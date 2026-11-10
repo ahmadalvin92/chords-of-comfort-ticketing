@@ -295,6 +295,25 @@ function TicketContent({
 
         </div>
 
+        {/* Bottom Actions for Mobile & Desktop (Hidden on Print) */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 print:hidden">
+          <Link
+            href="/"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#182B49] hover:bg-[#0F1C30] text-white px-6 py-3.5 rounded-xl font-bebas text-lg tracking-wider border-2 border-[#0F1C30] shadow-[0_3px_0_#0F1C30] transition-all"
+          >
+            <ArrowLeft className="w-5 h-5 text-[#F4B32A]" />
+            <span>KEMBALI KE BERANDA (BELI TIKET LAGI)</span>
+          </Link>
+
+          <button
+            onClick={handlePrint}
+            className="w-full sm:w-auto cursor-pointer inline-flex items-center justify-center gap-2 bg-[#C1272D] hover:bg-[#a61f25] text-white px-6 py-3.5 rounded-xl font-bebas text-lg tracking-wider border-2 border-[#0F1C30] shadow-[0_3px_0_#0F1C30] transition-all"
+          >
+            <Printer className="w-5 h-5 text-[#F4B32A]" />
+            <span>CETAK / SIMPAN SEBAGAI PDF</span>
+          </button>
+        </div>
+
       </div>
 
     </div>

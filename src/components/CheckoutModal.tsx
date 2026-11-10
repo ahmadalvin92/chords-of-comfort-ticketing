@@ -14,7 +14,7 @@ import {
   Building,
   AlertCircle,
   Clock,
-  Sparkles,
+  ArrowLeft,
 } from 'lucide-react';
 
 interface CheckoutModalProps {
@@ -45,9 +45,21 @@ export default function CheckoutModal({
   // 10-minute countdown for holding seats
   const [timeLeftSeconds, setTimeLeftSeconds] = useState(600);
 
+  // Handle browser back button (popstate) & lock body scroll
   useEffect(() => {
     if (!isOpen) return;
+
     setTimeLeftSeconds(600);
+    document.body.style.overflow = 'hidden';
+
+    // Push state into browser history so pressing device Back button closes modal
+    window.history.pushState({ modal: 'checkout' }, '');
+
+    const handlePopState = () => {
+      onClose();
+    };
+
+    window.addEventListener('popstate', handlePopState);
 
     const timer = setInterval(() => {
       setTimeLeftSeconds((prev) => {
@@ -59,8 +71,12 @@ export default function CheckoutModal({
       });
     }, 1000);
 
-    return () => clearInterval(timer);
-  }, [isOpen]);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('popstate', handlePopState);
+      clearInterval(timer);
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -70,6 +86,11 @@ export default function CheckoutModal({
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  };
+
+  const handleBack = () => {
+    // If modal had pushed state, going back in history is handled gracefully
+    onClose();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -127,45 +148,65 @@ export default function CheckoutModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
-      <div className="relative w-full max-w-2xl bg-[#F8F5EE] rounded-3xl border-4 border-[#0F1C30] shadow-[0_12px_0_#0F1C30] overflow-hidden my-8 animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
+      <div className="relative w-full max-w-2xl bg-[#F8F5EE] rounded-2xl sm:rounded-3xl border-3 sm:border-4 border-[#0F1C30] shadow-[0_12px_0_#0F1C30] overflow-hidden my-4 sm:my-8 max-h-[92vh] flex flex-col animate-in zoom-in-95 duration-200">
         
-        {/* Header Modal */}
-        <div className="bg-[#182B49] text-white p-5 border-b-4 border-[#F4B32A] flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#C1272D] border border-[#F4B32A] flex items-center justify-center">
-              <Ticket className="w-5 h-5 text-[#F4B32A]" />
-            </div>
+        {/* Sticky Header with Explicit BACK Button */}
+        <div className="sticky top-0 z-30 bg-[#182B49] text-white p-3.5 sm:p-5 border-b-4 border-[#F4B32A] flex items-center justify-between shrink-0 shadow-md">
+          
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Prominent Back Button on the left */}
+            <button
+              type="button"
+              onClick={handleBack}
+              className="cursor-pointer flex items-center gap-1.5 bg-[#C1272D] hover:bg-[#a61f25] text-white px-3 py-1.5 rounded-xl text-xs font-bold border-2 border-[#F4B32A] shadow-sm transition-all active:scale-95"
+              title="Kembali ke Pilihan Kursi"
+            >
+              <ArrowLeft className="w-4 h-4 text-[#F4B32A]" />
+              <span className="font-bebas text-sm tracking-wider">KEMBALI</span>
+            </button>
+
             <div>
-              <h3 className="font-bebas text-2xl tracking-wider text-[#FAF6ED] leading-none">
-                FORMULIR PEMBELIAN TIKET
+              <h3 className="font-bebas text-lg sm:text-2xl tracking-wider text-[#FAF6ED] leading-none">
+                FORM PEMBELIAN TIKET
               </h3>
-              <p className="text-xs text-slate-300 font-medium">
+              <p className="text-[10px] sm:text-xs text-slate-300 font-medium hidden sm:block">
                 COMM30-6SP Musical Theater • LSPR Sudirman Park
               </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-          >
-            <X className="w-6 h-6" />
-          </button>
+
+          <div className="flex items-center gap-2">
+            {/* Quick Timer in header on mobile */}
+            <div className="bg-amber-400 text-[#0F1C30] px-2.5 py-1 rounded-lg font-mono text-xs font-black flex items-center gap-1 border border-[#0F1C30]">
+              <Clock className="w-3.5 h-3.5 animate-spin" />
+              <span>{formatTimer(timeLeftSeconds)}</span>
+            </div>
+
+            <button
+              onClick={handleBack}
+              className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+              title="Tutup"
+            >
+              <X className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+          </div>
+
         </div>
 
-        {/* Hold Countdown Notice */}
-        <div className="bg-amber-100 border-b-2 border-amber-300 px-5 py-2.5 flex items-center justify-between text-xs font-bold text-amber-900">
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-amber-600 animate-spin" />
-            <span>Kursi dikunci untuk Anda selama:</span>
+        {/* Hold Countdown Notice Banner */}
+        <div className="bg-amber-100 border-b-2 border-amber-300 px-4 py-2 flex items-center justify-between text-[11px] sm:text-xs font-bold text-amber-900 shrink-0">
+          <div className="flex items-center gap-1.5">
+            <Ticket className="w-3.5 h-3.5 text-amber-700" />
+            <span>Kursi ditahan sementara selama proses pengisian form:</span>
           </div>
-          <span className="font-mono bg-amber-200 px-2 py-0.5 rounded text-sm text-amber-950 font-black">
+          <span className="font-mono bg-amber-200 px-2 py-0.5 rounded text-amber-950 font-black">
             {formatTimer(timeLeftSeconds)}
           </span>
         </div>
 
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        {/* Scrollable Form Body */}
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-5 overflow-y-auto flex-1">
           
           {errorMsg && (
             <div className="bg-red-100 border-2 border-red-400 text-red-800 p-3 rounded-xl text-xs font-bold flex items-center gap-2">
@@ -175,13 +216,13 @@ export default function CheckoutModal({
           )}
 
           {/* Section 1: Customer Info */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 font-bebas text-lg text-[#182B49]">
+          <div className="space-y-3.5">
+            <div className="flex items-center gap-2 font-bebas text-base sm:text-lg text-[#182B49]">
               <User className="w-4 h-4 text-[#C1272D]" />
               <span>DATA DIRI PEMBELI (SESUAI IDENTITAS)</span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
                   Nama Lengkap *
@@ -233,26 +274,26 @@ export default function CheckoutModal({
                 />
               </div>
               <p className="text-[11px] text-slate-500 font-semibold mt-1">
-                E-Ticket resmi ber-QR Code akan dikirim otomatis ke alamat email ini setelah pembayaran berhasil.
+                E-Ticket ber-QR Code akan dikirim otomatis ke alamat email ini setelah bayar.
               </p>
             </div>
           </div>
 
           {/* Section 2: Selected Seats Summary */}
-          <div className="bg-white p-4 rounded-2xl border-2 border-[#182B49] shadow-sm space-y-3">
+          <div className="bg-white p-3.5 sm:p-4 rounded-2xl border-2 border-[#182B49] shadow-sm space-y-2.5">
             <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-              <span className="font-bebas text-lg text-[#182B49]">RINGKASAN PESANAN</span>
+              <span className="font-bebas text-base sm:text-lg text-[#182B49]">RINGKASAN PESANAN</span>
               <span className="text-xs font-bold text-slate-500">{selectedSeats.length} Kursi Dipilih</span>
             </div>
 
-            <div className="max-h-36 overflow-y-auto space-y-2 pr-1">
+            <div className="max-h-32 overflow-y-auto space-y-1.5 pr-1">
               {selectedSeats.map((seat) => (
                 <div
                   key={seat.id}
                   className="flex items-center justify-between text-xs font-semibold py-1 border-b border-dashed border-slate-100 last:border-0"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="font-bebas text-sm bg-slate-100 px-2 py-0.5 rounded border border-slate-300">
+                    <span className="font-bebas text-xs sm:text-sm bg-slate-100 px-2 py-0.5 rounded border border-slate-300">
                       {seat.label}
                     </span>
                     <span className="text-slate-700">
@@ -267,7 +308,7 @@ export default function CheckoutModal({
             </div>
 
             <div className="pt-2 border-t border-slate-300 flex items-center justify-between">
-              <span className="font-bebas text-xl text-[#182B49]">TOTAL TAGIHAN</span>
+              <span className="font-bebas text-lg sm:text-xl text-[#182B49]">TOTAL TAGIHAN</span>
               <span className="font-bebas text-2xl text-[#C1272D]">
                 Rp {totalAmount.toLocaleString('id-ID')}
               </span>
@@ -275,23 +316,23 @@ export default function CheckoutModal({
           </div>
 
           {/* Section 3: Payment Method */}
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             <label className="block text-xs font-bold uppercase text-slate-700">
               Pilih Metode Pembayaran
             </label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               
               <button
                 type="button"
                 onClick={() => setPaymentMethod('QRIS')}
-                className={`p-3 rounded-xl border-2 text-left transition-all cursor-pointer ${
+                className={`p-3 rounded-xl border-2 text-left transition-all cursor-pointer flex items-center sm:block gap-3 ${
                   paymentMethod === 'QRIS'
                     ? 'border-[#182B49] bg-amber-50 shadow-sm'
                     : 'border-slate-200 bg-white hover:border-slate-300'
                 }`}
               >
-                <div className="flex items-center gap-2 mb-1">
-                  <QrCode className="w-4 h-4 text-[#C1272D]" />
+                <div className="flex items-center gap-2 mb-0.5 sm:mb-1">
+                  <QrCode className="w-4 h-4 text-[#C1272D] shrink-0" />
                   <span className="font-bold text-xs text-slate-900">QRIS (Instant)</span>
                 </div>
                 <p className="text-[10px] text-slate-500">GoPay, OVO, BCA, Dana, dll</p>
@@ -300,14 +341,14 @@ export default function CheckoutModal({
               <button
                 type="button"
                 onClick={() => setPaymentMethod('BCA_VA')}
-                className={`p-3 rounded-xl border-2 text-left transition-all cursor-pointer ${
+                className={`p-3 rounded-xl border-2 text-left transition-all cursor-pointer flex items-center sm:block gap-3 ${
                   paymentMethod === 'BCA_VA'
                     ? 'border-[#182B49] bg-amber-50 shadow-sm'
                     : 'border-slate-200 bg-white hover:border-slate-300'
                 }`}
               >
-                <div className="flex items-center gap-2 mb-1">
-                  <Building className="w-4 h-4 text-blue-600" />
+                <div className="flex items-center gap-2 mb-0.5 sm:mb-1">
+                  <Building className="w-4 h-4 text-blue-600 shrink-0" />
                   <span className="font-bold text-xs text-slate-900">BCA VA</span>
                 </div>
                 <p className="text-[10px] text-slate-500">Virtual Account Otomatis</p>
@@ -316,14 +357,14 @@ export default function CheckoutModal({
               <button
                 type="button"
                 onClick={() => setPaymentMethod('MANDIRI_VA')}
-                className={`p-3 rounded-xl border-2 text-left transition-all cursor-pointer ${
+                className={`p-3 rounded-xl border-2 text-left transition-all cursor-pointer flex items-center sm:block gap-3 ${
                   paymentMethod === 'MANDIRI_VA'
                     ? 'border-[#182B49] bg-amber-50 shadow-sm'
                     : 'border-slate-200 bg-white hover:border-slate-300'
                 }`}
               >
-                <div className="flex items-center gap-2 mb-1">
-                  <Building className="w-4 h-4 text-amber-600" />
+                <div className="flex items-center gap-2 mb-0.5 sm:mb-1">
+                  <Building className="w-4 h-4 text-amber-600 shrink-0" />
                   <span className="font-bold text-xs text-slate-900">Mandiri VA</span>
                 </div>
                 <p className="text-[10px] text-slate-500">Livin & ATM Transfer</p>
@@ -333,7 +374,7 @@ export default function CheckoutModal({
           </div>
 
           {/* Section 4: Terms */}
-          <div className="pt-2">
+          <div className="pt-1">
             <label className="flex items-start gap-2.5 cursor-pointer">
               <input
                 type="checkbox"
@@ -341,29 +382,41 @@ export default function CheckoutModal({
                 onChange={(e) => setAgreedToTerms(e.target.checked)}
                 className="mt-1 w-4 h-4 rounded border-slate-300 text-[#182B49] focus:ring-[#182B49]"
               />
-              <span className="text-xs text-slate-600 font-medium leading-relaxed">
+              <span className="text-[11px] sm:text-xs text-slate-600 font-medium leading-relaxed">
                 Saya menyetujui bahwa nomor kursi yang dipilih tidak dapat ditukar dan tiket yang sudah dibeli bersifat non-refundable sesuai ketentuan panitia LSPR COMM30-6SP.
               </span>
             </label>
           </div>
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isSubmitting || timeLeftSeconds <= 0}
-            className="w-full cursor-pointer bg-[#C1272D] hover:bg-[#a61f25] disabled:bg-slate-400 text-white py-4 rounded-xl font-bebas text-2xl tracking-wider border-3 border-[#0F1C30] shadow-[0_5px_0_#0F1C30] hover:translate-y-0.5 active:translate-y-1 transition-all flex items-center justify-center gap-2"
-          >
-            {isSubmitting ? (
-              <span className="animate-pulse">MEMPROSES TRANSAKSI...</span>
-            ) : (
-              <>
-                <CreditCard className="w-6 h-6 text-[#F4B32A]" />
-                <span>LANJUT KE PEMBAYARAN ONLINE</span>
-              </>
-            )}
-          </button>
+          {/* Double Action Buttons: Back + Proceed */}
+          <div className="pt-2 space-y-2.5">
+            <button
+              type="submit"
+              disabled={isSubmitting || timeLeftSeconds <= 0}
+              className="w-full cursor-pointer bg-[#C1272D] hover:bg-[#a61f25] disabled:bg-slate-400 text-white py-3.5 sm:py-4 rounded-xl font-bebas text-xl sm:text-2xl tracking-wider border-3 border-[#0F1C30] shadow-[0_4px_0_#0F1C30] hover:translate-y-0.5 active:translate-y-1 transition-all flex items-center justify-center gap-2"
+            >
+              {isSubmitting ? (
+                <span className="animate-pulse">MEMPROSES TRANSAKSI...</span>
+              ) : (
+                <>
+                  <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-[#F4B32A]" />
+                  <span>LANJUT KE PEMBAYARAN ONLINE</span>
+                </>
+              )}
+            </button>
 
-          <div className="flex items-center justify-center gap-2 text-[11px] font-bold text-slate-500">
+            {/* Bottom Explicit BACK Button for easy access on mobile */}
+            <button
+              type="button"
+              onClick={handleBack}
+              className="w-full cursor-pointer bg-[#EBE5D8] hover:bg-[#ded6c4] text-[#182B49] py-3 rounded-xl font-bebas text-lg tracking-wider border-2 border-[#182B49] shadow-[0_2px_0_#182B49] hover:translate-y-0.5 transition-all flex items-center justify-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4 text-[#C1272D]" />
+              <span>← KEMBALI KE DENAH KURSI (BATAL / UBAH)</span>
+            </button>
+          </div>
+
+          <div className="flex items-center justify-center gap-2 text-[10px] sm:text-[11px] font-bold text-slate-500 pb-2">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
             <span>Integrasi Aman Payment Gateway Midtrans & Xendit</span>
           </div>
@@ -374,4 +427,3 @@ export default function CheckoutModal({
     </div>
   );
 }
-

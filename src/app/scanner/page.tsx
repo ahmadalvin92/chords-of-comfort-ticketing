@@ -158,22 +158,31 @@ export default function ScannerPage() {
         
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-          <Link
-            href="/admin"
-            className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-white"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Dashboard</span>
-          </Link>
-          <div className="text-center">
-            <h1 className="font-bebas text-2xl text-[#F4B32A] tracking-wider">
+          <div className="flex items-center gap-2">
+            <Link
+              href="/"
+              className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-700"
+              title="Ke Halaman Utama"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Beranda</span>
+            </Link>
+            <Link
+              href="/admin"
+              className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-700"
+              title="Ke Dashboard Panitia"
+            >
+              <span>Admin</span>
+            </Link>
+          </div>
+          <div className="text-right">
+            <h1 className="font-bebas text-xl text-[#F4B32A] tracking-wider leading-none">
               GATE QR SCANNER
             </h1>
-            <p className="text-[10px] text-slate-400 uppercase tracking-widest">
-              LSPR COMM30-6SP • CHECK-IN SYSTEM
+            <p className="text-[9px] text-slate-400 uppercase tracking-widest">
+              LSPR COMM30-6SP
             </p>
           </div>
-          <div className="w-8" />
         </div>
 
         {/* Scan Status Feedback Card */}
