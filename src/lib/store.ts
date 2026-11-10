@@ -9,42 +9,76 @@ interface DbData {
   lastUpdated: string;
 }
 
-const DB_PATH = path.join(process.cwd(), 'data', 'ticketing-db.json');
+// Global in-memory cache for serverless environments (e.g. Vercel)
+declare global {
+  var __TICKETING_DB__: DbData | undefined;
+}
+
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+
+// Use /tmp on Vercel / serverless because /var/task is strictly read-only
+const DB_PATH = isServerless
+  ? path.join('/tmp', 'ticketing-db.json')
+  : path.join(process.cwd(), 'data', 'ticketing-db.json');
+
+const BUNDLED_DB_PATH = path.join(process.cwd(), 'data', 'ticketing-db.json');
 
 function ensureDbFile(): DbData {
-  const dir = path.dirname(DB_PATH);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+  if (globalThis.__TICKETING_DB__) {
+    return globalThis.__TICKETING_DB__;
   }
 
-  if (!fs.existsSync(DB_PATH)) {
-    const initialData: DbData = {
-      seats: generateInitialSeats(),
-      orders: [],
-      lastUpdated: new Date().toISOString(),
-    };
-    fs.writeFileSync(DB_PATH, JSON.stringify(initialData, null, 2), 'utf8');
-    return initialData;
+  // 1. Try reading from active DB_PATH (e.g. /tmp/ticketing-db.json)
+  if (fs.existsSync(DB_PATH)) {
+    try {
+      const fileContent = fs.readFileSync(DB_PATH, 'utf8');
+      const data = JSON.parse(fileContent) as DbData;
+      globalThis.__TICKETING_DB__ = data;
+      return data;
+    } catch {
+      // Continue fallback
+    }
   }
 
-  try {
-    const fileContent = fs.readFileSync(DB_PATH, 'utf8');
-    const data = JSON.parse(fileContent) as DbData;
-    return data;
-  } catch {
-    const initialData: DbData = {
-      seats: generateInitialSeats(),
-      orders: [],
-      lastUpdated: new Date().toISOString(),
-    };
-    fs.writeFileSync(DB_PATH, JSON.stringify(initialData, null, 2), 'utf8');
-    return initialData;
+  // 2. Try reading from bundled initial DB (read-only in /var/task/data/ticketing-db.json)
+  if (fs.existsSync(BUNDLED_DB_PATH)) {
+    try {
+      const fileContent = fs.readFileSync(BUNDLED_DB_PATH, 'utf8');
+      const data = JSON.parse(fileContent) as DbData;
+      globalThis.__TICKETING_DB__ = data;
+      saveDb(data); // Write to /tmp for future persistence
+      return data;
+    } catch {
+      // Continue fallback
+    }
   }
+
+  // 3. Fallback: generate fresh initial seats
+  const initialData: DbData = {
+    seats: generateInitialSeats(),
+    orders: [],
+    lastUpdated: new Date().toISOString(),
+  };
+
+  globalThis.__TICKETING_DB__ = initialData;
+  saveDb(initialData);
+  return initialData;
 }
 
 function saveDb(data: DbData) {
   data.lastUpdated = new Date().toISOString();
-  fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), 'utf8');
+  globalThis.__TICKETING_DB__ = data;
+
+  try {
+    const dir = path.dirname(DB_PATH);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), 'utf8');
+  } catch (err) {
+    // Graceful fallback: Serverless container memory still holds the data
+    console.warn('Could not write to disk, using in-memory store:', (err as Error).message);
+  }
 }
 
 // Clean up expired held seats (older than 10 mins)
@@ -267,7 +301,6 @@ export function validateTicketQR(qrPayload: string): CheckInResult {
   try {
     parsed = JSON.parse(qrPayload);
   } catch {
-    // Maybe raw string is orderId or ticket code
     parsed = { orderId: qrPayload.trim() };
   }
 
@@ -341,7 +374,7 @@ export function resetDatabase() {
     orders: [],
     lastUpdated: new Date().toISOString(),
   };
+  globalThis.__TICKETING_DB__ = initialData;
   saveDb(initialData);
   return initialData;
 }
-
