@@ -138,3 +138,4 @@ export async function sendTicketEmail(order: Order): Promise<{ success: boolean;
     return { success: false, error: (err as Error).message };
   }
 }
+
