@@ -3281,9 +3281,9 @@
       "number": 14,
       "category": "RUBY",
       "price": 35000,
-      "status": "held",
-      "heldBy": "LSPR-6SP-08CXUJ",
-      "heldUntil": 1794327283863
+      "status": "available",
+      "heldBy": null,
+      "heldUntil": null
     },
     {
       "id": "MF-A7-R15",
@@ -3817,9 +3817,9 @@
       "number": 12,
       "category": "DIAMOND",
       "price": 50000,
-      "status": "held",
-      "heldBy": "LSPR-6SP-08CXUJ",
-      "heldUntil": 1794327283863
+      "status": "available",
+      "heldBy": null,
+      "heldUntil": null
     },
     {
       "id": "MF-A9-L13",
@@ -3830,9 +3830,9 @@
       "number": 13,
       "category": "DIAMOND",
       "price": 50000,
-      "status": "held",
-      "heldBy": "LSPR-6SP-08CXUJ",
-      "heldUntil": 1794327283863
+      "status": "available",
+      "heldBy": null,
+      "heldUntil": null
     },
     {
       "id": "MF-A9-L14",
@@ -4422,50 +4422,6 @@
   ],
   "orders": [
     {
-      "id": "LSPR-6SP-W256VI",
-      "createdAt": "2026-11-10T15:48:08.804Z",
-      "customer": {
-        "fullName": "vio",
-        "email": "vio@vio.com",
-        "phone": "029392393",
-        "notes": ""
-      },
-      "items": [
-        {
-          "seatId": "MF-A7-R4",
-          "seatLabel": "A7-R4",
-          "category": "DIAMOND",
-          "price": 50000,
-          "ticketCode": "TCK-LSPR-6SP-W256VI-A7-R4-1",
-          "isCheckedIn": false,
-          "checkedInAt": null
-        },
-        {
-          "seatId": "MF-A9-L10",
-          "seatLabel": "A9-L10",
-          "category": "DIAMOND",
-          "price": 50000,
-          "ticketCode": "TCK-LSPR-6SP-W256VI-A9-L10-2",
-          "isCheckedIn": false,
-          "checkedInAt": null
-        },
-        {
-          "seatId": "MF-A9-L11",
-          "seatLabel": "A9-L11",
-          "category": "DIAMOND",
-          "price": 50000,
-          "ticketCode": "TCK-LSPR-6SP-W256VI-A9-L11-3",
-          "isCheckedIn": false,
-          "checkedInAt": null
-        }
-      ],
-      "totalAmount": 150000,
-      "paymentStatus": "paid",
-      "paymentMethod": "QRIS",
-      "paidAt": "2026-11-10T15:48:22.214Z",
-      "qrPayload": "{\"orderId\":\"LSPR-6SP-W256VI\",\"customerName\":\"vio\",\"seats\":[\"A7-R4\",\"A9-L10\",\"A9-L11\"],\"category\":\"DIAMOND\",\"secretHash\":\"TFNQUi02U1AtVzI1NlZJLUNPTU0zMC02U1A=\"}"
-    },
-    {
       "id": "LSPR-6SP-08CXUJ",
       "createdAt": "2026-11-10T15:59:43.863Z",
       "customer": {
@@ -4508,7 +4464,51 @@
       "paymentMethod": "QRIS",
       "paidAt": null,
       "qrPayload": "{\"orderId\":\"LSPR-6SP-08CXUJ\",\"customerName\":\"vio\",\"seats\":[\"A7-R14\",\"A9-L12\",\"A9-L13\"],\"category\":\"RUBY\",\"secretHash\":\"TFNQUi02U1AtMDhDWFVKLUNPTU0zMC02U1A=\"}"
+    },
+    {
+      "id": "LSPR-6SP-W256VI",
+      "createdAt": "2026-11-10T15:48:08.804Z",
+      "customer": {
+        "fullName": "vio",
+        "email": "vio@vio.com",
+        "phone": "029392393",
+        "notes": ""
+      },
+      "items": [
+        {
+          "seatId": "MF-A7-R4",
+          "seatLabel": "A7-R4",
+          "category": "DIAMOND",
+          "price": 50000,
+          "ticketCode": "TCK-LSPR-6SP-W256VI-A7-R4-1",
+          "isCheckedIn": false,
+          "checkedInAt": null
+        },
+        {
+          "seatId": "MF-A9-L10",
+          "seatLabel": "A9-L10",
+          "category": "DIAMOND",
+          "price": 50000,
+          "ticketCode": "TCK-LSPR-6SP-W256VI-A9-L10-2",
+          "isCheckedIn": false,
+          "checkedInAt": null
+        },
+        {
+          "seatId": "MF-A9-L11",
+          "seatLabel": "A9-L11",
+          "category": "DIAMOND",
+          "price": 50000,
+          "ticketCode": "TCK-LSPR-6SP-W256VI-A9-L11-3",
+          "isCheckedIn": false,
+          "checkedInAt": null
+        }
+      ],
+      "totalAmount": 150000,
+      "paymentStatus": "paid",
+      "paymentMethod": "QRIS",
+      "paidAt": "2026-11-10T15:48:22.214Z",
+      "qrPayload": "{\"orderId\":\"LSPR-6SP-W256VI\",\"customerName\":\"vio\",\"seats\":[\"A7-R4\",\"A9-L10\",\"A9-L11\"],\"category\":\"DIAMOND\",\"secretHash\":\"TFNQUi02U1AtVzI1NlZJLUNPTU0zMC02U1A=\"}"
     }
   ],
-  "lastUpdated": "2026-11-10T15:59:43.863Z"
+  "lastUpdated": "2026-11-10T16:20:39.046Z"
 }

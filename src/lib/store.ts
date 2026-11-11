@@ -378,3 +378,122 @@ export function resetDatabase() {
   saveDb(initialData);
   return initialData;
 }
+
+export function manualToggleCheckIn(orderId: string): { success: boolean; isCheckedIn?: boolean; error?: string } {
+  const db = ensureDbFile();
+  const order = db.orders.find((o) => o.id === orderId);
+
+  if (!order) {
+    return { success: false, error: `Order ${orderId} tidak ditemukan.` };
+  }
+
+  // Toggle state
+  const willBeCheckedIn = !order.items.every((it) => it.isCheckedIn);
+  const now = willBeCheckedIn ? new Date().toISOString() : null;
+
+  order.items.forEach((item) => {
+    item.isCheckedIn = willBeCheckedIn;
+    item.checkedInAt = now;
+  });
+
+  saveDb(db);
+  return { success: true, isCheckedIn: willBeCheckedIn };
+}
+
+export function deleteOrder(orderId: string): { success: boolean; error?: string } {
+  const db = ensureDbFile();
+  const orderIdx = db.orders.findIndex((o) => o.id === orderId);
+
+  if (orderIdx === -1) {
+    return { success: false, error: `Order ${orderId} tidak ditemukan.` };
+  }
+
+  const order = db.orders[orderIdx];
+
+  // Free up associated seats
+  order.items.forEach((item) => {
+    const seat = db.seats.find((s) => s.id === item.seatId);
+    if (seat && (seat.orderId === orderId || seat.heldBy === orderId)) {
+      seat.status = 'available';
+      seat.orderId = null;
+      seat.heldBy = null;
+      seat.heldUntil = null;
+    }
+  });
+
+  db.orders.splice(orderIdx, 1);
+  saveDb(db);
+  return { success: true };
+}
+
+export function manualCreateOrder(
+  customer: CustomerInfo,
+  seatIds: string[],
+  paymentMethod: string = 'MANUAL_CASH',
+  isPaid: boolean = true
+): { success: boolean; order?: Order; error?: string } {
+  const db = ensureDbFile();
+
+  const selectedSeats: Seat[] = [];
+  for (const id of seatIds) {
+    const seat = db.seats.find((s) => s.id === id);
+    if (!seat) {
+      return { success: false, error: `Kursi ${id} tidak ditemukan.` };
+    }
+    if (seat.status === 'sold') {
+      return { success: false, error: `Kursi ${seat.label} sudah terjual.` };
+    }
+    selectedSeats.push(seat);
+  }
+
+  const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
+  const orderId = `LSPR-ADM-${randomSuffix}`;
+  let totalAmount = 0;
+
+  const items: TicketItem[] = selectedSeats.map((seat, index) => {
+    totalAmount += seat.price;
+    const ticketCode = `TCK-${orderId}-${seat.label}-${index + 1}`;
+    return {
+      seatId: seat.id,
+      seatLabel: seat.label,
+      category: seat.category,
+      price: seat.price,
+      ticketCode,
+      isCheckedIn: false,
+      checkedInAt: null,
+    };
+  });
+
+  const qrPayload = JSON.stringify({
+    orderId,
+    customerName: customer.fullName,
+    seats: items.map((i) => i.seatLabel),
+    category: items[0]?.category,
+    secretHash: Buffer.from(`${orderId}-COMM30-6SP`).toString('base64'),
+  });
+
+  const now = new Date().toISOString();
+  const order: Order = {
+    id: orderId,
+    createdAt: now,
+    customer,
+    items,
+    totalAmount,
+    paymentStatus: isPaid ? 'paid' : 'pending',
+    paymentMethod,
+    paidAt: isPaid ? now : null,
+    qrPayload,
+  };
+
+  selectedSeats.forEach((seat) => {
+    seat.status = isPaid ? 'sold' : 'held';
+    seat.orderId = isPaid ? orderId : null;
+    seat.heldBy = isPaid ? null : orderId;
+    seat.heldUntil = isPaid ? null : Date.now() + 60 * 60 * 1000;
+  });
+
+  db.orders.push(order);
+  saveDb(db);
+
+  return { success: true, order };
+}

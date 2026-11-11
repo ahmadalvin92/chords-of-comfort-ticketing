@@ -50,20 +50,20 @@ Panduan lengkap ini disusun khusus untuk **Panitia Ticketing & Gatekeeper Event 
 
 ## 3. Panduan Admin Dashboard Panitia (`/admin`)
 
-Halaman ini digunakan oleh koordinator ticketing untuk memantau performa penjualan:
+Halaman ini digunakan oleh koordinator ticketing untuk memantau performa penjualan.
 
-- **Ringkasan KPI**:
-  - **Total Pendapatan (Rp)**: Akumulasi seluruh tiket berstatus `PAID` (Target maksimal kapasitas: Rp 19.500.000).
-  - **Tiket Terjual**: Jumlah kursi yang telah lunas dari total 400 kursi.
-  - **Kursi Tersedia**: Sisa kapasitas kursi yang belum terjual.
-  - **Kehadiran (Check-In)**: Jumlah pengunjung yang sudah melewati gate pemindaian QR code di hari-H.
-- **Pencarian Cepat**:
-  - Panitia dapat mencari data penonton hanya dengan mengetik **Nama**, **Nomor WhatsApp**, **Order ID** (misal `LSPR-6SP-XXXXXX`), atau **Nomor Kursi** (misal `A3-L12`).
-- **Ekspor Data ke Excel/CSV**:
-  - Klik tombol **"Export CSV (Excel)"** di pojok kanan atas.
-  - File spreadsheet akan otomatis terunduh berisi seluruh riwayat pemesanan untuk arsip bendahara & registrasi fisik.
-- **Fitur Reset Data**:
-  - Tombol *"Reset Data"* disediakan untuk membersihkan transaksi uji coba (demo/sandbox) sebelum link resmi disebarkan ke publik.
+### 🔐 Akun Login Panitia:
+| Nama Panitia | Username / Email | Password | Role |
+| :--- | :--- | :--- | :--- |
+| **Viona** | `meovivi@vinsky.com` | `viona1002` | Lead Ticketing Admin |
+| **Alvin** | `vinsky@vinsky.com` | `alvin123` | Lead Ticketing Admin |
+
+- **Fitur Lengkap Dashboard**:
+  - **Tabel Transaksi Detail**: Memuat nama lengkap pembeli, nomor WhatsApp (bisa langsung diklik untuk chat via WA), email, daftar nomor kursi lengkap beserta kategorinya, total bayar, status lunas (`PAID`/`PENDING`), serta status kehadiran gate (`Checked In`).
+  - **Denah Kursi & Pemilik (Seat Inspector)**: Klik kursi manapun pada denah untuk melihat siapa pemilik kursi tersebut atau memeriksa statusnya.
+  - **Penerbitan Tiket Manual / VIP**: Panitia dapat menerbitkan tiket undangan resmi untuk Dosen, Sponsor, atau tamu kehormatan tanpa pembayaran online.
+  - **Cetak Daftar Hadir**: Format siap cetak kertas (A4) untuk meja helpdesk / absensi fisik di pintu masuk.
+  - **Ekspor Data ke Excel/CSV**: Satu klik untuk mengunduh laporan penjualan lengkap.
 
 ---
 
