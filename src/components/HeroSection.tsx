@@ -31,10 +31,10 @@ export default function HeroSection({ onSelectSeatsClick }: HeroSectionProps) {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-          
+
           {/* Left Column: Headlines & Call to Actions */}
           <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-            
+
             {/* Top Pill / Badge */}
             <div className="inline-flex items-center gap-2 bg-[#F4B32A] text-[#0F1C30] px-3.5 py-1.5 rounded-full border-2 border-[#0F1C30] font-bebas text-sm sm:text-base tracking-wider shadow-[0_2px_0_#0F1C30]">
               <Flame className="w-4 h-4 fill-[#0F1C30] text-[#0F1C30]" />
@@ -131,13 +131,13 @@ export default function HeroSection({ onSelectSeatsClick }: HeroSectionProps) {
           {/* Right Column: High School Varsity Poster Mockup */}
           <div className="lg:col-span-5 flex justify-center">
             <div className="relative w-full max-w-sm sm:max-w-md">
-              
+
               {/* Retro Paper Drop Background */}
               <div className="absolute inset-0 bg-[#F4B32A] rounded-3xl rotate-3 border-4 border-[#0F1C30] shadow-[0_8px_0_#0F1C30]" />
 
               {/* Main Card Frame */}
               <div className="relative bg-white p-4 rounded-3xl -rotate-2 border-4 border-[#0F1C30] shadow-[0_8px_0_#0F1C30] space-y-4">
-                
+
                 {/* Poster Photo with Pin Effect */}
                 <div className="relative aspect-[4/5] rounded-2xl overflow-hidden border-2 border-[#0F1C30] bg-slate-900">
                   <Image
@@ -153,7 +153,7 @@ export default function HeroSection({ onSelectSeatsClick }: HeroSectionProps) {
                   <div className="absolute top-3 right-3 bg-[#C1272D] text-[#FAF6ED] border-2 border-[#0F1C30] px-3 py-1 rounded-lg font-bebas text-sm shadow-md rotate-6">
                     ★ LSPR BEKASI
                   </div>
-                  
+
                   <div className="absolute bottom-3 left-3 bg-[#182B49]/90 backdrop-blur-xs text-[#FAF6ED] border border-white/20 px-3 py-1.5 rounded-xl text-xs font-semibold">
                     The 35th LSPR Theater Festival
                   </div>

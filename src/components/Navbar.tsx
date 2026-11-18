@@ -31,7 +31,7 @@ export default function Navbar({ onBookTicketsClick }: NavbarProps) {
     <nav className="sticky top-0 z-50 bg-[#FAF6ED] border-b-4 border-[#0F1C30] shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          
+
           {/* Left Brand Identity: Varsity Crest / College Badge */}
           <Link href="/" className="flex items-center gap-3 group">
             <div className="w-12 h-12 rounded-2xl bg-[#C1272D] border-3 border-[#0F1C30] flex items-center justify-center text-[#FAF6ED] font-bebas text-2xl shadow-[0_3px_0_#0F1C30] group-hover:-rotate-6 transition-transform">
@@ -61,13 +61,6 @@ export default function Navbar({ onBookTicketsClick }: NavbarProps) {
             <a href="#faq" className="hover:text-[#C1272D] transition-colors">
               FAQ
             </a>
-            <Link
-              href="/admin"
-              className="hover:text-[#C1272D] transition-colors flex items-center gap-1 text-slate-500 hover:text-slate-900"
-            >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Admin</span>
-            </Link>
           </div>
 
           {/* Right Action Icons & Primary CTA (Desktop) */}
@@ -155,14 +148,6 @@ export default function Navbar({ onBookTicketsClick }: NavbarProps) {
             >
               Frequently Asked Questions (FAQ)
             </a>
-            <Link
-              href="/admin"
-              onClick={() => setMobileMenuOpen(false)}
-              className="hover:text-[#C1272D] flex items-center gap-2 pt-2 border-t border-slate-300"
-            >
-              <ShieldCheck className="w-5 h-5 text-[#C1272D]" />
-              <span>Admin & Gatekeeper Login</span>
-            </Link>
           </div>
 
           <div className="pt-4 border-t-2 border-dashed border-slate-300 flex items-center gap-3">

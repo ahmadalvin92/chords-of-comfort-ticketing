@@ -43,8 +43,8 @@ export default function PaymentModal({
 
   const seatsStr = order.items.map((i) => i.seatLabel).join(', ');
 
-  // English WhatsApp confirmation message template
-  const waConfirmationMsg = `Hello Chords of Comfort Ticketing Team! I would like to confirm my transfer payment for Order ID: #${order.id} under the name: ${order.customer.fullName} for Seats: ${seatsStr} (Total: Rp ${order.totalAmount.toLocaleString('id-ID')}). Please find my payment transfer receipt attached.`;
+  // English WhatsApp confirmation message template (BCA Transfer)
+  const waConfirmationMsg = `Hello Chords of Comfort Ticketing Team! I would like to confirm my BCA transfer payment for Order ID: #${order.id} under the name: ${order.customer.fullName} for Seats: ${seatsStr} (Total: Rp ${order.totalAmount.toLocaleString('id-ID')}). Please find my payment transfer receipt attached.`;
   const waUrl = `https://wa.me/6281915348866?text=${encodeURIComponent(waConfirmationMsg)}`;
 
   // Sandbox simulation payment handler for instant demonstration
@@ -77,7 +77,7 @@ export default function PaymentModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm overflow-y-auto">
       
       <div className="relative w-full max-w-lg bg-white rounded-3xl border-4 border-[#0F1C30] shadow-[0_16px_0_#0F1C30] overflow-hidden my-6 animate-in zoom-in-95 duration-200">
-        
+
         {/* Modal Header */}
         <div className="bg-[#182B49] text-white p-5 sm:p-6 border-b-4 border-[#F4B32A] relative">
           <div className="flex items-center justify-between gap-4">
@@ -127,91 +127,41 @@ export default function PaymentModal({
               <span>How to Complete Your Booking:</span>
             </div>
             <ol className="list-decimal pl-4 space-y-1 text-[11px]">
-              <li>Transfer the exact total amount to any of the committee accounts below.</li>
-              <li>Click the green WhatsApp button below to send your transfer receipt.</li>
-              <li>Once verified, your official E-Ticket with scannable QR Code will be activated immediately!</li>
+              <li>Transfer the exact total amount to our official Bank BCA account below.</li>
+              <li>Click the green WhatsApp button below to submit your transfer receipt.</li>
+              <li>Once verified by the ticketing team, your official QR E-Ticket will be activated instantly!</li>
             </ol>
           </div>
 
-          {/* Committee Bank Accounts */}
+          {/* Committee Bank Account (BCA Only) */}
           <div className="space-y-2.5">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
-              Official Committee Bank Accounts:
+              Official Committee Bank Account (BCA Transfer):
             </span>
 
             {/* BCA */}
-            <div className="p-3 bg-[#FAF6ED] rounded-xl border-2 border-slate-300 flex items-center justify-between">
+            <div className="p-4 bg-[#FAF6ED] rounded-2xl border-3 border-[#0F1C30] shadow-[0_4px_0_#0F1C30] flex items-center justify-between">
               <div>
-                <strong className="block text-slate-900 font-bold">Bank BCA</strong>
-                <span className="font-mono text-sm text-[#182B49] font-black">7650892101</span>
-                <span className="text-[10px] text-slate-500 block">a.n. Viona</span>
+                <span className="font-bebas text-xs px-2 py-0.5 rounded bg-[#182B49] text-white">
+                  BANK BCA
+                </span>
+                <div className="font-mono text-lg text-[#182B49] font-black mt-1">7650892101</div>
+                <span className="text-xs text-slate-600 font-bold block">a.n. Viona</span>
               </div>
               <button
                 type="button"
                 onClick={() => copyToClipboard('7650892101', 'BCA')}
-                className="cursor-pointer bg-white hover:bg-slate-100 text-[#182B49] px-3 py-1.5 rounded-lg border border-slate-300 font-bold flex items-center gap-1"
+                className="cursor-pointer bg-white hover:bg-slate-100 text-[#182B49] px-4 py-2 rounded-xl border-2 border-[#0F1C30] font-bold text-xs flex items-center gap-1.5 shadow-xs"
               >
                 {copiedAccount === 'BCA' ? (
                   <>
-                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                    <Check className="w-4 h-4 text-emerald-600" />
                     <span className="text-emerald-700">Copied!</span>
                   </>
                 ) : (
                   <>
-                    <Copy className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Copy</span>
-                  </>
-                )}
-              </button>
-            </div>
-
-            {/* Mandiri */}
-            <div className="p-3 bg-[#FAF6ED] rounded-xl border-2 border-slate-300 flex items-center justify-between">
-              <div>
-                <strong className="block text-slate-900 font-bold">Bank Mandiri</strong>
-                <span className="font-mono text-sm text-[#182B49] font-black">1220019283741</span>
-                <span className="text-[10px] text-slate-500 block">a.n. Chords of Comfort</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => copyToClipboard('1220019283741', 'MANDIRI')}
-                className="cursor-pointer bg-white hover:bg-slate-100 text-[#182B49] px-3 py-1.5 rounded-lg border border-slate-300 font-bold flex items-center gap-1"
-              >
-                {copiedAccount === 'MANDIRI' ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    <span className="text-emerald-700">Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Copy</span>
-                  </>
-                )}
-              </button>
-            </div>
-
-            {/* E-Wallet */}
-            <div className="p-3 bg-[#FAF6ED] rounded-xl border-2 border-slate-300 flex items-center justify-between">
-              <div>
-                <strong className="block text-slate-900 font-bold">E-Wallet (GoPay / Dana / OVO)</strong>
-                <span className="font-mono text-sm text-[#182B49] font-black">081915348866</span>
-                <span className="text-[10px] text-slate-500 block">a.n. Chords of Comfort Committee</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => copyToClipboard('081915348866', 'EWALLET')}
-                className="cursor-pointer bg-white hover:bg-slate-100 text-[#182B49] px-3 py-1.5 rounded-lg border border-slate-300 font-bold flex items-center gap-1"
-              >
-                {copiedAccount === 'EWALLET' ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    <span className="text-emerald-700">Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Copy</span>
+                    <Copy className="w-4 h-4 text-slate-500" />
+                    <span>Copy Number</span>
                   </>
                 )}
               </button>

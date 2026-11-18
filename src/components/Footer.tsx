@@ -32,10 +32,10 @@ export default function Footer() {
   return (
     <footer className="bg-[#182B49] text-white border-t-4 border-[#F4B32A] pt-16 pb-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-        
+
         {/* Main 4-Column Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8">
-          
+
           {/* Col 1: Brand & Synopsis (5 cols) */}
           <div className="lg:col-span-5 space-y-4">
             <div className="flex items-center gap-3">
@@ -103,11 +103,6 @@ export default function Footer() {
                 <a href="#faq" className="hover:text-[#F4B32A] transition-colors">
                   FAQ & Guidelines
                 </a>
-              </li>
-              <li>
-                <Link href="/admin" className="hover:text-[#F4B32A] transition-colors">
-                  Admin Portal Login
-                </Link>
               </li>
             </ul>
           </div>

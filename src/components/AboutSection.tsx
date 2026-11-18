@@ -8,9 +8,6 @@ import {
   Clock,
   Shirt,
   QrCode,
-  Music,
-  Users,
-  Award,
   ExternalLink,
   Phone,
 } from 'lucide-react';
@@ -63,35 +60,6 @@ export default function AboutSection() {
                 <p className="font-bebas text-lg text-[#182B49] leading-tight mt-0.5">
                   E-TICKET SCANNED AT GATE & EXCHANGED FOR FABRIC WRISTBAND
                 </p>
-              </div>
-            </div>
-
-            {/* Production Pillars Box */}
-            <div className="bg-[#182B49] text-white p-6 rounded-3xl border-4 border-[#0F1C30] shadow-[0_6px_0_#0F1C30] space-y-4">
-              <div className="flex items-center gap-2 text-[#F4B32A] font-bebas text-xl tracking-wider">
-                <Sparkles className="w-5 h-5" />
-                <span>PRODUCTION HIGHLIGHTS</span>
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed font-medium">
-                Crafted with passion by the student cohort of COMM30-6SP: featuring handcrafted varsity costuming, Broadway-inspired stage lighting, multi-track live audio engineering, and dynamic theatrical choreography.
-              </p>
-              
-              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-700 text-center">
-                <div className="p-2 rounded-xl bg-slate-800/80 border border-slate-700">
-                  <Music className="w-4 h-4 text-[#F4B32A] mx-auto mb-1" />
-                  <div className="font-bebas text-lg text-[#FAF6ED] leading-none">15+ SONGS</div>
-                  <div className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Live Musical</div>
-                </div>
-                <div className="p-2 rounded-xl bg-slate-800/80 border border-slate-700">
-                  <Users className="w-4 h-4 text-[#F4B32A] mx-auto mb-1" />
-                  <div className="font-bebas text-lg text-[#FAF6ED] leading-none">30+ CAST</div>
-                  <div className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">& Dance Squad</div>
-                </div>
-                <div className="p-2 rounded-xl bg-slate-800/80 border border-slate-700">
-                  <Award className="w-4 h-4 text-[#F4B32A] mx-auto mb-1" />
-                  <div className="font-bebas text-lg text-[#FAF6ED] leading-none">BROADWAY</div>
-                  <div className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Stage Setup</div>
-                </div>
               </div>
             </div>
 

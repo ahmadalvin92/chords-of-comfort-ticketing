@@ -38,31 +38,26 @@ export default function SeatPlan({
   const [hoveredSeat, setHoveredSeat] = useState<Seat | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Group seats by section and row
-  const { mainFloorRows, balconyRows } = useMemo(() => {
-    const mainSeats = seats.filter((s) => s.section === 'MAIN_FLOOR');
-    const balcSeats = seats.filter((s) => s.section === 'BALCONY');
-
-    const groupByRow = (seatList: Seat[]) => {
-      const map: { [row: string]: Seat[] } = {};
-      seatList.forEach((s) => {
-        if (!map[s.row]) map[s.row] = [];
-        map[s.row].push(s);
-      });
-      // Sort rows
-      const sortedKeys = Object.keys(map).sort();
-      // Sort seats within each row by number
-      sortedKeys.forEach((r) => {
-        map[r].sort((a, b) => a.number - b.number);
-      });
-      return { keys: sortedKeys, map };
-    };
-
-    return {
-      mainFloorRows: groupByRow(mainSeats),
-      balconyRows: groupByRow(balcSeats),
-    };
+  // Group seats by row for fast O(1) lookup: rowMap[row][seatNumber]
+  const seatLookup = useMemo(() => {
+    const map: Record<string, Record<number, Seat>> = {};
+    seats.forEach((s) => {
+      if (!map[s.row]) map[s.row] = {};
+      map[s.row][s.number] = s;
+    });
+    return map;
   }, [seats]);
+
+  const MAIN_FLOOR_ROWS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+  const BALCONY_ROWS = ['AA', 'AB', 'AC'];
+
+  const MAIN_LEFT_SLOTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  const MAIN_CENTER_SLOTS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+  const MAIN_RIGHT_SLOTS = [21, 22, 23, 24, 25, 26, 27, 28, 29, 30];
+
+  const BALC_LEFT_SLOTS = [1, 2, 3, 4, 5, 6, 7, 8];
+  const BALC_CENTER_SLOTS = [9, 10, 11, 12, 13, 14, 15, 16, 17];
+  const BALC_RIGHT_SLOTS = [18, 19, 20, 21, 22, 23, 24, 25];
 
   // Selected seats summary
   const selectedSeats = useMemo(() => {
@@ -83,24 +78,50 @@ export default function SeatPlan({
 
   const getSeatColor = (seat: Seat, isSelected: boolean) => {
     if (seat.status === 'sold') {
-      return 'bg-slate-300 text-slate-400 border-slate-400 cursor-not-allowed opacity-60 line-through';
+      return 'bg-slate-700 text-slate-500 border border-slate-800 cursor-not-allowed opacity-50 line-through';
     }
     if (seat.status === 'held' && !isSelected) {
-      return 'bg-amber-200 text-amber-900 border-amber-400 cursor-not-allowed animate-pulse';
+      return 'bg-amber-300 text-amber-950 border border-amber-500 cursor-not-allowed animate-pulse';
     }
     if (isSelected) {
-      return 'bg-[#F4B32A] text-[#0F1C30] border-[#0F1C30] font-black shadow-[0_0_12px_rgba(244,179,42,0.8)] scale-110 z-20 ring-2 ring-[#0F1C30]';
+      return 'bg-[#F4B32A] text-[#0F1C30] border-[#0F1C30] font-black shadow-[0_0_12px_rgba(244,179,42,0.8)] scale-110 z-20 ring-2 ring-white';
     }
     if (seat.category === 'VIP' || seat.category === 'VIP_BALCONY') {
-      return 'bg-[#C1272D] text-white border-[#0F1C30] hover:scale-115 hover:z-10 shadow-xs';
+      return 'bg-[#C1272D] text-white border border-[#961C20] hover:scale-115 hover:z-10 shadow-xs cursor-pointer';
     }
-    return 'bg-[#4B88E2] text-white border-[#0F1C30] hover:scale-115 hover:z-10 shadow-xs';
+    return 'bg-[#3B82F6] text-white border border-[#1D4ED8] hover:scale-115 hover:z-10 shadow-xs cursor-pointer';
+  };
+
+  const renderSeatButton = (seat: Seat | undefined, slotKey: string | number) => {
+    if (!seat) {
+      return <div key={slotKey} className="w-6 h-6 sm:w-7 sm:h-7 shrink-0" />;
+    }
+
+    const isSelected = selectedSeatIds.includes(seat.id);
+    const isDisabled = seat.status === 'sold' || (seat.status === 'held' && !isSelected);
+
+    return (
+      <button
+        key={seat.id}
+        onClick={() => onToggleSeat(seat.id)}
+        onMouseEnter={() => setHoveredSeat(seat)}
+        onMouseLeave={() => setHoveredSeat(null)}
+        disabled={isDisabled}
+        aria-label={`Seat ${seat.label} - ${seat.category} - Rp ${seat.price.toLocaleString('id-ID')}`}
+        className={`w-6 h-6 sm:w-7 sm:h-7 rounded-md text-[10px] sm:text-[11px] font-bold flex items-center justify-center shrink-0 transition-transform ${getSeatColor(
+          seat,
+          isSelected
+        )}`}
+      >
+        {seat.number}
+      </button>
+    );
   };
 
   return (
     <section id="seatplan" className="py-16 md:py-24 bg-[#0F1C30] text-white relative">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 space-y-8">
-        
+
         {/* Header Title & Section Switchers */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-700 pb-6">
           <div>
@@ -211,122 +232,71 @@ export default function SeatPlan({
               className="min-w-[780px] max-w-4xl mx-auto space-y-12"
               style={{ transform: `scale(${zoom})`, transformOrigin: 'top center' }}
             >
-              
-              {/* ================= STAGE AREA ================= */}
+
+              {/* ================= MAIN FLOOR AREA ================= */}
               {(activeSection === 'ALL' || activeSection === 'MAIN') && (
                 <div className="space-y-6">
                   
-                  {/* Physical Stage Banner */}
-                  <div className="relative max-w-md mx-auto">
-                    <div className="h-14 bg-gradient-to-b from-[#C1272D] to-[#8E1C21] rounded-2xl border-3 border-[#F4B32A] flex items-center justify-center shadow-lg relative overflow-hidden">
-                      <div className="absolute inset-0 bg-[radial-gradient(#F4B32A_1px,transparent_1px)] [background-size:8px_8px] opacity-30" />
-                      <div className="font-bebas text-2xl tracking-widest text-[#FAF6ED] flex items-center gap-2 relative z-10">
-                        <Sparkles className="w-4 h-4 text-[#F4B32A]" />
-                        <span>★ MAIN STAGE • AMANI PALLADIUM THEATRE ★</span>
-                        <Sparkles className="w-4 h-4 text-[#F4B32A]" />
+                  {/* Physical Stage Banner matching poster */}
+                  <div className="relative max-w-md mx-auto mb-4">
+                    <div className="relative flex items-center justify-center">
+                      <div className="w-3.5 h-7 bg-[#C59F5E] border-2 border-[#8E6E32] rounded-l-md -mr-1 hidden sm:block shadow-sm" />
+                      <div className="flex-1 max-w-sm h-10 sm:h-11 bg-gradient-to-r from-[#D8B67D] via-[#ECD4AA] to-[#D8B67D] rounded-xl border-2 border-[#8E6E32] flex items-center justify-center shadow-md">
+                        <span className="font-bebas text-xl sm:text-2xl tracking-[0.35em] text-[#2C1805] font-black pl-[0.35em]">
+                          STAGE
+                        </span>
                       </div>
+                      <div className="w-3.5 h-7 bg-[#C59F5E] border-2 border-[#8E6E32] rounded-r-md -ml-1 hidden sm:block shadow-sm" />
                     </div>
-                    {/* Stage lighting apron gradient */}
-                    <div className="h-6 bg-gradient-to-b from-[#F4B32A]/20 to-transparent rounded-b-2xl blur-xs" />
                   </div>
 
-                  {/* Main Floor Header */}
-                  <div className="flex items-center justify-between border-b border-slate-700 pb-2">
-                    <span className="font-bebas text-lg text-[#F4B32A] tracking-wider">
+                  {/* Main Floor Header with Yellow Ripped Paper Badge */}
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-slate-700/80 pb-3">
+                    <div className="inline-flex items-center gap-2 bg-[#F4B32A] text-[#0F1C30] font-bebas text-base sm:text-lg px-4 py-1 rounded-lg border-2 border-[#0F1C30] shadow-[0_2px_0_#0F1C30] tracking-wider transform -rotate-1">
                       MAIN FLOOR — 225 SEATS TOTAL
-                    </span>
-                    <span className="text-xs font-bold text-slate-400">
-                      20 VIP (Rows A & B) • 205 Regular
-                    </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="bg-[#C1272D] text-white font-bebas text-xs sm:text-sm px-3 py-1 rounded-md border border-[#0F1C30] font-bold">
+                        20 VIP
+                      </span>
+                      <span className="bg-[#3B82F6] text-white font-bebas text-xs sm:text-sm px-3 py-1 rounded-md border border-[#0F1C30] font-bold">
+                        205 REGULAR
+                      </span>
+                    </div>
                   </div>
 
-                  {/* Main Floor Seat Matrix */}
-                  <div className="space-y-2">
-                    {mainFloorRows.keys.map((rowKey) => {
-                      const rowSeats = mainFloorRows.map[rowKey] || [];
-                      const leftBlock = rowSeats.filter((s) => s.number <= 10);
-                      const centerBlock = rowSeats.filter((s) => s.number >= 11 && s.number <= 20);
-                      const rightBlock = rowSeats.filter((s) => s.number >= 21);
+                  {/* Main Floor Seat Matrix (Rows A - H) */}
+                  <div className="space-y-1.5 sm:space-y-2">
+                    {MAIN_FLOOR_ROWS.map((rowKey) => {
+                      const rowLookup = seatLookup[rowKey] || {};
 
                       return (
-                        <div key={rowKey} className="flex items-center justify-center gap-3">
-                          
-                          {/* Row Letter Left */}
-                          <span className="w-6 font-bebas text-sm text-[#F4B32A] text-right shrink-0">
+                        <div key={rowKey} className="flex items-center justify-center">
+                          {/* Row Letter (Left Only, as in the official poster) */}
+                          <span className="w-6 sm:w-8 font-bebas text-sm sm:text-base text-[#F4B32A] text-center font-bold shrink-0 mr-1 sm:mr-2">
                             {rowKey}
                           </span>
 
-                          {/* Left Block (Seats 1-10) */}
-                          <div className="flex gap-1">
-                            {leftBlock.map((seat) => {
-                              const isSelected = selectedSeatIds.includes(seat.id);
-                              return (
-                                <button
-                                  key={seat.id}
-                                  onClick={() => onToggleSeat(seat.id)}
-                                  onMouseEnter={() => setHoveredSeat(seat)}
-                                  onMouseLeave={() => setHoveredSeat(null)}
-                                  disabled={seat.status === 'sold' || (seat.status === 'held' && !isSelected)}
-                                  className={`w-6 h-6 rounded-md border text-[10px] font-bold flex items-center justify-center transition-all ${getSeatColor(
-                                    seat,
-                                    isSelected
-                                  )}`}
-                                >
-                                  {seat.number}
-                                </button>
-                              );
-                            })}
+                          {/* Left Block: Seats 1-10 */}
+                          <div className="flex gap-1 sm:gap-1.5 shrink-0">
+                            {MAIN_LEFT_SLOTS.map((num) => renderSeatButton(rowLookup[num], `MF-${rowKey}-${num}`))}
                           </div>
 
-                          {/* Center Block (Seats 11-20, VIP on A & B) */}
-                          <div className="flex gap-1 mx-2 p-1 rounded-lg bg-black/20 border border-slate-700/60">
-                            {centerBlock.map((seat) => {
-                              const isSelected = selectedSeatIds.includes(seat.id);
-                              return (
-                                <button
-                                  key={seat.id}
-                                  onClick={() => onToggleSeat(seat.id)}
-                                  onMouseEnter={() => setHoveredSeat(seat)}
-                                  onMouseLeave={() => setHoveredSeat(null)}
-                                  disabled={seat.status === 'sold' || (seat.status === 'held' && !isSelected)}
-                                  className={`w-6 h-6 rounded-md border text-[10px] font-bold flex items-center justify-center transition-all ${getSeatColor(
-                                    seat,
-                                    isSelected
-                                  )}`}
-                                >
-                                  {seat.number}
-                                </button>
-                              );
-                            })}
+                          {/* Left Aisle */}
+                          <div className="w-3 sm:w-5 shrink-0" />
+
+                          {/* Center Block: Seats 11-20 (Empty placeholders on Row H) */}
+                          <div className="flex gap-1 sm:gap-1.5 shrink-0">
+                            {MAIN_CENTER_SLOTS.map((num) => renderSeatButton(rowLookup[num], `MF-${rowKey}-${num}`))}
                           </div>
 
-                          {/* Right Block (Seats 21-30) */}
-                          <div className="flex gap-1">
-                            {rightBlock.map((seat) => {
-                              const isSelected = selectedSeatIds.includes(seat.id);
-                              return (
-                                <button
-                                  key={seat.id}
-                                  onClick={() => onToggleSeat(seat.id)}
-                                  onMouseEnter={() => setHoveredSeat(seat)}
-                                  onMouseLeave={() => setHoveredSeat(null)}
-                                  disabled={seat.status === 'sold' || (seat.status === 'held' && !isSelected)}
-                                  className={`w-6 h-6 rounded-md border text-[10px] font-bold flex items-center justify-center transition-all ${getSeatColor(
-                                    seat,
-                                    isSelected
-                                  )}`}
-                                >
-                                  {seat.number}
-                                </button>
-                              );
-                            })}
+                          {/* Right Aisle */}
+                          <div className="w-3 sm:w-5 shrink-0" />
+
+                          {/* Right Block: Seats 21-30 (Row H has 21-25 then 5 empty placeholders) */}
+                          <div className="flex gap-1 sm:gap-1.5 shrink-0">
+                            {MAIN_RIGHT_SLOTS.map((num) => renderSeatButton(rowLookup[num], `MF-${rowKey}-${num}`))}
                           </div>
-
-                          {/* Row Letter Right */}
-                          <span className="w-6 font-bebas text-sm text-[#F4B32A] text-left shrink-0">
-                            {rowKey}
-                          </span>
-
                         </div>
                       );
                     })}
@@ -339,103 +309,66 @@ export default function SeatPlan({
               {(activeSection === 'ALL' || activeSection === 'BALCONY') && (
                 <div className="space-y-6 pt-6 border-t-2 border-dashed border-slate-700">
                   
-                  {/* Balcony Header */}
-                  <div className="flex items-center justify-between border-b border-slate-700 pb-2">
-                    <span className="font-bebas text-lg text-[#F4B32A] tracking-wider">
-                      BALCONY LEVEL — 75 SEATS TOTAL
-                    </span>
-                    <span className="text-xs font-bold text-slate-400">
-                      9 VIP Balcony (Row AA 9–17) • 66 Regular
-                    </span>
+                  {/* Balcony Stage Ribbon */}
+                  <div className="relative max-w-md mx-auto mb-4">
+                    <div className="relative flex items-center justify-center">
+                      <div className="w-3.5 h-7 bg-[#C59F5E] border-2 border-[#8E6E32] rounded-l-md -mr-1 hidden sm:block shadow-sm" />
+                      <div className="flex-1 max-w-sm h-10 sm:h-11 bg-gradient-to-r from-[#D8B67D] via-[#ECD4AA] to-[#D8B67D] rounded-xl border-2 border-[#8E6E32] flex items-center justify-center shadow-md">
+                        <span className="font-bebas text-xl sm:text-2xl tracking-[0.35em] text-[#2C1805] font-black pl-[0.35em]">
+                          STAGE
+                        </span>
+                      </div>
+                      <div className="w-3.5 h-7 bg-[#C59F5E] border-2 border-[#8E6E32] rounded-r-md -ml-1 hidden sm:block shadow-sm" />
+                    </div>
                   </div>
 
-                  {/* Balcony Seat Matrix */}
-                  <div className="space-y-2">
-                    {balconyRows.keys.map((rowKey) => {
-                      const rowSeats = balconyRows.map[rowKey] || [];
-                      const leftBlock = rowSeats.filter((s) => s.number <= 8);
-                      const centerBlock = rowSeats.filter((s) => s.number >= 9 && s.number <= 17);
-                      const rightBlock = rowSeats.filter((s) => s.number >= 18);
+                  {/* Balcony Header with Yellow Ripped Paper Badge */}
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-slate-700/80 pb-3">
+                    <div className="inline-flex items-center gap-2 bg-[#F4B32A] text-[#0F1C30] font-bebas text-base sm:text-lg px-4 py-1 rounded-lg border-2 border-[#0F1C30] shadow-[0_2px_0_#0F1C30] tracking-wider transform -rotate-1">
+                      BALCONY — 75 SEATS TOTAL
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="bg-[#C1272D] text-white font-bebas text-xs sm:text-sm px-3 py-1 rounded-md border border-[#0F1C30] font-bold">
+                        9 VIP
+                      </span>
+                      <span className="bg-[#3B82F6] text-white font-bebas text-xs sm:text-sm px-3 py-1 rounded-md border border-[#0F1C30] font-bold">
+                        66 REGULAR
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Balcony Seat Matrix (Rows AA - AC) */}
+                  <div className="space-y-1.5 sm:space-y-2">
+                    {BALCONY_ROWS.map((rowKey) => {
+                      const rowLookup = seatLookup[rowKey] || {};
 
                       return (
-                        <div key={rowKey} className="flex items-center justify-center gap-3">
-                          
-                          {/* Row Letter Left */}
-                          <span className="w-6 font-bebas text-sm text-[#F4B32A] text-right shrink-0">
+                        <div key={rowKey} className="flex items-center justify-center">
+                          {/* Row Letter (Left Only, as in the official poster) */}
+                          <span className="w-6 sm:w-8 font-bebas text-sm sm:text-base text-[#F4B32A] text-center font-bold shrink-0 mr-1 sm:mr-2">
                             {rowKey}
                           </span>
 
-                          {/* Left Block (Seats 1-8) */}
-                          <div className="flex gap-1">
-                            {leftBlock.map((seat) => {
-                              const isSelected = selectedSeatIds.includes(seat.id);
-                              return (
-                                <button
-                                  key={seat.id}
-                                  onClick={() => onToggleSeat(seat.id)}
-                                  onMouseEnter={() => setHoveredSeat(seat)}
-                                  onMouseLeave={() => setHoveredSeat(null)}
-                                  disabled={seat.status === 'sold' || (seat.status === 'held' && !isSelected)}
-                                  className={`w-6 h-6 rounded-md border text-[10px] font-bold flex items-center justify-center transition-all ${getSeatColor(
-                                    seat,
-                                    isSelected
-                                  )}`}
-                                >
-                                  {seat.number}
-                                </button>
-                              );
-                            })}
+                          {/* Left Block: Seats 1-8 */}
+                          <div className="flex gap-1 sm:gap-1.5 shrink-0">
+                            {BALC_LEFT_SLOTS.map((num) => renderSeatButton(rowLookup[num], `BAL-${rowKey}-${num}`))}
                           </div>
 
-                          {/* Center Block (Seats 9-17, VIP Balcony on AA) */}
-                          <div className="flex gap-1 mx-2 p-1 rounded-lg bg-black/20 border border-slate-700/60">
-                            {centerBlock.map((seat) => {
-                              const isSelected = selectedSeatIds.includes(seat.id);
-                              return (
-                                <button
-                                  key={seat.id}
-                                  onClick={() => onToggleSeat(seat.id)}
-                                  onMouseEnter={() => setHoveredSeat(seat)}
-                                  onMouseLeave={() => setHoveredSeat(null)}
-                                  disabled={seat.status === 'sold' || (seat.status === 'held' && !isSelected)}
-                                  className={`w-6 h-6 rounded-md border text-[10px] font-bold flex items-center justify-center transition-all ${getSeatColor(
-                                    seat,
-                                    isSelected
-                                  )}`}
-                                >
-                                  {seat.number}
-                                </button>
-                              );
-                            })}
+                          {/* Left Aisle */}
+                          <div className="w-3 sm:w-5 shrink-0" />
+
+                          {/* Center Block: Seats 9-17 (VIP Balcony on AA, Regular on AB & AC) */}
+                          <div className="flex gap-1 sm:gap-1.5 shrink-0">
+                            {BALC_CENTER_SLOTS.map((num) => renderSeatButton(rowLookup[num], `BAL-${rowKey}-${num}`))}
                           </div>
 
-                          {/* Right Block (Seats 18-25) */}
-                          <div className="flex gap-1">
-                            {rightBlock.map((seat) => {
-                              const isSelected = selectedSeatIds.includes(seat.id);
-                              return (
-                                <button
-                                  key={seat.id}
-                                  onClick={() => onToggleSeat(seat.id)}
-                                  onMouseEnter={() => setHoveredSeat(seat)}
-                                  onMouseLeave={() => setHoveredSeat(null)}
-                                  disabled={seat.status === 'sold' || (seat.status === 'held' && !isSelected)}
-                                  className={`w-6 h-6 rounded-md border text-[10px] font-bold flex items-center justify-center transition-all ${getSeatColor(
-                                    seat,
-                                    isSelected
-                                  )}`}
-                                >
-                                  {seat.number}
-                                </button>
-                              );
-                            })}
+                          {/* Right Aisle */}
+                          <div className="w-3 sm:w-5 shrink-0" />
+
+                          {/* Right Block: Seats 18-25 */}
+                          <div className="flex gap-1 sm:gap-1.5 shrink-0">
+                            {BALC_RIGHT_SLOTS.map((num) => renderSeatButton(rowLookup[num], `BAL-${rowKey}-${num}`))}
                           </div>
-
-                          {/* Row Letter Right */}
-                          <span className="w-6 font-bebas text-sm text-[#F4B32A] text-left shrink-0">
-                            {rowKey}
-                          </span>
-
                         </div>
                       );
                     })}
@@ -487,7 +420,7 @@ export default function SeatPlan({
         {/* Floating Bottom Bar when Seats are Selected */}
         {selectedSeatIds.length > 0 && (
           <div className="sticky bottom-4 z-40 bg-[#FAF6ED] text-[#182B49] p-4 sm:p-5 rounded-3xl border-4 border-[#0F1C30] shadow-[0_8px_0_#0F1C30] flex flex-col sm:flex-row items-center justify-between gap-4 animate-in slide-in-from-bottom-4 duration-200">
-            
+
             <div className="space-y-1 text-center sm:text-left">
               <div className="flex items-center justify-center sm:justify-start gap-2">
                 <span className="font-bebas text-xl sm:text-2xl text-[#C1272D] leading-none">

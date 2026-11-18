@@ -40,7 +40,7 @@ export default function CheckoutModal({
     notes: '',
   });
 
-  const [paymentMethod, setPaymentMethod] = useState<string>('TRANSFER_MANUAL');
+  const [paymentMethod, setPaymentMethod] = useState<string>('BCA_TRANSFER');
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({});
 
@@ -114,7 +114,7 @@ export default function CheckoutModal({
       
       {/* Modal Container */}
       <div className="relative w-full max-w-xl bg-white rounded-3xl border-4 border-[#0F1C30] shadow-[0_16px_0_#0F1C30] overflow-hidden my-6 animate-in zoom-in-95 duration-200">
-        
+
         {/* Top Header */}
         <div className="bg-[#182B49] text-white p-5 sm:p-6 border-b-4 border-[#F4B32A] relative">
           <div className="flex items-center justify-between gap-4">
@@ -167,7 +167,7 @@ export default function CheckoutModal({
 
         {/* Modal Form Body */}
         <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-5 max-h-[75vh] overflow-y-auto">
-          
+
           {error && (
             <div className="bg-red-100 border-2 border-red-400 text-red-800 p-3 rounded-2xl text-xs font-bold flex items-center gap-2">
               <AlertCircle className="w-5 h-5 shrink-0 text-red-600" />
@@ -282,37 +282,23 @@ export default function CheckoutModal({
             </div>
           </div>
 
-          {/* Payment Method Selector */}
-          <div className="space-y-2">
+          {/* Payment Method Display (BCA Transfer Only) */}
+          <div className="space-y-1.5">
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-              Payment Confirmation Channel:
+              Payment Method:
             </label>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => setPaymentMethod('TRANSFER_MANUAL')}
-                className={`p-3 rounded-xl border-2 text-left font-bold transition-all cursor-pointer ${
-                  paymentMethod === 'TRANSFER_MANUAL'
-                    ? 'border-[#182B49] bg-amber-50 text-[#182B49]'
-                    : 'border-slate-300 bg-white text-slate-600'
-                }`}
-              >
-                <div className="font-bebas text-sm">BANK TRANSFER + WA</div>
-                <div className="text-[10px] font-normal text-slate-500">BCA, Mandiri, E-Wallet</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setPaymentMethod('QRIS')}
-                className={`p-3 rounded-xl border-2 text-left font-bold transition-all cursor-pointer ${
-                  paymentMethod === 'QRIS'
-                    ? 'border-[#182B49] bg-amber-50 text-[#182B49]'
-                    : 'border-slate-300 bg-white text-slate-600'
-                }`}
-              >
-                <div className="font-bebas text-sm">QRIS INSTANT</div>
-                <div className="text-[10px] font-normal text-slate-500">GoPay, OVO, Dana, Shopee</div>
-              </button>
+            <div className="p-3.5 rounded-2xl border-2 border-[#182B49] bg-amber-50/70 flex items-center justify-between">
+              <div>
+                <div className="font-bebas text-base text-[#182B49] leading-tight">
+                  DIRECT BANK TRANSFER (BANK BCA)
+                </div>
+                <div className="text-[11px] font-semibold text-slate-600 mt-0.5">
+                  BCA <span className="font-mono font-bold text-slate-900">7650892101</span> (a.n. Viona)
+                </div>
+              </div>
+              <span className="font-bebas text-xs bg-[#182B49] text-white px-2.5 py-1 rounded-md">
+                BCA ONLY
+              </span>
             </div>
           </div>
 
