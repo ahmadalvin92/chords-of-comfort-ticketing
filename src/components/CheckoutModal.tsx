@@ -37,7 +37,7 @@ export default function CheckoutModal({
     notes: '',
   });
 
-  const [paymentMethod, setPaymentMethod] = useState<'QRIS' | 'BCA_VA' | 'MANDIRI_VA' | 'EWALLET'>('QRIS');
+  const [paymentMethod, setPaymentMethod] = useState<'TRANSFER_BCA' | 'TRANSFER_MANDIRI' | 'EWALLET' | 'QRIS'>('TRANSFER_BCA');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -317,59 +317,88 @@ export default function CheckoutModal({
 
           {/* Section 3: Payment Method */}
           <div className="space-y-2.5">
-            <label className="block text-xs font-bold uppercase text-slate-700">
-              Pilih Metode Pembayaran
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-bold uppercase text-slate-700">
+                Pilih Metode Pembayaran Transfer
+              </label>
+              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                Konfirmasi via WhatsApp Panitia
+              </span>
+            </div>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               
               <button
                 type="button"
-                onClick={() => setPaymentMethod('QRIS')}
-                className={`p-3 rounded-xl border-2 text-left transition-all cursor-pointer flex items-center sm:block gap-3 ${
-                  paymentMethod === 'QRIS'
-                    ? 'border-[#182B49] bg-amber-50 shadow-sm'
+                onClick={() => setPaymentMethod('TRANSFER_BCA')}
+                className={`p-3 rounded-xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between ${
+                  paymentMethod === 'TRANSFER_BCA'
+                    ? 'border-[#182B49] bg-amber-50 shadow-sm ring-2 ring-[#F4B32A]'
                     : 'border-slate-200 bg-white hover:border-slate-300'
                 }`}
               >
-                <div className="flex items-center gap-2 mb-0.5 sm:mb-1">
-                  <QrCode className="w-4 h-4 text-[#C1272D] shrink-0" />
-                  <span className="font-bold text-xs text-slate-900">QRIS (Instant)</span>
-                </div>
-                <p className="text-[10px] text-slate-500">GoPay, OVO, BCA, Dana, dll</p>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setPaymentMethod('BCA_VA')}
-                className={`p-3 rounded-xl border-2 text-left transition-all cursor-pointer flex items-center sm:block gap-3 ${
-                  paymentMethod === 'BCA_VA'
-                    ? 'border-[#182B49] bg-amber-50 shadow-sm'
-                    : 'border-slate-200 bg-white hover:border-slate-300'
-                }`}
-              >
-                <div className="flex items-center gap-2 mb-0.5 sm:mb-1">
+                <div className="flex items-center gap-1.5 mb-1">
                   <Building className="w-4 h-4 text-blue-600 shrink-0" />
-                  <span className="font-bold text-xs text-slate-900">BCA VA</span>
+                  <span className="font-bold text-xs text-slate-900">BCA Transfer</span>
                 </div>
-                <p className="text-[10px] text-slate-500">Virtual Account Otomatis</p>
+                <p className="text-[10px] text-slate-500">Cek Rekening Panitia</p>
               </button>
 
               <button
                 type="button"
-                onClick={() => setPaymentMethod('MANDIRI_VA')}
-                className={`p-3 rounded-xl border-2 text-left transition-all cursor-pointer flex items-center sm:block gap-3 ${
-                  paymentMethod === 'MANDIRI_VA'
-                    ? 'border-[#182B49] bg-amber-50 shadow-sm'
+                onClick={() => setPaymentMethod('TRANSFER_MANDIRI')}
+                className={`p-3 rounded-xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between ${
+                  paymentMethod === 'TRANSFER_MANDIRI'
+                    ? 'border-[#182B49] bg-amber-50 shadow-sm ring-2 ring-[#F4B32A]'
                     : 'border-slate-200 bg-white hover:border-slate-300'
                 }`}
               >
-                <div className="flex items-center gap-2 mb-0.5 sm:mb-1">
+                <div className="flex items-center gap-1.5 mb-1">
                   <Building className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span className="font-bold text-xs text-slate-900">Mandiri VA</span>
+                  <span className="font-bold text-xs text-slate-900">Mandiri</span>
                 </div>
-                <p className="text-[10px] text-slate-500">Livin & ATM Transfer</p>
+                <p className="text-[10px] text-slate-500">Livin / Transfer ATM</p>
               </button>
 
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('EWALLET')}
+                className={`p-3 rounded-xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between ${
+                  paymentMethod === 'EWALLET'
+                    ? 'border-[#182B49] bg-amber-50 shadow-sm ring-2 ring-[#F4B32A]'
+                    : 'border-slate-200 bg-white hover:border-slate-300'
+                }`}
+              >
+                <div className="flex items-center gap-1.5 mb-1">
+                  <CreditCard className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span className="font-bold text-xs text-slate-900">E-Wallet</span>
+                </div>
+                <p className="text-[10px] text-slate-500">GoPay / Dana / OVO</p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('QRIS')}
+                className={`p-3 rounded-xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between ${
+                  paymentMethod === 'QRIS'
+                    ? 'border-[#182B49] bg-amber-50 shadow-sm ring-2 ring-[#F4B32A]'
+                    : 'border-slate-200 bg-white hover:border-slate-300'
+                }`}
+              >
+                <div className="flex items-center gap-1.5 mb-1">
+                  <QrCode className="w-4 h-4 text-[#C1272D] shrink-0" />
+                  <span className="font-bold text-xs text-slate-900">QRIS Scan</span>
+                </div>
+                <p className="text-[10px] text-slate-500">Scan Semua E-Wallet</p>
+              </button>
+
+            </div>
+
+            <div className="bg-emerald-50 border border-emerald-300 p-2.5 rounded-xl text-emerald-900 text-xs flex items-center gap-2">
+              <span className="text-base">📱</span>
+              <span>
+                Setelah klik <strong>Lanjut ke Pembayaran</strong>, Anda akan menerima nomor rekening transfer & diarahkan kirim struk ke WhatsApp panitia di <strong>0819-1534-8866</strong>.
+              </span>
             </div>
           </div>
 

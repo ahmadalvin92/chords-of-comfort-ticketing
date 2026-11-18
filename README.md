@@ -70,20 +70,30 @@ Aplikasi ini dibangun menggunakan arsitektur modern berkecepatan tinggi:
 - **Seat Locking Timer**: Kursi yang diklik customer langsung dikunci sementara selama **10 menit**. Customer lain tidak dapat memilih kursi tersebut saat proses isi form & bayar berlangsung.
 - Batasan jumlah tiket maksimal 6 kursi per transaksi.
 
-### 2. Multi-Payment Gateway (QRIS & Virtual Account)
-- Terintegrasi dengan **Midtrans Snap**.
-- Dilengkapi **Payment Simulator (Sandbox)** bawaan sehingga panitia dapat menguji alur pembayaran sukses seketika tanpa harus transfer uang sungguhan saat fase demo.
-- Webhook verifikasi signature SHA-512 otomatis mengubah status menjadi `PAID`.
+### 2. WhatsApp Integration & Transfer Manual (Tanpa Potongan Payment Gateway)
+- **Kontak Resmi Hotline WhatsApp:** `0819-1534-8866` ([wa.me/6281915348866](https://wa.me/6281915348866))
+- **Akun Instagram Resmi:** `@chordsofcomfort.theater` ([instagram.com/chordsofcomfort.theater](https://www.instagram.com/chordsofcomfort.theater?jplx=MXM3c3J3bGQ1NXJ5Zg==))
+- **Metode Pembayaran:** Transfer Rekening Bank Panitia (BCA: `7650892101`, Mandiri: `1220019283741`, E-Wallet: `081915348866`) & QRIS.
+- **Konfirmasi 1-Klik:** Setelah memesan, customer cukup klik tombol *"Kirim Bukti Transfer ke WhatsApp Panitia"* yang otomatis membuka WhatsApp dengan template pesan rapi memuat Order ID, Nama, Nomor Kursi, dan Nominal Tagihan.
+- Dilengkapi **Sandbox / Simulator Pembayaran** bawaan untuk pengujian instan.
 
-### 3. Automatic E-Ticket Delivery
+### 3. Automatic E-Ticket Delivery & WhatsApp Ticket Generator
 - Terbit otomatis setelah pembayaran terverifikasi.
+- Panitia di Admin Dashboard memiliki tombol **"Kirim Tiket WA"** 1-klik untuk langsung mengirimkan tautan E-Ticket resmi beserta QR Code ke nomor WhatsApp pembeli.
 - Dilengkapi **Print-Friendly PDF Mode** (`window.print()`).
 - Memuat nama pemegang tiket, Order ID unik (e.g. `LSPR-6SP-XXXXXX`), tanggal pementasan, nomor kursi, dan QR Code validasi gate.
 
-### 4. Admin Dashboard Panitia (`/admin`)
-- Pantauan pendapatan kumulatif real-time (target kapasitas penuh: Rp 19.500.000).
-- Statistik keterisian kursi per kategori (VIP, Sapphire, Diamond, Platinum, Ruby).
-- Tabel transaksi komprehensif dengan filter status (`PAID`, `PENDING`) dan pencarian instan berdasarkan Nama / No HP / Order ID / Nomor Kursi.
+### 4. Admin Dashboard Panitia & CRUD Lengkap (`/admin`)
+- **Login Petugas Resmi:**
+  - Viona: `meovivi@vinsky.com` / `viona1002`
+  - Alvin: `vinsky@vinsky.com` / `alvin123`
+- **Fitur CRUD Lengkap:**
+  - **Create:** Penerbitan tiket manual untuk Tamu Kehormatan / VIP / Undangan Kampus.
+  - **Read:** Tabel transaksi komprehensif, pencarian cepat, denah kursi interaktif & pemilik.
+  - **Update:** Edit data pembeli (Nama, No WA, Email) jika terdapat typo, serta ubah status bayar (`Approve Lunas`) dan toggle Check-In gate.
+  - **Delete:** Tolak / batalkan pesanan jika belum transfer dalam batas waktu (kursi otomatis kembali *Available* untuk pembeli lain).
+- **Template Chat WhatsApp Lengkap:**
+  - Tab khusus berisi 4 template resmi: *Pengiriman E-Ticket Lunas*, *Follow-up / Reminder Transfer Pending*, *Pembatalan Pesanan*, dan *Pengingat Hari-H / Open Gate*.
 - **Export to CSV (Excel)** dengan satu klik untuk backup dan arsip helpdesk fisik.
 - Tombol **Reset Data** untuk membersihkan data uji coba sebelum penjualan resmi dibuka.
 

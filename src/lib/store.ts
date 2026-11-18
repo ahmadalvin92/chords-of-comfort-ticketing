@@ -426,6 +426,26 @@ export function deleteOrder(orderId: string): { success: boolean; error?: string
   return { success: true };
 }
 
+export function updateCustomerInfo(
+  orderId: string,
+  customerUpdates: Partial<CustomerInfo>
+): { success: boolean; order?: Order; error?: string } {
+  const db = ensureDbFile();
+  const order = db.orders.find((o) => o.id === orderId);
+
+  if (!order) {
+    return { success: false, error: `Order ${orderId} tidak ditemukan.` };
+  }
+
+  order.customer = {
+    ...order.customer,
+    ...customerUpdates,
+  };
+
+  saveDb(db);
+  return { success: true, order };
+}
+
 export function manualCreateOrder(
   customer: CustomerInfo,
   seatIds: string[],

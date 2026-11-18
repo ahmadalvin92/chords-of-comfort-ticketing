@@ -4,6 +4,7 @@ import {
   manualToggleCheckIn,
   deleteOrder,
   manualCreateOrder,
+  updateCustomerInfo,
 } from '@/lib/store';
 
 export async function POST(request: Request) {
@@ -19,7 +20,7 @@ export async function POST(request: Request) {
       if (!orderId) {
         return NextResponse.json({ success: false, error: 'Order ID wajib diisi.' }, { status: 400 });
       }
-      const res = confirmPayment(orderId, paymentMethod || 'MANUAL_CONFIRMED');
+      const res = confirmPayment(orderId, paymentMethod || 'MANUAL_TRANSFER');
       return NextResponse.json(res);
     }
 
@@ -36,6 +37,14 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: false, error: 'Order ID wajib diisi.' }, { status: 400 });
       }
       const res = deleteOrder(orderId);
+      return NextResponse.json(res);
+    }
+
+    if (action === 'update_customer') {
+      if (!orderId || !customer) {
+        return NextResponse.json({ success: false, error: 'Order ID dan data customer wajib diisi.' }, { status: 400 });
+      }
+      const res = updateCustomerInfo(orderId, customer);
       return NextResponse.json(res);
     }
 

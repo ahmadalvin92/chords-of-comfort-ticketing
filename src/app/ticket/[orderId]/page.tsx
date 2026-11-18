@@ -122,24 +122,50 @@ function TicketContent({
       <div className="max-w-3xl mx-auto space-y-6">
         
         {/* Status Banner (Hidden during printing) */}
-        <div className="bg-emerald-50 border-2 border-emerald-400 p-4 rounded-2xl flex items-center justify-between text-emerald-900 shadow-sm print:hidden">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0 border border-emerald-300">
-              <CheckCircle2 className="w-6 h-6 text-emerald-600" />
-            </div>
-            <div>
-              <div className="font-bebas text-lg leading-tight text-emerald-900">
-                E-TICKET BERHASIL DITERBITKAN
+        {order.paymentStatus === 'paid' ? (
+          <div className="bg-emerald-50 border-2 border-emerald-400 p-4 rounded-2xl flex items-center justify-between text-emerald-900 shadow-sm print:hidden">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0 border border-emerald-300">
+                <CheckCircle2 className="w-6 h-6 text-emerald-600" />
               </div>
-              <p className="text-xs text-emerald-700 font-medium">
-                Status Pembayaran: <span className="font-bold uppercase">{order.paymentStatus}</span> • Dikirim ke {order.customer.email}
-              </p>
+              <div>
+                <div className="font-bebas text-lg leading-tight text-emerald-900">
+                  E-TICKET RESMI SUDAH AKTIF (LUNAS)
+                </div>
+                <p className="text-xs text-emerald-700 font-medium">
+                  Pembayaran Terverifikasi • Tunjukkan QR Code ini kepada panitia gate saat hari-H.
+                </p>
+              </div>
             </div>
+            <span className="font-mono text-xs font-black bg-emerald-200 px-3 py-1 rounded-lg">
+              {order.id}
+            </span>
           </div>
-          <span className="font-mono text-xs font-black bg-emerald-200 px-3 py-1 rounded-lg">
-            {order.id}
-          </span>
-        </div>
+        ) : (
+          <div className="bg-amber-50 border-2 border-amber-400 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-amber-900 shadow-sm print:hidden">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 border border-amber-300">
+                <Clock className="w-6 h-6 text-amber-600 animate-spin" />
+              </div>
+              <div>
+                <div className="font-bebas text-lg leading-tight text-amber-900">
+                  MENUNGGU VERIFIKASI PEMBAYARAN TRANSFER
+                </div>
+                <p className="text-xs text-amber-800 font-medium">
+                  Kursi Anda sedang ditahan. Mohon kirimkan foto bukti transfer ke WhatsApp panitia agar e-ticket resmi diaktifkan.
+                </p>
+              </div>
+            </div>
+            <a
+              href={`https://wa.me/6281915348866?text=Halo%20Panitia%20Ticketing%20Chords%20of%20Comfort%2C%20saya%20mau%20konfirmasi%20transfer%20untuk%20Order%20ID%3A%20${order.id}%20an%20${encodeURIComponent(order.customer.fullName)}`}
+              target="_blank"
+              rel="noreferrer"
+              className="bg-[#25D366] hover:bg-[#20ba59] text-white px-4 py-2 rounded-xl text-xs font-bold border border-slate-900 shadow-sm flex items-center gap-1.5 shrink-0"
+            >
+              <span>Kirim Bukti ke WhatsApp (0819-1534-8866)</span>
+            </a>
+          </div>
+        )}
 
         {/* ================= PHYSICAL ADMIT-ONE RETRO TICKET DESIGN ================= */}
         <div className="bg-white rounded-3xl border-4 border-[#0F1C30] shadow-[0_12px_0_#0F1C30] overflow-hidden relative">
