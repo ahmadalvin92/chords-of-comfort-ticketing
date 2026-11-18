@@ -19,10 +19,14 @@ Sistem ini dirancang bukan sekadar tampilan mockup, melainkan **aplikasi web res
 
 Konsep antarmuka mengusung tema **American High School / Varsity Scrapbook Collage** (terinspirasi dari gaya *Golf le Fleur* & tiket retro *Admit-One*) dengan identitas warna resmi **Varsity Navy (`#182B49`)**, **Crimson Red (`#C1272D`)**, **Varsity Yellow (`#F4B32A`)**, dan **Paper Cream (`#F8F5EE`)**.
 
-### 1. Interactive 400-Seat Seating Plan (Denah Kursi)
-Denah kursi interaktif memetakan kapasitas total 400 kursi di venue Auditorium LSPR Sudirman Park secara presisi:
-- **Balcony (Upper Level - 75 Kursi)**: Sapphire (Row R1) & Platinum (Row R2–R3).
-- **Main Floor (Lower Level - 325 Kursi)**: VIP Front Center (Row A1–A5), Diamond Middle & Rear, Ruby Side & Rear.
+### 1. Interactive 300-Seat Seating Plan (Denah Kursi)
+Denah kursi interaktif memetakan kapasitas total 300 kursi di venue Auditorium LSPR Sudirman Park secara presisi:
+- **Main Floor (225 Kursi Total)**:
+  - 20 VIP (Row A & B, Kursi 11–20) • Rp 50.000
+  - 205 Regular (Row A–H) • Rp 35.000
+- **Balcony (75 Kursi Total)**:
+  - 9 VIP Balcony (Row AA, Kursi 9–17) • Rp 50.000
+  - 66 Regular (Row AA–AC) • Rp 35.000
 
 ![Seating Plan Venue](public/assets/seat-plan.jpeg)
 

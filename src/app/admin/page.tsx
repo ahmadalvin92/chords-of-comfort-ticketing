@@ -368,7 +368,7 @@ export default function AdminPage() {
   const handleResetData = async () => {
     if (
       !confirm(
-        'PERINGATAN: Apakah Anda yakin ingin me-reset seluruh transaksi dan mengembalikan 400 kursi menjadi TERSEDIA? Seluruh data penjualan demo akan dibersihkan.'
+        'PERINGATAN: Apakah Anda yakin ingin me-reset seluruh transaksi dan mengembalikan 300 kursi menjadi TERSEDIA? Seluruh data penjualan demo akan dibersihkan.'
       )
     ) {
       return;
@@ -615,12 +615,12 @@ export default function AdminPage() {
                 </div>
               </div>
               <div className="font-bebas text-2xl sm:text-4xl text-[#182B49] leading-tight">
-                {stats.soldSeats} <span className="text-sm sm:text-lg text-slate-400">/ 400 Kursi</span>
+                {stats.soldSeats} <span className="text-sm sm:text-lg text-slate-400">/ {stats.totalCapacity || 300} Kursi</span>
               </div>
               <div className="w-full bg-slate-100 rounded-full h-2 mt-2 overflow-hidden border border-slate-200">
                 <div
                   className="bg-[#C1272D] h-2 rounded-full"
-                  style={{ width: `${(stats.soldSeats / 400) * 100}%` }}
+                  style={{ width: `${(stats.soldSeats / (stats.totalCapacity || 300)) * 100}%` }}
                 />
               </div>
             </div>
@@ -722,7 +722,7 @@ export default function AdminPage() {
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                Denah Kursi & Pemilik (400)
+                Denah Kursi & Pemilik ({seats.length})
               </button>
 
               <button

@@ -1,16 +1,16 @@
-export type TicketCategory = 'VIP' | 'DIAMOND' | 'RUBY' | 'SAPPHIRE' | 'PLATINUM';
+export type TicketCategory = 'VIP' | 'VIP_BALCONY' | 'REGULAR';
 
 export type SeatStatus = 'available' | 'held' | 'sold';
 
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'expired';
 
 export interface Seat {
-  id: string; // e.g. "MF-A1-01", "BAL-R1-C05"
-  label: string; // e.g. "A1-01", "R1-C5"
+  id: string; // e.g. "MF-A-15", "BAL-AA-12"
+  label: string; // e.g. "A-15", "AA-12"
   section: 'MAIN_FLOOR' | 'BALCONY';
-  row: string; // "A1", "A2", ... "A10" or "R1", "R2", "R3"
+  row: string; // "A".."H" or "AA", "AB", "AC"
   number: number;
-  subSection?: 'LEFT' | 'CENTER' | 'RIGHT';
+  block?: 'LEFT' | 'CENTER' | 'RIGHT';
   category: TicketCategory;
   price: number;
   status: SeatStatus;
@@ -62,4 +62,3 @@ export interface CheckInResult {
   };
   checkedInAt?: string | null;
 }
-

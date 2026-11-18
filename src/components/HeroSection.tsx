@@ -114,7 +114,7 @@ export default function HeroSection({ onSelectSeatsClick }: HeroSectionProps) {
                 className="w-full sm:w-auto cursor-pointer bg-[#C1272D] hover:bg-[#a61f25] text-[#FAF6ED] px-8 py-4 rounded-xl font-bebas text-2xl tracking-wider border-3 border-[#0F1C30] shadow-[0_5px_0_#0F1C30] hover:translate-y-1 hover:shadow-[0_2px_0_#0F1C30] transition-all flex items-center justify-center gap-3"
               >
                 <Ticket className="w-6 h-6 text-[#F4B32A]" />
-                PILIH KURSI SEKARANG (400 SEATS)
+                PILIH KURSI SEKARANG (300 SEATS)
               </button>
 
               <a

@@ -23,79 +23,49 @@ export default function CategoriesSection({ onSelectCategoryFilter }: Categories
   }[] = [
     {
       category: 'VIP',
-      name: 'VIP Front Center',
+      name: 'VIP Main Floor',
       price: CATEGORY_INFO.VIP.price,
       description: CATEGORY_INFO.VIP.description,
       total: CATEGORY_INFO.VIP.total,
       benefits: [
-        'Baris Paling Depan & Tengah (Row A1-A5)',
-        'Pandangan Terbaik langsung ke Aktor & Panggung',
+        'Posisi Tengah Depan Panggung (Row A & B, Kursi 11-20)',
+        'Jarak Pandang Terbaik Langsung Berhadapan dengan Aktor',
+        'Akustik Suara Paling Optimal di Area Panggung Utama',
         'Prioritas Antrean Masuk Gate (Fast-Track)',
-        'Exclusive COMM30-6SP Souvenir Sticker Pack',
       ],
-      bgHeader: 'bg-pink-500 text-white',
-      accentColor: '#EC4899',
+      bgHeader: 'bg-[#E04D65] text-white',
+      accentColor: '#E04D65',
       isPopular: true,
     },
     {
-      category: 'SAPPHIRE',
-      name: 'Sapphire Balcony',
-      price: CATEGORY_INFO.SAPPHIRE.price,
-      description: CATEGORY_INFO.SAPPHIRE.description,
-      total: CATEGORY_INFO.SAPPHIRE.total,
+      category: 'VIP_BALCONY',
+      name: 'VIP Balcony',
+      price: CATEGORY_INFO.VIP_BALCONY.price,
+      description: CATEGORY_INFO.VIP_BALCONY.description,
+      total: CATEGORY_INFO.VIP_BALCONY.total,
       benefits: [
-        'Balkon Baris Pertama (Row R1)',
-        'Pandangan Luas & Menyeluruh dari Atas',
-        'Akustik Audio Teater Sangat Jelas',
-        'Kursi Nyaman & Eksklusif (Hanya 25 Kursi)',
+        'Balkon Baris Depan Tengah (Row AA, Kursi 9-17)',
+        'Pandangan Panoramik Menyeluruh dari Ketinggian',
+        'Hanya 9 Kursi Eksklusif di Seluruh Venue',
+        'Pengalaman Menikmati Tata Cahaya & Blocking Teater Maksimal',
       ],
-      bgHeader: 'bg-blue-600 text-white',
-      accentColor: '#3B82F6',
+      bgHeader: 'bg-[#C1272D] text-white',
+      accentColor: '#C1272D',
     },
     {
-      category: 'DIAMOND',
-      name: 'Diamond Main Floor',
-      price: CATEGORY_INFO.DIAMOND.price,
-      description: CATEGORY_INFO.DIAMOND.description,
-      total: CATEGORY_INFO.DIAMOND.total,
+      category: 'REGULAR',
+      name: 'Regular Theater Pass',
+      price: CATEGORY_INFO.REGULAR.price,
+      description: CATEGORY_INFO.REGULAR.description,
+      total: CATEGORY_INFO.REGULAR.total,
       benefits: [
-        'Main Floor Bagian Tengah & Belakang Tengah',
+        'Tersedia di Main Floor (Row A-H) & Balcony (Row AA-AC)',
         'Kapasitas Terbesar & Suasana Teater Meriah',
-        'Pandangan Lurus Sejajar Panggung',
-        'Cocok untuk Nonton Rame-rame Bareng Teman',
+        'Harga Sangat Terjangkau (Student-Friendly)',
+        'E-Ticket Resmi & Validasi QR Code Gate Masuk Sama Lengkap',
       ],
-      bgHeader: 'bg-amber-500 text-slate-900',
-      accentColor: '#F59E0B',
-    },
-    {
-      category: 'PLATINUM',
-      name: 'Platinum Balcony',
-      price: CATEGORY_INFO.PLATINUM.price,
-      description: CATEGORY_INFO.PLATINUM.description,
-      total: CATEGORY_INFO.PLATINUM.total,
-      benefits: [
-        'Balkon Baris 2 & 3 (Row R2-R3)',
-        'Elevasi Tinggi Pandangan Bebas Halangan',
-        'Pengalaman Menikmati Koreografi Panggung Penuh',
-        'Harga Terjangkau untuk Area Balkon',
-      ],
-      bgHeader: 'bg-emerald-600 text-white',
-      accentColor: '#10B981',
-    },
-    {
-      category: 'RUBY',
-      name: 'Ruby Best Value',
-      price: CATEGORY_INFO.RUBY.price,
-      description: CATEGORY_INFO.RUBY.description,
-      total: CATEGORY_INFO.RUBY.total,
-      benefits: [
-        'Main Floor Sisi Kanan/Kiri & Baris Belakang',
-        'Harga Paling Ekonomis (Student Friendly)',
-        'Tetap Mendapatkan Seluruh Pengalaman Cerita & Musik',
-        'E-Ticket Resmi & Validasi Barcode Sama Lengkap',
-      ],
-      bgHeader: 'bg-rose-600 text-white',
-      accentColor: '#EF4444',
+      bgHeader: 'bg-[#3B82F6] text-white',
+      accentColor: '#3B82F6',
     },
   ];
 
@@ -109,16 +79,16 @@ export default function CategoriesSection({ onSelectCategoryFilter }: Categories
             <Sparkles className="w-4 h-4" /> TICKET CATEGORIES & PRICING
           </div>
           <h2 className="font-bebas text-4xl sm:text-5xl lg:text-6xl text-[#182B49] leading-tight">
-            PILIH KATEGORI TIKET SESUAI KEINGINANMU
+            PILIH KATEGORI TIKET CHORDS OF COMFORT
           </h2>
           <p className="text-slate-600 font-medium text-base sm:text-lg">
-            Seluruh tiket adalah sistem *Reserved Seating* (pilih nomor kursi langsung saat pemesanan). 
-            Total kuota hanya 400 kursi di LSPR Sudirman Park.
+            Sistem *Reserved Seating* (pilih langsung nomor kursi di denah panggung). 
+            Total kapasitas: 300 Kursi (Main Floor 225 seats & Balcony 75 seats).
           </p>
         </div>
 
         {/* Pricing Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
           {categories.map((cat) => (
             <div
               key={cat.category}
@@ -129,7 +99,7 @@ export default function CategoriesSection({ onSelectCategoryFilter }: Categories
               {/* Popular Badge */}
               {cat.isPopular && (
                 <div className="bg-[#F4B32A] text-[#0F1C30] font-bebas text-sm tracking-wider py-1 text-center border-b-2 border-[#0F1C30] flex items-center justify-center gap-1">
-                  <Star className="w-3.5 h-3.5 fill-[#0F1C30]" /> BEST SEATS & POPULAR CHOICE
+                  <Star className="w-3.5 h-3.5 fill-[#0F1C30]" /> BEST SEATS & FRONT CENTER VIEW
                 </div>
               )}
 
@@ -176,7 +146,7 @@ export default function CategoriesSection({ onSelectCategoryFilter }: Categories
                   onClick={() => onSelectCategoryFilter(cat.category)}
                   className="w-full cursor-pointer bg-[#182B49] hover:bg-[#C1272D] text-white py-3.5 rounded-xl font-bebas text-xl tracking-wider border-2 border-[#0F1C30] shadow-[0_3px_0_#0F1C30] hover:translate-y-0.5 active:translate-y-1 transition-all flex items-center justify-center gap-2"
                 >
-                  PILIH KURSI {cat.category}
+                  PILIH KURSI {cat.name}
                 </button>
               </div>
 
@@ -191,14 +161,14 @@ export default function CategoriesSection({ onSelectCategoryFilter }: Categories
         <div className="mt-12 bg-[#FAF6ED] p-6 rounded-2xl border-3 border-[#0F1C30] shadow-[0_4px_0_#0F1C30] flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="space-y-1 text-center sm:text-left">
             <div className="font-bebas text-2xl text-[#182B49]">
-              TOTAL KAPASITAS VENUE: 400 SEATS
+              TOTAL KAPASITAS VENUE: 300 SEATS
             </div>
             <p className="text-xs font-semibold text-slate-600">
-              Balcony: 75 Kursi (Sapphire & Platinum) • Main Floor: 325 Kursi (VIP, Diamond & Ruby)
+              Main Floor: 225 Kursi (20 VIP, 205 Regular) • Balcony: 75 Kursi (9 VIP Balcony, 66 Regular)
             </p>
           </div>
           <div className="flex items-center gap-2 font-bebas text-xl bg-[#F4B32A] text-[#0F1C30] px-5 py-2.5 rounded-xl border-2 border-[#0F1C30]">
-            ESTIMASI PENJUALAN: Rp 19.500.000
+            ESTIMASI PENJUALAN: Rp 10.935.000
           </div>
         </div>
 
@@ -206,4 +176,3 @@ export default function CategoriesSection({ onSelectCategoryFilter }: Categories
     </section>
   );
 }
-

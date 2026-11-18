@@ -55,7 +55,7 @@ export default function Navbar({ onScrollToSeats }: NavbarProps) {
               }}
               className="hover:text-[#F4B32A] transition-colors py-1 border-b-2 border-transparent hover:border-[#F4B32A]"
             >
-              Denah Kursi (400 Seat)
+              Denah Kursi (300 Seat)
             </a>
             <Link
               href="/admin"
@@ -127,7 +127,7 @@ export default function Navbar({ onScrollToSeats }: NavbarProps) {
             }}
             className="block py-2 text-slate-200 hover:text-[#F4B32A]"
           >
-            Denah Kursi (400 Seat)
+            Denah Kursi (300 Seat)
           </a>
           <div className="pt-2 border-t border-slate-800 flex gap-4">
             <Link

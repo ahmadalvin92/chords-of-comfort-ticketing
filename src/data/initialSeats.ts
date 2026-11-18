@@ -5,196 +5,178 @@ export const CATEGORY_INFO: Record<
   { name: string; price: number; color: string; badgeBg: string; border: string; description: string; total: number }
 > = {
   VIP: {
-    name: 'VIP',
-    price: 70000,
-    color: '#EC4899', // Pink
-    badgeBg: 'bg-pink-100 text-pink-700 border-pink-400',
-    border: 'border-pink-500',
-    description: 'Main Floor - Front Center (Row A1-A5)',
-    total: 50,
-  },
-  SAPPHIRE: {
-    name: 'SAPPHIRE',
-    price: 60000,
-    color: '#3B82F6', // Blue
-    badgeBg: 'bg-blue-100 text-blue-700 border-blue-400',
-    border: 'border-blue-500',
-    description: 'Balcony - Row 1',
-    total: 25,
-  },
-  DIAMOND: {
-    name: 'DIAMOND',
+    name: 'VIP Main Floor',
     price: 50000,
-    color: '#F59E0B', // Orange/Amber
-    badgeBg: 'bg-amber-100 text-amber-700 border-amber-400',
-    border: 'border-amber-500',
-    description: 'Main Floor - Middle & Rear',
-    total: 175,
-  },
-  PLATINUM: {
-    name: 'PLATINUM',
-    price: 45000,
-    color: '#10B981', // Emerald Green
-    badgeBg: 'bg-emerald-100 text-emerald-700 border-emerald-400',
-    border: 'border-emerald-500',
-    description: 'Balcony - Row 2-3',
-    total: 50,
-  },
-  RUBY: {
-    name: 'RUBY',
-    price: 35000,
-    color: '#EF4444', // Red
+    color: '#E04D65', // Coral/Red as in the chart
     badgeBg: 'bg-rose-100 text-rose-700 border-rose-400',
     border: 'border-rose-500',
-    description: 'Main Floor - Side & Rear (Limited View)',
-    total: 100,
+    description: 'Main Floor - Row A & B Center (Seats 11-20)',
+    total: 20,
+  },
+  VIP_BALCONY: {
+    name: 'VIP Balcony',
+    price: 50000,
+    color: '#E04D65', // Coral/Red as in the chart
+    badgeBg: 'bg-rose-100 text-rose-700 border-rose-400',
+    border: 'border-rose-500',
+    description: 'Balcony - Row AA Center (Seats 9-17)',
+    total: 9,
+  },
+  REGULAR: {
+    name: 'REGULAR',
+    price: 35000,
+    color: '#3B82F6', // Blue as in the chart
+    badgeBg: 'bg-blue-100 text-blue-700 border-blue-400',
+    border: 'border-blue-500',
+    description: 'Main Floor & Balcony (Standard Theater View)',
+    total: 271,
   },
 };
 
 export function generateInitialSeats(): Seat[] {
   const seats: Seat[] = [];
 
-  // ================= 1. BALCONY (UPPER LEVEL) - 75 seats =================
-  const balconyRows: { row: string; category: TicketCategory; price: number }[] = [
-    { row: 'R1', category: 'SAPPHIRE', price: 60000 },
-    { row: 'R2', category: 'PLATINUM', price: 45000 },
-    { row: 'R3', category: 'PLATINUM', price: 45000 },
-  ];
+  // =================================================================
+  // 1. MAIN FLOOR (225 SEATS TOTAL)
+  // Rows: A, B, C, D, E, F, G, H
+  // Rows A-G: 30 seats each (Left 1-10, Center 11-20, Right 21-30)
+  // Row H: 15 seats (Left 1-10, Right 21-25)
+  // VIP: Row A (11-20) & Row B (11-20) = 20 seats
+  // REGULAR: The rest = 205 seats
+  // =================================================================
+  const mainFloorRows = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
 
-  balconyRows.forEach(({ row, category, price }) => {
-    // Left: 8 seats
-    for (let i = 1; i <= 8; i++) {
+  mainFloorRows.forEach((row) => {
+    // Left Block: 1 to 10 (Regular)
+    for (let num = 1; num <= 10; num++) {
       seats.push({
-        id: `BAL-${row}-L${i}`,
-        label: `${row}-L${i}`,
-        section: 'BALCONY',
-        subSection: 'LEFT',
+        id: `MF-${row}-${num}`,
+        label: `${row}-${num}`,
+        section: 'MAIN_FLOOR',
         row,
-        number: i,
-        category,
-        price,
+        number: num,
+        block: 'LEFT',
+        category: 'REGULAR',
+        price: 35000,
         status: 'available',
       });
     }
 
-    // Center: 9 seats
-    for (let i = 1; i <= 9; i++) {
+    // Center Block: 11 to 20 (VIP for Row A and B; Regular for C-G)
+    for (let num = 11; num <= 20; num++) {
+      const isVip = row === 'A' || row === 'B';
       seats.push({
-        id: `BAL-${row}-C${i}`,
-        label: `${row}-C${i}`,
-        section: 'BALCONY',
-        subSection: 'CENTER',
+        id: `MF-${row}-${num}`,
+        label: `${row}-${num}`,
+        section: 'MAIN_FLOOR',
         row,
-        number: i,
-        category,
-        price,
+        number: num,
+        block: 'CENTER',
+        category: isVip ? 'VIP' : 'REGULAR',
+        price: isVip ? 50000 : 35000,
         status: 'available',
       });
     }
 
-    // Right: 8 seats
-    for (let i = 1; i <= 8; i++) {
+    // Right Block: 21 to 30 (Regular)
+    for (let num = 21; num <= 30; num++) {
       seats.push({
-        id: `BAL-${row}-R${i}`,
-        label: `${row}-R${i}`,
-        section: 'BALCONY',
-        subSection: 'RIGHT',
+        id: `MF-${row}-${num}`,
+        label: `${row}-${num}`,
+        section: 'MAIN_FLOOR',
         row,
-        number: i,
-        category,
-        price,
+        number: num,
+        block: 'RIGHT',
+        category: 'REGULAR',
+        price: 35000,
         status: 'available',
       });
     }
   });
 
-  // ================= 2. MAIN FLOOR (LOWER LEVEL) - 325 seats =================
-  // Rows A1 to A5 have 16 left + 16 right = 32 seats/row (160 seats)
-  // Rows A6 to A10 have 16 left + 17 right = 33 seats/row (165 seats)
-  // Total = 325 seats
-  // VIP: 50 seats (Row A1-A5 Center)
-  // RUBY: 100 seats
-  // DIAMOND: 175 seats
-  const rows = ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9', 'A10'];
+  // Row H: Left (1-10) and Right (21-25)
+  for (let num = 1; num <= 10; num++) {
+    seats.push({
+      id: `MF-H-${num}`,
+      label: `H-${num}`,
+      section: 'MAIN_FLOOR',
+      row: 'H',
+      number: num,
+      block: 'LEFT',
+      category: 'REGULAR',
+      price: 35000,
+      status: 'available',
+    });
+  }
 
-  rows.forEach((rowName, rowIndex) => {
-    const isRow1To5 = rowIndex < 5;
-    const isRow6To9 = rowIndex >= 5 && rowIndex < 9;
-    const isRow10 = rowIndex === 9;
-    const rightCount = rowIndex < 5 ? 16 : 17;
+  for (let num = 21; num <= 25; num++) {
+    seats.push({
+      id: `MF-H-${num}`,
+      label: `H-${num}`,
+      section: 'MAIN_FLOOR',
+      row: 'H',
+      number: num,
+      block: 'RIGHT',
+      category: 'REGULAR',
+      price: 35000,
+      status: 'available',
+    });
+  }
 
-    // LEFT WING (16 seats per row: L1 .. L16)
-    for (let num = 1; num <= 16; num++) {
-      let cat: TicketCategory = 'DIAMOND';
-      let price = 50000;
+  // =================================================================
+  // 2. BALCONY (75 SEATS TOTAL)
+  // Rows: AA, AB, AC
+  // Left: 1 to 8 (Regular)
+  // Center: 9 to 17 (VIP Balcony on Row AA; Regular on Row AB and AC)
+  // Right: 18 to 25 (Regular)
+  // VIP BALCONY: Row AA (9-17) = 9 seats
+  // REGULAR: 66 seats
+  // =================================================================
+  const balconyRows = ['AA', 'AB', 'AC'];
 
-      if (isRow1To5) {
-        if (num >= 12) {
-          cat = 'VIP'; // 5 seats per row (L12..L16) * 5 rows = 25 left VIP seats
-          price = 70000;
-        } else if (num <= 4) {
-          cat = 'RUBY'; // 4 seats per row (L1..L4) * 5 rows = 20 left Ruby
-          price = 35000;
-        }
-      } else if (isRow6To9) {
-        if (num <= 4) {
-          cat = 'RUBY'; // 4 seats per row * 4 rows = 16 left Ruby
-          price = 35000;
-        }
-      } else if (isRow10) {
-        if (num <= 14) {
-          cat = 'RUBY'; // 14 seats left Ruby
-          price = 35000;
-        }
-      }
-
+  balconyRows.forEach((row) => {
+    // Left: 1 to 8
+    for (let num = 1; num <= 8; num++) {
       seats.push({
-        id: `MF-${rowName}-L${num}`,
-        label: `${rowName}-L${num}`,
-        section: 'MAIN_FLOOR',
-        subSection: 'LEFT',
-        row: rowName,
+        id: `BAL-${row}-${num}`,
+        label: `${row}-${num}`,
+        section: 'BALCONY',
+        row,
         number: num,
-        category: cat,
-        price,
+        block: 'LEFT',
+        category: 'REGULAR',
+        price: 35000,
         status: 'available',
       });
     }
 
-    // RIGHT WING (16 or 17 seats: R1 .. R16/17)
-    for (let num = 1; num <= rightCount; num++) {
-      let cat: TicketCategory = 'DIAMOND';
-      let price = 50000;
-
-      if (isRow1To5) {
-        if (num <= 5) {
-          cat = 'VIP'; // 5 seats per row (R1..R5) * 5 rows = 25 right VIP seats
-          price = 70000;
-        } else if (num >= 13) {
-          cat = 'RUBY'; // 4 seats per row (R13..R16) * 5 rows = 20 right Ruby
-          price = 35000;
-        }
-      } else if (isRow6To9) {
-        if (num >= 14) {
-          cat = 'RUBY'; // 4 seats per row (R14..R17) * 4 rows = 16 right Ruby
-          price = 35000;
-        }
-      } else if (isRow10) {
-        if (num >= 4) {
-          cat = 'RUBY'; // 14 seats right Ruby (R4..R17)
-          price = 35000;
-        }
-      }
-
+    // Center: 9 to 17 (VIP Balcony for Row AA; Regular for AB & AC)
+    for (let num = 9; num <= 17; num++) {
+      const isVipBalcony = row === 'AA';
       seats.push({
-        id: `MF-${rowName}-R${num}`,
-        label: `${rowName}-R${num}`,
-        section: 'MAIN_FLOOR',
-        subSection: 'RIGHT',
-        row: rowName,
+        id: `BAL-${row}-${num}`,
+        label: `${row}-${num}`,
+        section: 'BALCONY',
+        row,
         number: num,
-        category: cat,
-        price,
+        block: 'CENTER',
+        category: isVipBalcony ? 'VIP_BALCONY' : 'REGULAR',
+        price: isVipBalcony ? 50000 : 35000,
+        status: 'available',
+      });
+    }
+
+    // Right: 18 to 25
+    for (let num = 18; num <= 25; num++) {
+      seats.push({
+        id: `BAL-${row}-${num}`,
+        label: `${row}-${num}`,
+        section: 'BALCONY',
+        row,
+        number: num,
+        block: 'RIGHT',
+        category: 'REGULAR',
+        price: 35000,
         status: 'available',
       });
     }

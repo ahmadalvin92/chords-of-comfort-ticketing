@@ -23,10 +23,8 @@ export async function GET() {
       { total: number; sold: number; available: number; revenue: number }
     > = {
       VIP: { total: 0, sold: 0, available: 0, revenue: 0 },
-      SAPPHIRE: { total: 0, sold: 0, available: 0, revenue: 0 },
-      DIAMOND: { total: 0, sold: 0, available: 0, revenue: 0 },
-      PLATINUM: { total: 0, sold: 0, available: 0, revenue: 0 },
-      RUBY: { total: 0, sold: 0, available: 0, revenue: 0 },
+      VIP_BALCONY: { total: 0, sold: 0, available: 0, revenue: 0 },
+      REGULAR: { total: 0, sold: 0, available: 0, revenue: 0 },
     };
 
     seats.forEach((seat) => {
