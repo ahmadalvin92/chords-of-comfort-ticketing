@@ -20,14 +20,14 @@ export async function POST(request: Request) {
 
     if (!seatIds || !Array.isArray(seatIds) || seatIds.length === 0) {
       return NextResponse.json(
-        { success: false, error: 'Daftar kursi harus dipilih.' },
+        { success: false, error: 'At least one seat must be selected.' },
         { status: 400 }
       );
     }
 
     if (!sessionId) {
       return NextResponse.json(
-        { success: false, error: 'Session ID tidak valid.' },
+        { success: false, error: 'Invalid session ID.' },
         { status: 400 }
       );
     }
@@ -53,7 +53,7 @@ export async function DELETE(request: Request) {
 
     if (!seatIds || !sessionId) {
       return NextResponse.json(
-        { success: false, error: 'Data tidak lengkap.' },
+        { success: false, error: 'Incomplete data.' },
         { status: 400 }
       );
     }

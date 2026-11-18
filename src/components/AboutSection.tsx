@@ -3,214 +3,319 @@
 import React from 'react';
 import Image from 'next/image';
 import {
+  Sparkles,
   MapPin,
   Clock,
-  Sparkles,
-  Ticket,
-  AlertTriangle,
-  Award,
+  Shirt,
+  QrCode,
   Music,
-  Heart,
   Users,
+  Award,
+  ExternalLink,
+  Phone,
 } from 'lucide-react';
+
+const InstagramIcon = ({ className = 'w-4 h-4' }: { className?: string }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+  </svg>
+);
 
 export default function AboutSection() {
   return (
-    <section id="about" className="py-20 bg-[#F4EFE6] border-b-4 border-[#0F1C30] relative overflow-hidden">
-
-      {/* Tape Decoration */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-
-        {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <div className="inline-flex items-center gap-2 bg-[#FAF6ED] px-4 py-1.5 rounded-full border-2 border-[#182B49] shadow-[0_2px_0_#182B49] text-xs font-black uppercase tracking-widest text-[#182B49] -rotate-1 mb-3">
-            <Sparkles className="w-4 h-4 text-amber-500" />
-            TENTANG PRODUKSI & ACARA
-          </div>
-          <h2 className="font-bebas text-4xl sm:text-5xl lg:text-6xl text-[#182B49] leading-tight">
-            CHORDS OF COMFORT
-          </h2>
-          <p className="text-slate-600 font-medium text-base sm:text-lg">
-            Karya teater musikal orisinal karya mahasiswa LSPR Institute of Communication & Business angkatan COMM30-6SP.
-          </p>
-        </div>
-
-        {/* 2-Column Story & Visual Collage */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center mb-16">
-
-          {/* Left: Scrapbook Polaroid & Poster */}
+    <section id="about" className="py-16 md:py-24 bg-[#F8F5EE] border-b-4 border-[#0F1C30]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
+        
+        {/* ================= SECTION 1: ABOUT THE MUSICAL & SYNOPSIS ================= */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+          
+          {/* Left Column: Visual Collage & Wristband Reference */}
           <div className="lg:col-span-5 space-y-6">
-
-            <div className="relative bg-white p-4 pb-6 rounded-2xl border-4 border-[#0F1C30] shadow-[0_8px_0_#0F1C30] rotate-1 hover:rotate-0 transition-transform">
-              <div className="relative aspect-[4/3] rounded-xl overflow-hidden border-2 border-[#0F1C30]">
+            
+            <div className="relative bg-white p-4 rounded-3xl border-4 border-[#0F1C30] shadow-[0_8px_0_#0F1C30] -rotate-1">
+              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border-2 border-[#0F1C30]">
                 <Image
-                  src="/assets/cast-photo.jpeg"
-                  alt="Cast of LSPR Theater"
+                  src="/assets/ticket-wristband-ref.jpeg"
+                  alt="Chords of Comfort Wristband & Ticket Stubs"
                   fill
+                  sizes="(max-width: 768px) 100vw, 450px"
                   className="object-cover"
                 />
-              </div>
-              <div className="mt-4 flex items-center justify-between">
-                <div>
-                  <h4 className="font-bebas text-2xl text-[#182B49] leading-none">
-                    MEMORIES OF THE HALLWAY
-                  </h4>
-                  <p className="text-xs font-bold text-slate-500 mt-0.5">
-                    An American High School Musical Story
-                  </p>
+                <div className="absolute top-2 left-2 bg-[#F4B32A] text-[#0F1C30] font-bebas text-xs px-2.5 py-1 rounded border border-[#0F1C30]">
+                  OFFICIAL WRISTBAND PASS
                 </div>
-                <span className="bg-[#F4B32A] text-[#0F1C30] px-3 py-1 rounded font-bebas text-sm border border-[#0F1C30]">
-                  LSPR 2026
+              </div>
+
+              <div className="mt-4 p-3 bg-[#FAF6ED] rounded-xl border-2 border-dashed border-[#0F1C30] text-center">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block">
+                  ADMISSION VERIFICATION
                 </span>
+                <p className="font-bebas text-lg text-[#182B49] leading-tight mt-0.5">
+                  E-TICKET SCANNED AT GATE & EXCHANGED FOR FABRIC WRISTBAND
+                </p>
               </div>
             </div>
 
-            {/* Wristband info banner */}
-            <div className="bg-[#182B49] text-white p-5 rounded-2xl border-3 border-[#F4B32A] shadow-[0_4px_0_#0F1C30] flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-[#C1272D] flex items-center justify-center shrink-0 border border-[#F4B32A]">
-                <Ticket className="w-6 h-6 text-[#F4B32A]" />
+            {/* Production Pillars Box */}
+            <div className="bg-[#182B49] text-white p-6 rounded-3xl border-4 border-[#0F1C30] shadow-[0_6px_0_#0F1C30] space-y-4">
+              <div className="flex items-center gap-2 text-[#F4B32A] font-bebas text-xl tracking-wider">
+                <Sparkles className="w-5 h-5" />
+                <span>PRODUCTION HIGHLIGHTS</span>
               </div>
-              <div>
-                <h5 className="font-bebas text-lg text-[#F4B32A] leading-tight">
-                  PENUKARAN WRISTBAND & ADMIT-ONE
-                </h5>
-                <p className="text-xs text-slate-300 font-medium">
-                  Tunjukkan QR Code E-Ticket di meja registrasi untuk mendapatkan wristband resmi dan akses masuk venue.
-                </p>
+              <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                Crafted with passion by the student cohort of COMM30-6SP: featuring handcrafted varsity costuming, Broadway-inspired stage lighting, multi-track live audio engineering, and dynamic theatrical choreography.
+              </p>
+              
+              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-700 text-center">
+                <div className="p-2 rounded-xl bg-slate-800/80 border border-slate-700">
+                  <Music className="w-4 h-4 text-[#F4B32A] mx-auto mb-1" />
+                  <div className="font-bebas text-lg text-[#FAF6ED] leading-none">15+ SONGS</div>
+                  <div className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Live Musical</div>
+                </div>
+                <div className="p-2 rounded-xl bg-slate-800/80 border border-slate-700">
+                  <Users className="w-4 h-4 text-[#F4B32A] mx-auto mb-1" />
+                  <div className="font-bebas text-lg text-[#FAF6ED] leading-none">30+ CAST</div>
+                  <div className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">& Dance Squad</div>
+                </div>
+                <div className="p-2 rounded-xl bg-slate-800/80 border border-slate-700">
+                  <Award className="w-4 h-4 text-[#F4B32A] mx-auto mb-1" />
+                  <div className="font-bebas text-lg text-[#FAF6ED] leading-none">BROADWAY</div>
+                  <div className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Stage Setup</div>
+                </div>
               </div>
             </div>
 
           </div>
 
-          {/* Right: Story & Production Details */}
+          {/* Right Column: Full Official Synopsis */}
           <div className="lg:col-span-7 space-y-6">
-
-            <div className="bg-white p-6 sm:p-8 rounded-3xl border-3 border-[#0F1C30] shadow-[0_6px_0_#0F1C30] space-y-4">
-              <h3 className="font-bebas text-3xl sm:text-4xl text-[#182B49]">
-                SINOPSIS: MIMPI, PERSAHABATAN & CINTA DI KORIDOR KAMPUS
-              </h3>
-              <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
-                Victoria, a wealthy student who loves ves shopping with her friends Selena and Isabella, is assigned an essay on the Irish Revolution and meets Oliver, a restaurant worker saving for college, at the library. They start off annoved with each other but gradually grow close. When Victoria's family goes bankrupt and their house must be sold, Oliver becomes her support, and they start dating.
-
-                Their relationship cracks when Victoria says she's happy to be an "ordinary person" like Oliver, which offends him since she still has a home. After reflecting and receiving advice from those close to them, they apologize and reconcile. Victoria's father also turns out to have kept her education fund, so she can still go to college.
-              </p>
-              <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
-                Produksi ini dipersiapkan dengan dedikasi penuh oleh tim COMM30-6SP mulai dari tata panggung, kostum varsity retro, pencahayaan panggung broadway, hingga sistem audio stereo mutakhir.
-              </p>
-
-              {/* Quick Pillars */}
-              <div className="grid grid-cols-3 gap-3 pt-4 border-t-2 border-dashed border-slate-200">
-                <div className="text-center p-3 rounded-xl bg-[#FAF6ED] border border-slate-300">
-                  <Music className="w-5 h-5 mx-auto text-[#C1272D] mb-1" />
-                  <div className="font-bebas text-lg text-[#182B49]">15+ LAGU</div>
-                  <div className="text-[10px] font-bold text-slate-500 uppercase">Live Performance</div>
-                </div>
-                <div className="text-center p-3 rounded-xl bg-[#FAF6ED] border border-slate-300">
-                  <Users className="w-5 h-5 mx-auto text-blue-600 mb-1" />
-                  <div className="font-bebas text-lg text-[#182B49]">30+ CAST</div>
-                  <div className="text-[10px] font-bold text-slate-500 uppercase">& Dancer Squad</div>
-                </div>
-                <div className="text-center p-3 rounded-xl bg-[#FAF6ED] border border-slate-300">
-                  <Award className="w-5 h-5 mx-auto text-amber-600 mb-1" />
-                  <div className="font-bebas text-lg text-[#182B49]">BROADWAY</div>
-                  <div className="text-[10px] font-bold text-slate-500 uppercase">Stage Setup</div>
-                </div>
+            
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 bg-[#C1272D] text-[#FAF6ED] font-bebas text-sm px-3 py-1 rounded-md border-2 border-[#0F1C30] tracking-wider">
+                ABOUT THE PRODUCTION
               </div>
+              <h2 className="font-bebas text-4xl sm:text-5xl text-[#182B49] tracking-wider leading-none">
+                THE STORY BEHIND <span className="text-[#C1272D]">CHORDS OF COMFORT</span>
+              </h2>
+              <p className="text-xs font-bold uppercase tracking-widest text-[#F4B32A] bg-[#182B49] inline-block px-3 py-1 rounded-md">
+                COMM30-6SP • THE 35TH LSPR THEATER FESTIVAL
+              </p>
             </div>
 
-            {/* Venue Location & Access Note */}
-            <div className="bg-[#FAF6ED] p-5 rounded-2xl border-2 border-[#182B49] shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-rose-100 border border-rose-300 flex items-center justify-center text-rose-700 shrink-0">
-                  <MapPin className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="font-bebas text-lg text-[#182B49] leading-none">
-                    LSPR SUDIRMAN PARK AUDITORIUM
-                  </div>
-                  <p className="text-xs text-slate-600 font-medium">
-                    Jl. K.H. Mas Mansyur Kav. 35, Karet Tengsin, Tanah Abang, Jakarta Pusat
-                  </p>
-                </div>
+            {/* Official 7-Paragraph Synopsis */}
+            <div className="bg-white p-6 sm:p-8 rounded-3xl border-4 border-[#0F1C30] shadow-[0_8px_0_#0F1C30] space-y-4 text-slate-700 text-sm sm:text-base leading-relaxed">
+              <p>
+                Victoria, a wealthy student who loves shopping with her best friends, Selena and Isabella, is assigned an essay about the Irish Revolution. Her research leads her to the library, where she unexpectedly meets Oliver, a hardworking restaurant employee saving money for college.
+              </p>
+              
+              <p>
+                At first, their personalities clash, and they struggle to get along. However, as they spend more time together, their differences slowly turn into an unexpected connection.
+              </p>
+
+              <p>
+                When Victoria’s family suddenly faces bankruptcy and their house is put up for sale, Oliver becomes her greatest source of comfort and support. Their growing friendship eventually blossoms into love.
+              </p>
+
+              <p>
+                But their relationship faces a difficult moment when Victoria describes herself as being happy to live like an ‘ordinary person’ like Oliver. Her words hurt him, as he realizes that she still has privileges he could only dream of.
+              </p>
+
+              <p>
+                Through reflection, honest conversations, and advice from the people closest to them, they learn to understand each other’s struggles, apologize, and find their way back to one another.
+              </p>
+
+              <p>
+                Meanwhile, Victoria discovers that her father has secretly preserved her college education fund, giving her a chance to pursue her dreams after all.
+              </p>
+
+              <div className="pt-2 border-t-2 border-dashed border-slate-200">
+                <p className="font-medium text-[#182B49] italic">
+                  Chords of Comfort is a heartwarming story about love beyond social differences, the meaning of true support, and discovering that sometimes the greatest comfort comes from the people we least expect.
+                </p>
               </div>
-              <a
-                href="https://maps.google.com/?q=LSPR+Sudirman+Park"
-                target="_blank"
-                rel="noreferrer"
-                className="bg-[#182B49] text-white text-xs font-bold px-4 py-2 rounded-lg border border-[#0F1C30] hover:bg-[#C1272D] transition-colors shrink-0"
-              >
-                Buka Google Maps
-              </a>
             </div>
 
           </div>
 
         </div>
 
-        {/* Attendee Terms & Protocol Cards */}
-        <div className="bg-white p-6 sm:p-8 rounded-3xl border-3 border-[#0F1C30] shadow-[0_6px_0_#0F1C30]">
-          <h4 className="font-bebas text-2xl text-[#182B49] mb-4 flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-[#C1272D]" />
-            KETENTUAN PENTING BAGI PENONTON
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-slate-600 font-medium">
-            <div className="p-4 rounded-xl bg-[#FAF6ED] border border-slate-200">
-              <strong className="block text-[#182B49] font-bold mb-1">1. Tepat Waktu (Open Gate)</strong>
-              Pintu masuk dibuka pukul 17:00 WIB dan ditutup pukul 18:15 WIB. Penonton yang terlambat hanya dapat masuk saat jeda lagu untuk menjaga kenyamanan pertunjukan.
+        {/* ================= SECTION 2: VENUE INFORMATION & GOOGLE MAPS EMBED ================= */}
+        <div className="space-y-6">
+          <div className="text-center max-w-2xl mx-auto space-y-2">
+            <span className="bg-[#182B49] text-[#F4B32A] font-bebas text-sm px-3 py-1 rounded-md border-2 border-[#0F1C30] tracking-wider">
+              VENUE & LOCATION
+            </span>
+            <h3 className="font-bebas text-4xl sm:text-5xl text-[#182B49] tracking-wider">
+              AMANI PALLADIUM THEATRE • LSPR BEKASI
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-600 font-medium">
+              Transpark Juanda, Jl. Ir. H. Juanda No. 220, Duren Jaya, East Bekasi, Bekasi City, West Java 17111
+            </p>
+          </div>
+
+          <div className="bg-white rounded-3xl border-4 border-[#0F1C30] shadow-[0_8px_0_#0F1C30] overflow-hidden grid grid-cols-1 lg:grid-cols-12">
+            
+            {/* Left 5 Columns: Venue Info Details */}
+            <div className="lg:col-span-5 p-6 sm:p-8 space-y-6 flex flex-col justify-between border-b-4 lg:border-b-0 lg:border-r-4 border-[#0F1C30] bg-[#FAF6ED]">
+              <div className="space-y-4">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#C1272D]">
+                    THEATRE AUDITORIUM
+                  </span>
+                  <h4 className="font-bebas text-3xl text-[#182B49] leading-tight">
+                    Amani Palladium Theatre
+                  </h4>
+                  <p className="text-xs text-slate-600 mt-1 font-medium">
+                    State-of-the-art auditorium equipped with theatrical acoustics, dual-level seating (Main Floor & Balcony), full air conditioning, and convenient on-site parking at Transpark Juanda.
+                  </p>
+                </div>
+
+                <div className="space-y-3 pt-2 text-xs">
+                  <div className="flex items-start gap-3">
+                    <MapPin className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="block text-slate-900">Address:</strong>
+                      <span className="text-slate-600">
+                        Transpark Juanda, Jl. Ir. H. Juanda No. 220, Duren Jaya, East Bekasi, Bekasi City, West Java 17111
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="block text-slate-900">Production Date:</strong>
+                      <span className="text-slate-600">
+                        January 2027 • Showtime & Gate Opening TBA
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Direct Open in Google Maps CTA */}
+              <div className="pt-4 border-t-2 border-dashed border-slate-300">
+                <a
+                  href="https://www.google.com/maps/place/LSPR+BEKASI/@-6.2492029,107.0170136,17z/data=!3m1!4b1!4m6!3m5!1s0x2e698f15b75cee39:0x2e5917016b27bfad!8m2!3d-6.2492029!4d107.0170136!16s%2Fg%2F11hyn7g4fg"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full inline-flex items-center justify-center gap-2 bg-[#182B49] hover:bg-[#C1272D] text-white px-5 py-3 rounded-xl font-bebas text-lg tracking-wider border-2 border-[#0F1C30] shadow-[0_3px_0_#0F1C30] hover:translate-y-0.5 transition-all"
+                >
+                  <MapPin className="w-5 h-5 text-[#F4B32A]" />
+                  <span>OPEN IN GOOGLE MAPS</span>
+                  <ExternalLink className="w-4 h-4 ml-1" />
+                </a>
+              </div>
             </div>
-            <div className="p-4 rounded-xl bg-[#FAF6ED] border border-slate-200">
-              <strong className="block text-[#182B49] font-bold mb-1">2. Satu Tiket Satu Orang</strong>
-              Setiap QR Code bersifat unik dan hanya berlaku untuk 1 kali pemindaian di pintu masuk. Jangan menyebarkan kode QR Anda kepada orang lain.
+
+            {/* Right 7 Columns: Embedded Interactive Google Maps */}
+            <div className="lg:col-span-7 h-72 sm:h-96 lg:h-auto min-h-[320px] bg-slate-100 relative">
+              <iframe
+                title="LSPR Bekasi Google Maps Location"
+                src="https://maps.google.com/maps?q=-6.2492029,107.0170136&hl=en&z=17&output=embed"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen={false}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                className="w-full h-full min-h-[320px]"
+              />
             </div>
-            <div className="p-4 rounded-xl bg-[#FAF6ED] border border-slate-200">
-              <strong className="block text-[#182B49] font-bold mb-1">3. Dress Code Retro School</strong>
-              Disarankan mengenakan pakaian dengan sentuhan *American High School*, *Varsity Jacket*, atau nuansa warna *Navy & Red* untuk meramaikan suasana teater!
+
+          </div>
+        </div>
+
+        {/* ================= SECTION 3: AUDIENCE GUIDELINES & WRISTBAND EXCHANGE ================= */}
+        <div className="bg-white rounded-3xl border-4 border-[#0F1C30] shadow-[0_8px_0_#0F1C30] p-6 sm:p-8 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-2 border-slate-200 pb-4">
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                AUDIENCE GUIDELINES
+              </span>
+              <h3 className="font-bebas text-3xl sm:text-4xl text-[#182B49] leading-tight">
+                IMPORTANT ENTRY INFORMATION
+              </h3>
+            </div>
+            <div className="font-bebas text-sm bg-[#FAF6ED] border-2 border-[#0F1C30] px-3.5 py-1.5 rounded-xl text-[#C1272D] self-start sm:self-auto">
+              NON-REFUNDABLE • ALL SALES FINAL
             </div>
           </div>
 
-          {/* Social Media & Official Hotline Banner */}
-          <div className="mt-6 pt-5 border-t-2 border-dashed border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-pink-100 flex items-center justify-center text-pink-700 shrink-0 border border-pink-300">
-                <Heart className="w-5 h-5" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <div className="p-4 rounded-2xl bg-[#FAF6ED] border-2 border-slate-300 space-y-2">
+              <div className="w-10 h-10 rounded-xl bg-[#182B49] text-[#F4B32A] flex items-center justify-center border border-[#0F1C30]">
+                <QrCode className="w-5 h-5" />
               </div>
-              <div>
-                <span className="font-bebas text-lg text-[#182B49] leading-none block">
-                  IKUTI KESERUAN & INFO RESMI
-                </span>
-                <p className="text-xs text-slate-500 font-medium">
-                  Follow Instagram kami untuk bocoran cast, gladi resik, dan jadwal tayang!
-                </p>
-              </div>
+              <h4 className="font-bebas text-xl text-[#182B49]">E-TICKET & QR ADMISSION</h4>
+              <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                Please present the official QR Code E-Ticket received via WhatsApp/email at the registration desk. Each ticket is strictly valid for single check-in.
+              </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="p-4 rounded-2xl bg-[#FAF6ED] border-2 border-slate-300 space-y-2">
+              <div className="w-10 h-10 rounded-xl bg-[#C1272D] text-white flex items-center justify-center border border-[#0F1C30]">
+                <Clock className="w-5 h-5" />
+              </div>
+              <h4 className="font-bebas text-xl text-[#182B49]">DOOR POLICY & TIMING</h4>
+              <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                Registration opens prior to curtain call. Late arrivals will only be admitted during designated scene transitions to preserve the theatrical experience.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-[#FAF6ED] border-2 border-slate-300 space-y-2">
+              <div className="w-10 h-10 rounded-xl bg-blue-900 text-[#F4B32A] flex items-center justify-center border border-[#0F1C30]">
+                <Shirt className="w-5 h-5" />
+              </div>
+              <h4 className="font-bebas text-xl text-[#182B49]">DRESS CODE & ETIQUETTE</h4>
+              <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                Casual chic, varsity apparel, or smart casual attire is highly recommended. Flash photography and professional video recording inside the theatre are prohibited.
+              </p>
+            </div>
+
+          </div>
+
+          {/* Social Contact Card */}
+          <div className="pt-4 border-t-2 border-dashed border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="text-xs text-slate-600">
+              Need assistance or group bookings? Contact the official ticketing team:
+            </div>
+            <div className="flex items-center gap-3">
               <a
                 href="https://www.instagram.com/chordsofcomfort.theater?jplx=MXM3c3J3bGQ1NXJ5Zg=="
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-2 bg-[#E1306C] hover:bg-[#c2255c] text-white px-4 py-2 rounded-xl text-xs font-bold border border-slate-900 shadow-sm transition-all"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#182B49] bg-[#FAF6ED] hover:bg-slate-200 px-3 py-1.5 rounded-xl border border-slate-300"
               >
-                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                </svg>
+                <InstagramIcon className="w-4 h-4 text-[#C1272D]" />
                 <span>@chordsofcomfort.theater</span>
               </a>
-
               <a
-                href="https://wa.me/6281915348866?text=Halo%20Panitia%20Ticketing%20Chords%20of%20Comfort%2C%20saya%20mau%20bertanya%20seputar%20tiket"
+                href="https://wa.me/6281915348866"
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#20ba59] text-white px-4 py-2 rounded-xl text-xs font-bold border border-slate-900 shadow-sm transition-all"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-[#25D366] hover:bg-[#20ba59] px-3 py-1.5 rounded-xl border border-slate-900 shadow-sm"
               >
-                <span>WhatsApp: 0819-1534-8866</span>
+                <Phone className="w-4 h-4" />
+                <span>0819-1534-8866</span>
               </a>
             </div>
           </div>
+
         </div>
 
       </div>
     </section>
   );
 }
-

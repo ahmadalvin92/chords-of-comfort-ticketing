@@ -16,8 +16,17 @@ const jakartaSans = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: 'CHORDS OF COMFORT | LSPR COMM30-6SP Musical Theater',
   description:
-    'Sistem Pembelian Tiket Online Resmi Musical Theater "Chords of Comfort" LSPR COMM30-6SP di Sudirman Park. Pilih kursi langsung, bayar via QRIS/VA, dan dapatkan e-ticket instan.',
-  keywords: ['Chords of Comfort', 'LSPR', 'Musical Theater', 'COMM30-6SP', 'Sudirman Park', 'Ticketing'],
+    'Official Online Ticketing for the musical theater production "Chords of Comfort" by LSPR COMM30-6SP at Amani Palladium Theatre, LSPR Bekasi. Select seats, reserve instantly, and receive official E-Tickets.',
+  keywords: [
+    'Chords of Comfort',
+    'LSPR',
+    'Musical Theater',
+    'COMM30-6SP',
+    'The 35th LSPR Theater Festival',
+    'Amani Palladium Theatre',
+    'LSPR Bekasi',
+    'Ticketing',
+  ],
 };
 
 export default function RootLayout({
@@ -26,7 +35,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id" className={`${bebasNeue.variable} ${jakartaSans.variable} scroll-smooth`}>
+    <html lang="en" className={`${bebasNeue.variable} ${jakartaSans.variable} scroll-smooth`}>
       <body className="min-h-screen bg-[#F7F4EB] text-slate-900 font-sans antialiased selection:bg-[#F4B32A] selection:text-[#182B49]">
         {children}
       </body>

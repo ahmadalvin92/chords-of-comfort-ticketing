@@ -6,23 +6,23 @@ import HeroSection from '@/components/HeroSection';
 import AboutSection from '@/components/AboutSection';
 import CategoriesSection from '@/components/CategoriesSection';
 import SeatPlan from '@/components/SeatPlan';
+import FaqSection from '@/components/FaqSection';
 import Footer from '@/components/Footer';
 import CheckoutModal from '@/components/CheckoutModal';
 import PaymentModal from '@/components/PaymentModal';
-import { Seat, TicketCategory, Order } from '@/types/ticket';
+import { Seat, CustomerInfo, Order } from '@/types/ticket';
 
 export default function Home() {
   const [seats, setSeats] = useState<Seat[]>([]);
   const [selectedSeatIds, setSelectedSeatIds] = useState<string[]>([]);
-  const [activeFilter, setActiveFilter] = useState<TicketCategory | 'ALL'>('ALL');
-  const [isLoadingSeats, setIsLoadingSeats] = useState(true);
+  const [highlightCategory, setHighlightCategory] = useState<string | null>(null);
 
   // Modals state
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
-  const [snapToken, setSnapToken] = useState<string | undefined>(undefined);
-  const [hasLiveMidtrans, setHasLiveMidtrans] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   // Fetch seats data from API
   const fetchSeats = useCallback(async () => {
@@ -34,14 +34,12 @@ export default function Home() {
       }
     } catch (err) {
       console.error('Failed to load seats:', err);
-    } finally {
-      setIsLoadingSeats(false);
     }
   }, []);
 
   useEffect(() => {
     fetchSeats();
-    // Poll every 10 seconds to keep seat availability fresh in real-time
+    // Poll every 10 seconds to keep seat availability synchronized in real-time
     const interval = setInterval(fetchSeats, 10000);
     return () => clearInterval(interval);
   }, [fetchSeats]);
@@ -56,134 +54,152 @@ export default function Home() {
     return sId;
   };
 
-  const handleToggleSeat = async (seat: Seat) => {
+  const handleToggleSeat = async (seatId: string) => {
     const sessionId = getSessionId();
-    const isCurrentlySelected = selectedSeatIds.includes(seat.id);
+    const isCurrentlySelected = selectedSeatIds.includes(seatId);
 
     if (isCurrentlySelected) {
       // Unselect & release hold
-      setSelectedSeatIds((prev) => prev.filter((id) => id !== seat.id));
+      setSelectedSeatIds((prev) => prev.filter((id) => id !== seatId));
       try {
         await fetch('/api/seats', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ seatIds: [seat.id], sessionId }),
+          body: JSON.stringify({ seatIds: [seatId], sessionId }),
         });
         fetchSeats();
       } catch (e) {
         console.error('Failed to release seat:', e);
       }
     } else {
-      // Limit selection (e.g., max 6 tickets per order)
+      // Limit selection to max 6 tickets per booking
       if (selectedSeatIds.length >= 6) {
-        alert('Maksimal pemesanan adalah 6 kursi per transaksi.');
+        alert('Maximum booking limit is 6 seats per transaction.');
         return;
       }
 
       // Optimistically add & request hold from server
-      const newSelected = [...selectedSeatIds, seat.id];
-      setSelectedSeatIds(newSelected);
+      setSelectedSeatIds((prev) => [...prev, seatId]);
 
       try {
         const res = await fetch('/api/seats', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ seatIds: [seat.id], sessionId }),
+          body: JSON.stringify({ seatIds: [seatId], sessionId }),
         });
 
         const data = await res.json();
         if (!res.ok || !data.success) {
           // Revert selection if conflict
-          setSelectedSeatIds((prev) => prev.filter((id) => id !== seat.id));
-          alert(data.error || 'Maaf, kursi ini baru saja dipilih oleh pembeli lain.');
+          setSelectedSeatIds((prev) => prev.filter((id) => id !== seatId));
+          alert(data.error || 'Sorry, this seat is temporarily held by another attendee.');
         }
         fetchSeats();
       } catch (err) {
         console.error('Hold error:', err);
-        setSelectedSeatIds((prev) => prev.filter((id) => id !== seat.id));
+        setSelectedSeatIds((prev) => prev.filter((id) => id !== seatId));
       }
     }
   };
 
   const handleScrollToSeats = () => {
-    const el = document.getElementById('seating');
+    const el = document.getElementById('seatplan');
     el?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleSelectCategoryFilter = (cat: TicketCategory) => {
-    setActiveFilter(cat);
+  const handleSelectCategory = (cat: string) => {
+    setHighlightCategory(cat);
     handleScrollToSeats();
   };
 
-  const handleOrderCreated = (order: Order, token?: string, live?: boolean) => {
-    setCurrentOrder(order);
-    setSnapToken(token);
-    setHasLiveMidtrans(Boolean(live));
-    setIsCheckoutOpen(false);
-    setIsPaymentOpen(true);
-    // Clear selection cart
-    setSelectedSeatIds([]);
-    fetchSeats();
+  // Checkout submission handler
+  const handleConfirmCheckout = async (customer: CustomerInfo, paymentMethod: string) => {
+    setCheckoutLoading(true);
+    setCheckoutError(null);
+
+    const sessionId = getSessionId();
+
+    try {
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer,
+          seatIds: selectedSeatIds,
+          sessionId,
+          paymentMethod,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success || !data.order) {
+        throw new Error(data.error || 'Failed to complete order reservation.');
+      }
+
+      setCurrentOrder(data.order);
+      setIsCheckoutOpen(false);
+      setIsPaymentOpen(true);
+      setSelectedSeatIds([]);
+      fetchSeats();
+    } catch (err) {
+      setCheckoutError((err as Error).message);
+    } finally {
+      setCheckoutLoading(false);
+    }
   };
 
   const selectedSeatsList = seats.filter((s) => selectedSeatIds.includes(s.id));
 
   return (
-    <main className="min-h-screen flex flex-col">
-      {/* Midtrans Snap script loader if Client Key is configured */}
-      {process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY && (
-        <script
-          src={
-            process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === 'true'
-              ? 'https://app.midtrans.com/snap/snap.js'
-              : 'https://app.sandbox.midtrans.com/snap/snap.js'
-          }
-          data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
-          async
-        />
-      )}
-
+    <main className="min-h-screen flex flex-col bg-[#FAF6ED]">
       {/* Navigation Bar */}
-      <Navbar onScrollToSeats={handleScrollToSeats} />
+      <Navbar onBookTicketsClick={handleScrollToSeats} />
 
       {/* Hero Section */}
       <HeroSection onSelectSeatsClick={handleScrollToSeats} />
 
-      {/* About The Show & Cast Section */}
+      {/* About The Musical & Venue Location Section */}
       <AboutSection />
 
-      {/* Ticket Categories & Pricing Section */}
-      <CategoriesSection onSelectCategoryFilter={handleSelectCategoryFilter} />
+      {/* Ticket Tiers & Pricing Section */}
+      <CategoriesSection onSelectCategory={handleSelectCategory} />
 
-      {/* Interactive 400-Seat Seating Plan */}
+      {/* Interactive 300-Seat Seating Plan */}
       <SeatPlan
         seats={seats}
         selectedSeatIds={selectedSeatIds}
         onToggleSeat={handleToggleSeat}
         onProceedToCheckout={() => setIsCheckoutOpen(true)}
-        activeFilter={activeFilter}
-        onFilterChange={setActiveFilter}
-        isLoading={isLoadingSeats}
+        maxSeats={6}
+        highlightCategory={highlightCategory}
+        onClearHighlight={() => setHighlightCategory(null)}
       />
+
+      {/* Frequently Asked Questions (FAQ) Section */}
+      <FaqSection />
 
       {/* Footer */}
       <Footer />
 
-      {/* Checkout Form Modal */}
+      {/* Step 1: Attendee Information Modal */}
       <CheckoutModal
         isOpen={isCheckoutOpen}
         onClose={() => setIsCheckoutOpen(false)}
         selectedSeats={selectedSeatsList}
-        onOrderCreated={handleOrderCreated}
+        onConfirmCheckout={handleConfirmCheckout}
+        loading={checkoutLoading}
+        error={checkoutError}
       />
 
-      {/* Payment Gateway Modal (Simulated QRIS / Midtrans Snap) */}
+      {/* Step 2: Payment Instructions & WhatsApp Confirmation Modal */}
       <PaymentModal
         isOpen={isPaymentOpen}
         onClose={() => setIsPaymentOpen(false)}
         order={currentOrder}
-        snapToken={snapToken}
-        hasLiveMidtrans={hasLiveMidtrans}
+        onPaymentConfirmed={(updatedOrder) => {
+          setCurrentOrder(updatedOrder);
+          fetchSeats();
+        }}
       />
     </main>
   );

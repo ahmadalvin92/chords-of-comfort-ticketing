@@ -1,6 +1,6 @@
 # 🎭 Panduan Penggunaan Sistem Ticketing LSPR COMM30-6SP
 
-Panduan lengkap ini disusun khusus untuk **Panitia Ticketing & Gatekeeper Event Musical Theater LSPR COMM30-6SP** di Sudirman Park Auditorium.
+Panduan lengkap ini disusun khusus untuk **Panitia Ticketing & Gatekeeper Event Musical Theater LSPR COMM30-6SP** di Amani Palladium Theatre, LSPR Bekasi.
 
 ---
 
@@ -69,7 +69,7 @@ Halaman ini digunakan oleh koordinator ticketing untuk memantau performa penjual
 
 ## 4. Panduan Check-In Mobile QR Scanner di Hari-H (`/scanner`)
 
-Di hari pementasan di LSPR Sudirman Park, panitia gatekeeper cukup membuka URL `/scanner` di browser HP masing-masing:
+Di hari pementasan di Amani Palladium Theatre, LSPR Bekasi, panitia gatekeeper cukup membuka URL `/scanner` di browser HP masing-masing:
 
 1. Klik tombol **"AKTIFKAN KAMERA SCANNER"** dan izinkan akses kamera di browser.
 2. Arahkan kamera HP ke QR Code pada E-Ticket penonton (bisa dari layar HP penonton atau lembaran print).
@@ -125,5 +125,5 @@ Di hari pementasan di LSPR Sudirman Park, panitia gatekeeper cukup membuka URL `
 - [ ] Pastikan seluruh petugas gate membuka `/scanner` dan menguji pemindaian 1 tiket percobaan.
 - [ ] Siapkan koneksi Wi-Fi cadangan atau kuota data seluler untuk petugas gate.
 - [ ] Sediakan lembaran cetak data penonton (dari fitur *Export CSV*) di meja helpdesk ticketing jika ada pengunjung yang kehabisan baterai HP.
-- [ ] Pisahkan antrean penonton kategori VIP (Fast-Track) dengan kategori Balcony/Main Floor biasa untuk menghindari penumpukan di pintu masuk Auditorium LSPR Sudirman Park.
+- [ ] Pisahkan antrean penonton kategori VIP (Fast-Track) dengan kategori Balcony/Main Floor biasa untuk menghindari penumpukan di pintu masuk Amani Palladium Theatre, LSPR Bekasi.
 

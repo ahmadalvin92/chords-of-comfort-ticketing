@@ -18,7 +18,6 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
-  Filter,
   Lock,
   LogOut,
   UserCheck,
@@ -29,7 +28,6 @@ import {
   Trash2,
   Check,
   X,
-  Sparkles,
   Info,
   MessageCircle,
   Edit3,
@@ -134,7 +132,7 @@ export default function AdminPage() {
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Login gagal.');
+        throw new Error(data.error || 'Authentication failed.');
       }
 
       setCurrentUser(data.user);
@@ -151,7 +149,7 @@ export default function AdminPage() {
     setCurrentUser(null);
   };
 
-  // Quick Account Autofill for Convenience
+  // Quick Account Autofill for Committee
   const handleQuickFill = (email: string, pass: string) => {
     setLoginEmail(email);
     setLoginPassword(pass);
@@ -189,7 +187,7 @@ export default function AdminPage() {
 
   // Actions
   const handleMarkAsPaid = async (orderId: string) => {
-    if (!confirm(`Konfirmasi pembayaran lunas untuk Order ${orderId}?`)) return;
+    if (!confirm(`Confirm verified payment for Order #${orderId}?`)) return;
 
     try {
       const res = await fetch('/api/admin/action', {
@@ -199,7 +197,7 @@ export default function AdminPage() {
       });
       const data = await res.json();
       if (data.success) {
-        alert('Status berhasil diubah menjadi PAID.');
+        alert('Order status successfully updated to PAID.');
         fetchAdminData();
       } else {
         alert(data.error);
@@ -230,7 +228,7 @@ export default function AdminPage() {
   const handleDeleteOrder = async (orderId: string) => {
     if (
       !confirm(
-        `PERINGATAN: Apakah Anda yakin ingin menghapus Order ${orderId}? Kursi yang dipesan akan otomatis kembali TERSEDIA (Available).`
+        `WARNING: Are you sure you want to delete Order #${orderId}? Reserved seats will automatically return to Available status.`
       )
     ) {
       return;
@@ -244,7 +242,7 @@ export default function AdminPage() {
       });
       const data = await res.json();
       if (data.success) {
-        alert('Order berhasil dihapus dan kursi telah dikembalikan.');
+        alert('Order successfully deleted and seats released back to available.');
         setSelectedOrder(null);
         fetchAdminData();
       } else {
@@ -273,36 +271,30 @@ export default function AdminPage() {
 
       const data = await res.json();
       if (data.success) {
-        alert('Data pembeli berhasil diperbarui!');
+        alert('Attendee information updated successfully!');
         setEditingOrder(null);
         fetchAdminData();
       } else {
-        alert(data.error || 'Gagal memperbarui data pembeli.');
+        alert(data.error || 'Failed to update attendee information.');
       }
     } catch (err) {
       alert((err as Error).message);
     }
   };
 
-  // WhatsApp Message Builders
+  // WhatsApp Message Builders in natural English
   const buildSendTicketWaUrl = (o: Order) => {
     const cleanPhone = o.customer.phone.replace(/[^0-9]/g, '').replace(/^0/, '62');
     const seatsStr = o.items.map((i) => i.seatLabel).join(', ');
     const catStr = o.items[0]?.category || 'REGULAR';
-    const msg = `Halo Kak ${o.customer.fullName}! ✨%0A%0APembayaran tiket *Chords of Comfort* (LSPR COMM30-6SP • LSPR Theater 35th Festival) kamu sudah *BERHASIL DIVERIFIKASI*! 🎉🎟️%0A%0A*DETAIL TIKET RESMI:*%0A• Order ID: *#${o.id}*%0A• Nama: ${o.customer.fullName}%0A• Kursi: *${seatsStr}* (${catStr})%0A• Total: Rp ${o.totalAmount.toLocaleString('id-ID')}%0A• Status: *LUNAS (PAID)*%0A%0A*LINK E-TICKET & QR CODE KAMU:*%0A👉 https://chords-of-comfort-ticketing.vercel.app/ticket/${o.id}%0A%0A⚠️ *PENTING:*%0A1. Simpan link atau screenshot QR Code pada tiket di atas.%0A2. Tunjukkan QR Code kepada panitia di meja registrasi saat Open Gate (Pkl 17:00 WIB, 19 Des 2026).%0A%0ASampai jumpa di panggung teater musikal! 🎭🌟%0AInstagram: @chordsofcomfort.theater%0AInfo / Bantuan: WA 0819-1534-8866`;
+    const msg = `Hello ${encodeURIComponent(o.customer.fullName)}! ✨%0A%0AYour ticket payment for *Chords of Comfort* (LSPR COMM30-6SP • The 35th LSPR Theater Festival) has been *SUCCESSFULLY VERIFIED*! 🎉🎟️%0A%0A*OFFICIAL TICKET DETAILS:*%0A• Order ID: *#${o.id}*%0A• Name: ${encodeURIComponent(o.customer.fullName)}%0A• Seats: *${encodeURIComponent(seatsStr)}* (${encodeURIComponent(catStr)})%0A• Total Paid: Rp ${o.totalAmount.toLocaleString('id-ID')}%0A• Status: *PAID (VERIFIED)*%0A%0A*YOUR OFFICIAL E-TICKET & QR PASS:*%0A👉 https://chords-of-comfort-ticketing.vercel.app/ticket/${o.id}%0A%0A⚠️ *IMPORTANT INSTRUCTIONS:*%0A1. Save your ticket link or take a screenshot of the QR Code.%0A2. Present your QR Code at the registration desk upon gate opening (January 2027 • Amani Palladium Theatre, LSPR Bekasi).%0A%0AWe look forward to seeing you at the musical! 🎭🌟%0AInstagram: @chordsofcomfort.theater%0ASupport: WA 0819-1534-8866`;
     return `https://wa.me/${cleanPhone}?text=${msg}`;
   };
 
   const buildFollowUpWaUrl = (o: Order) => {
     const cleanPhone = o.customer.phone.replace(/[^0-9]/g, '').replace(/^0/, '62');
     const seatsStr = o.items.map((i) => i.seatLabel).join(', ');
-    const msg = `Halo Kak ${o.customer.fullName}! 👋%0A%0AKami dari Panitia Ticketing *Chords of Comfort* (LSPR COMM30-6SP).%0A%0AMengingatkan reservasi tiket kamu:%0A• Order ID: *#${o.id}*%0A• Kursi: *${seatsStr}*%0A• Total Tagihan: *Rp ${o.totalAmount.toLocaleString('id-ID')}*%0A• Status: *Menunggu Transfer*%0A%0A*Rekening Pembayaran Panitia:*%0A- BCA: *7650892101* (a.n. Viona)%0A- Mandiri: *1220019283741*%0A- E-Wallet (GoPay/Dana): *081915348866*%0A%0AMohon segera kirimkan bukti transfernya ya kak agar nomor kursi tidak otomatis terlepas ke pembeli lain. Terima kasih banyak! 🙏🎭`;
-    return `https://wa.me/${cleanPhone}?text=${msg}`;
-  };
-
-  const buildRejectWaUrl = (o: Order) => {
-    const cleanPhone = o.customer.phone.replace(/[^0-9]/g, '').replace(/^0/, '62');
-    const msg = `Halo Kak ${o.customer.fullName}, mohon maaf pesanan tiket Chords of Comfort kamu (*Order ID: #${o.id}*) telah kami batalkan karena batas waktu pembayaran telah berakhir / bukti transfer tidak valid. Kursi telah dirilis kembali. Jika ada kendala silakan hubungi kami di 0819-1534-8866. Terima kasih!`;
+    const msg = `Hello ${encodeURIComponent(o.customer.fullName)}! 👋%0A%0AThis is the Ticketing Team for *Chords of Comfort* (LSPR COMM30-6SP).%0A%0AFriendly reminder regarding your ticket reservation:%0A• Order ID: *#${o.id}*%0A• Seats: *${encodeURIComponent(seatsStr)}*%0A• Total Amount: *Rp ${o.totalAmount.toLocaleString('id-ID')}*%0A• Status: *Awaiting Bank Transfer*%0A%0A*Committee Bank Accounts:*%0A- BCA: *7650892101* (a.n. Viona)%0A- Mandiri: *1220019283741*%0A- E-Wallet (GoPay/Dana): *081915348866*%0A%0APlease reply with your transfer receipt to secure your reserved seats before they are automatically released. Thank you! 🙏🎭`;
     return `https://wa.me/${cleanPhone}?text=${msg}`;
   };
 
@@ -316,7 +308,7 @@ export default function AdminPage() {
   const handleCreateManualOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!manualForm.fullName.trim() || !manualForm.seatId) {
-      alert('Nama tamu dan nomor kursi wajib diisi.');
+      alert('Guest name and seat selection are required.');
       return;
     }
 
@@ -340,7 +332,7 @@ export default function AdminPage() {
 
       const data = await res.json();
       if (data.success) {
-        alert(`Tiket tamu berhasil diterbitkan! Order ID: ${data.order.id}`);
+        alert(`Guest ticket successfully issued! Order ID: #${data.order.id}`);
         setManualForm({
           fullName: '',
           email: '',
@@ -352,7 +344,7 @@ export default function AdminPage() {
         setActiveTab('transactions');
         fetchAdminData();
       } else {
-        alert(data.error || 'Gagal membuat pesanan manual.');
+        alert(data.error || 'Failed to create manual order.');
       }
     } catch (err) {
       alert((err as Error).message);
@@ -364,24 +356,24 @@ export default function AdminPage() {
   // Export CSV
   const handleExportCSV = () => {
     if (orders.length === 0) {
-      alert('Tidak ada data transaksi untuk diekspor.');
+      alert('No transaction records available to export.');
       return;
     }
 
     const headers = [
       'Order ID',
-      'Tanggal Pembelian',
-      'Nama Pembeli',
+      'Booking Date',
+      'Attendee Name',
       'Email',
-      'Nomor WhatsApp',
-      'Daftar Nomor Kursi',
-      'Kategori',
-      'Total Kursi',
-      'Total Bayar (Rp)',
-      'Status Pembayaran',
-      'Metode Pembayaran',
-      'Status Kehadiran Gate',
-      'Waktu Check-In',
+      'WhatsApp Phone',
+      'Seat Numbers',
+      'Tier Category',
+      'Total Seats',
+      'Total Amount (IDR)',
+      'Payment Status',
+      'Payment Method',
+      'Gate Check-In Status',
+      'Check-In Timestamp',
     ];
 
     const rows = orders.map((o) => {
@@ -390,24 +382,24 @@ export default function AdminPage() {
       const checkedInStr = o.items.every((i) => i.isCheckedIn)
         ? 'Checked In'
         : o.items.some((i) => i.isCheckedIn)
-        ? 'Sebagian'
-        : 'Belum';
+        ? 'Partial'
+        : 'Pending';
       const checkInTime = o.items[0]?.checkedInAt
-        ? new Date(o.items[0].checkedInAt).toLocaleString('id-ID')
+        ? new Date(o.items[0].checkedInAt).toLocaleString('en-US')
         : '-';
 
       return [
         `"${o.id}"`,
-        `"${new Date(o.createdAt).toLocaleString('id-ID')}"`,
+        `"${new Date(o.createdAt).toLocaleString('en-US')}"`,
         `"${o.customer.fullName}"`,
         `"${o.customer.email}"`,
-        `"'${o.customer.phone}"`, // prefix with single quote to preserve leading zero in Excel
+        `"'${o.customer.phone}"`, // prefix with single quote to preserve leading zero
         `"${seatsStr}"`,
         `"${catStr}"`,
         o.items.length,
         o.totalAmount,
         `"${o.paymentStatus.toUpperCase()}"`,
-        `"${o.paymentMethod || 'QRIS'}"`,
+        `"${o.paymentMethod || 'BANK_TRANSFER'}"`,
         `"${checkedInStr}"`,
         `"${checkInTime}"`,
       ].join(',');
@@ -417,7 +409,7 @@ export default function AdminPage() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `CHORDS_OF_COMFORT_Penjualan_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `CHORDS_OF_COMFORT_Attendees_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -430,7 +422,7 @@ export default function AdminPage() {
   const handleResetData = async () => {
     if (
       !confirm(
-        'PERINGATAN: Apakah Anda yakin ingin me-reset seluruh transaksi dan mengembalikan 300 kursi menjadi TERSEDIA? Seluruh data penjualan demo akan dibersihkan.'
+        'WARNING: Are you sure you want to reset all transactions and restore all 300 seats to AVAILABLE? All demo order records will be cleared.'
       )
     ) {
       return;
@@ -441,11 +433,11 @@ export default function AdminPage() {
       const res = await fetch('/api/admin/reset', { method: 'POST' });
       const data = await res.json();
       if (data.success) {
-        alert('Database tiket berhasil di-reset.');
+        alert('Ticketing database reset successfully.');
         fetchAdminData();
       }
     } catch (err) {
-      alert('Gagal me-reset: ' + (err as Error).message);
+      alert('Failed to reset: ' + (err as Error).message);
     } finally {
       setIsResetting(false);
     }
@@ -489,7 +481,7 @@ export default function AdminPage() {
 
             <div>
               <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                Username / Email Panitia *
+                Committee Username / Email *
               </label>
               <div className="relative">
                 <Mail className="w-4 h-4 absolute left-3 top-3.5 text-slate-400" />
@@ -527,13 +519,13 @@ export default function AdminPage() {
               className="w-full cursor-pointer bg-[#C1272D] hover:bg-[#a61f25] disabled:bg-slate-400 text-white py-3.5 rounded-xl font-bebas text-xl tracking-wider border-2 border-[#0F1C30] shadow-[0_4px_0_#0F1C30] hover:translate-y-0.5 active:translate-y-1 transition-all flex items-center justify-center gap-2"
             >
               <ShieldCheck className="w-5 h-5 text-[#F4B32A]" />
-              <span>{isLoggingIn ? 'MEMVALIDASI...' : 'MASUK KE DASHBOARD'}</span>
+              <span>{isLoggingIn ? 'VALIDATING CREDENTIALS...' : 'SIGN IN TO DASHBOARD'}</span>
             </button>
 
-            {/* Quick Login Chips for Panitia */}
+            {/* Quick Login Chips for Committee */}
             <div className="pt-3 border-t-2 border-dashed border-slate-200">
               <span className="text-[11px] font-bold text-slate-500 uppercase block mb-2">
-                Pilih Akun Panitia (Quick Login):
+                Quick Sign-In Accounts:
               </span>
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -560,7 +552,7 @@ export default function AdminPage() {
                 href="/"
                 className="text-xs font-bold text-slate-500 hover:text-[#182B49] transition-colors"
               >
-                ← Kembali ke Halaman Utama Website
+                ← Return to Public Website
               </Link>
             </div>
 
@@ -585,7 +577,7 @@ export default function AdminPage() {
             <Link
               href="/"
               className="p-2 sm:p-2.5 rounded-xl bg-slate-800 hover:bg-[#C1272D] text-slate-300 hover:text-white transition-colors"
-              title="Kembali ke Beranda"
+              title="Return to Homepage"
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
@@ -595,11 +587,11 @@ export default function AdminPage() {
                   <ShieldCheck className="w-3.5 h-3.5" /> TICKETING CONTROL PANEL
                 </span>
                 <span className="text-xs font-semibold text-emerald-400">
-                  ● Sedang Bertugas: <strong>{currentUser.name}</strong> ({currentUser.email})
+                  ● On Duty: <strong>{currentUser.name}</strong> ({currentUser.email})
                 </span>
               </div>
               <h1 className="font-bebas text-2xl sm:text-4xl text-[#FAF6ED] leading-none">
-                CHORDS OF COMFORT • PANITIA COMM30-6SP
+                CHORDS OF COMFORT • COMM30-6SP COMMITTEE
               </h1>
             </div>
           </div>
@@ -611,7 +603,7 @@ export default function AdminPage() {
               className="cursor-pointer bg-[#F4B32A] hover:bg-amber-400 text-[#0F1C30] px-3.5 py-2 rounded-xl font-bebas text-sm sm:text-base tracking-wider border-2 border-[#0F1C30] shadow-sm flex items-center gap-1.5"
             >
               <QrCode className="w-4 h-4" />
-              <span>Scan Gate HP</span>
+              <span>Gate QR Scanner</span>
             </Link>
 
             <button
@@ -625,19 +617,19 @@ export default function AdminPage() {
             <button
               onClick={handlePrintAttendanceList}
               className="cursor-pointer bg-[#FAF6ED] hover:bg-slate-100 text-[#182B49] px-3.5 py-2 rounded-xl font-bebas text-sm sm:text-base tracking-wider border-2 border-[#0F1C30] shadow-sm flex items-center gap-1.5"
-              title="Cetak Daftar Hadir Gate"
+              title="Print Gate Attendance List"
             >
               <Printer className="w-4 h-4 text-[#C1272D]" />
-              <span>Cetak Daftar Hadir</span>
+              <span>Print Attendance List</span>
             </button>
 
             <button
               onClick={handleLogout}
               className="cursor-pointer bg-slate-800 hover:bg-[#C1272D] text-slate-300 hover:text-white px-3 py-2 rounded-xl font-bebas text-sm tracking-wider border border-slate-700 transition-colors flex items-center gap-1.5"
-              title="Logout"
+              title="Sign Out"
             >
               <LogOut className="w-4 h-4" />
-              <span>Keluar</span>
+              <span>Sign Out</span>
             </button>
           </div>
 
@@ -645,9 +637,9 @@ export default function AdminPage() {
 
         {/* Printable Attendance Header (Only visible on Print) */}
         <div className="hidden print:block p-4 border-b-2 border-black text-center">
-          <h2 className="text-xl font-bold uppercase">DAFTAR HADIR REGISTRASI PENONTON</h2>
-          <p className="text-sm">Musical Theater LSPR COMM30-6SP: Chords of Comfort • Auditorium Sudirman Park</p>
-          <p className="text-xs text-slate-600">Dicetak pada: {new Date().toLocaleString('id-ID')}</p>
+          <h2 className="text-xl font-bold uppercase">OFFICIAL AUDIENCE ATTENDANCE & GATE CHECK-IN ROSTER</h2>
+          <p className="text-sm">Musical Theater LSPR COMM30-6SP: Chords of Comfort • Amani Palladium Theatre, LSPR Bekasi</p>
+          <p className="text-xs text-slate-600">Printed: {new Date().toLocaleString('en-US')}</p>
         </div>
 
         {/* Analytics KPI Cards */}
@@ -656,7 +648,7 @@ export default function AdminPage() {
             
             <div className="bg-white p-4 sm:p-5 rounded-2xl border-3 border-[#0F1C30] shadow-[0_4px_0_#0F1C30]">
               <div className="flex items-center justify-between text-slate-500 mb-1 sm:mb-2">
-                <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider">Total Pendapatan</span>
+                <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider">Total Revenue</span>
                 <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center border border-emerald-300">
                   <TrendingUp className="w-4 h-4" />
                 </div>
@@ -665,19 +657,19 @@ export default function AdminPage() {
                 Rp {stats.totalRevenue.toLocaleString('id-ID')}
               </div>
               <p className="text-[10px] sm:text-[11px] font-semibold text-slate-500 mt-1">
-                Dari {stats.paidOrdersCount} transaksi lunas
+                From {stats.paidOrdersCount} verified transactions
               </p>
             </div>
 
             <div className="bg-white p-4 sm:p-5 rounded-2xl border-3 border-[#0F1C30] shadow-[0_4px_0_#0F1C30]">
               <div className="flex items-center justify-between text-slate-500 mb-1 sm:mb-2">
-                <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider">Tiket Terjual</span>
+                <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider">Tickets Sold</span>
                 <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center border border-blue-300">
                   <Ticket className="w-4 h-4" />
                 </div>
               </div>
               <div className="font-bebas text-2xl sm:text-4xl text-[#182B49] leading-tight">
-                {stats.soldSeats} <span className="text-sm sm:text-lg text-slate-400">/ {stats.totalCapacity || 300} Kursi</span>
+                {stats.soldSeats} <span className="text-sm sm:text-lg text-slate-400">/ {stats.totalCapacity || 300} Seats</span>
               </div>
               <div className="w-full bg-slate-100 rounded-full h-2 mt-2 overflow-hidden border border-slate-200">
                 <div
@@ -689,31 +681,31 @@ export default function AdminPage() {
 
             <div className="bg-white p-4 sm:p-5 rounded-2xl border-3 border-[#0F1C30] shadow-[0_4px_0_#0F1C30]">
               <div className="flex items-center justify-between text-slate-500 mb-1 sm:mb-2">
-                <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider">Kursi Tersedia</span>
+                <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider">Available Seats</span>
                 <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center border border-amber-300">
                   <Users className="w-4 h-4" />
                 </div>
               </div>
               <div className="font-bebas text-2xl sm:text-4xl text-[#182B49] leading-tight">
-                {stats.availableSeats} Kursi
+                {stats.availableSeats} Seats
               </div>
               <p className="text-[10px] sm:text-[11px] font-semibold text-slate-500 mt-1">
-                {stats.heldSeats} kursi sedang di-hold pembeli
+                {stats.heldSeats} seats temporarily held
               </p>
             </div>
 
             <div className="bg-white p-4 sm:p-5 rounded-2xl border-3 border-[#0F1C30] shadow-[0_4px_0_#0F1C30]">
               <div className="flex items-center justify-between text-slate-500 mb-1 sm:mb-2">
-                <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider">Kehadiran (Check-In)</span>
+                <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider">Gate Check-In</span>
                 <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center border border-purple-300">
                   <QrCode className="w-4 h-4" />
                 </div>
               </div>
               <div className="font-bebas text-2xl sm:text-4xl text-[#182B49] leading-tight">
-                {stats.totalCheckIns} Hadir
+                {stats.totalCheckIns} Checked In
               </div>
               <p className="text-[10px] sm:text-[11px] font-semibold text-slate-500 mt-1">
-                {stats.soldSeats > 0 ? Math.round((stats.totalCheckIns / stats.soldSeats) * 100) : 0}% rasio kehadiran gate
+                {stats.soldSeats > 0 ? Math.round((stats.totalCheckIns / stats.soldSeats) * 100) : 0}% gate attendance rate
               </p>
             </div>
 
@@ -724,7 +716,7 @@ export default function AdminPage() {
         {stats?.categoryStats && (
           <div className="bg-white p-4 sm:p-5 rounded-3xl border-3 border-[#0F1C30] shadow-[0_4px_0_#0F1C30] print:hidden">
             <h3 className="font-bebas text-xl sm:text-2xl text-[#182B49] mb-3">
-              RINCIAN PENJUALAN PER KATEGORI KURSI
+              SALES BREAKDOWN BY SEATING TIER
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
               {(Object.keys(stats.categoryStats) as TicketCategory[]).map((cat) => {
@@ -743,10 +735,10 @@ export default function AdminPage() {
                       {cat}
                     </span>
                     <div className="text-xs font-bold text-slate-600">
-                      Terjual: <span className="text-[#C1272D] font-black">{s.sold}</span> / {s.total}
+                      Sold: <span className="text-[#C1272D] font-black">{s.sold}</span> / {s.total}
                     </div>
                     <div className="text-[10px] text-slate-500">
-                      Sisa: {s.available} kursi
+                      Remaining: {s.available} seats
                     </div>
                     <div className="text-xs font-black text-emerald-700 mt-1.5">
                       Rp {s.revenue.toLocaleString('id-ID')}
@@ -773,7 +765,7 @@ export default function AdminPage() {
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                Daftar Pembeli & Kursi ({orders.length})
+                Orders & Attendees ({orders.length})
               </button>
 
               <button
@@ -784,7 +776,7 @@ export default function AdminPage() {
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                Denah Kursi & Pemilik ({seats.length})
+                Seat Map & Occupancy ({seats.length})
               </button>
 
               <button
@@ -796,7 +788,7 @@ export default function AdminPage() {
                 }`}
               >
                 <PlusCircle className="w-4 h-4" />
-                <span>+ Reservasi Manual / VIP</span>
+                <span>+ Manual / VIP Reservation</span>
               </button>
 
               <button
@@ -808,7 +800,7 @@ export default function AdminPage() {
                 }`}
               >
                 <MessageCircle className="w-4 h-4" />
-                <span>💬 Template Chat WA</span>
+                <span>💬 WhatsApp Templates</span>
               </button>
             </div>
 
@@ -817,10 +809,10 @@ export default function AdminPage() {
               onClick={handleResetData}
               disabled={isResetting}
               className="cursor-pointer bg-slate-100 hover:bg-red-50 text-red-700 px-3 py-1.5 rounded-xl text-xs font-bold border border-red-300 transition-colors flex items-center gap-1.5 shrink-0 self-end md:self-auto"
-              title="Reset data transaksi"
+              title="Reset transaction records"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span>Reset Data Demo</span>
+              <span>Reset Demo Data</span>
             </button>
 
           </div>
@@ -835,7 +827,7 @@ export default function AdminPage() {
                   <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
                   <input
                     type="text"
-                    placeholder="Cari Nama, WhatsApp, Order ID, Nomor Kursi..."
+                    placeholder="Search by Name, WhatsApp, Order ID, Seat Number..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 text-xs font-medium bg-[#FAF6ED] rounded-xl border border-slate-300 focus:outline-none focus:border-[#182B49]"
@@ -847,9 +839,9 @@ export default function AdminPage() {
                   onChange={(e) => setStatusFilter(e.target.value as any)}
                   className="bg-[#FAF6ED] border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none"
                 >
-                  <option value="ALL">Semua Status Bayar</option>
-                  <option value="paid">Hanya Lunas (PAID)</option>
-                  <option value="pending">Hanya Menunggu (PENDING)</option>
+                  <option value="ALL">All Payment Statuses</option>
+                  <option value="paid">Paid (Verified)</option>
+                  <option value="pending">Pending Payment</option>
                 </select>
 
                 <select
@@ -857,9 +849,9 @@ export default function AdminPage() {
                   onChange={(e) => setCheckInFilter(e.target.value as any)}
                   className="bg-[#FAF6ED] border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none"
                 >
-                  <option value="ALL">Semua Status Gate</option>
-                  <option value="checked_in">Sudah Check-In</option>
-                  <option value="not_checked_in">Belum Hadir</option>
+                  <option value="ALL">All Gate Statuses</option>
+                  <option value="checked_in">Checked In</option>
+                  <option value="not_checked_in">Not Yet Checked In</option>
                 </select>
               </div>
 
@@ -867,20 +859,20 @@ export default function AdminPage() {
               <div className="overflow-x-auto rounded-2xl border border-slate-200">
                 {filteredOrders.length === 0 ? (
                   <div className="p-12 text-center text-slate-500 text-sm font-semibold">
-                    Tidak ada pembeli atau transaksi yang cocok dengan filter.
+                    No orders or attendees match the current filters.
                   </div>
                 ) : (
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
                       <tr className="bg-[#FAF6ED] border-b-2 border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
                         <th className="p-3">Order ID</th>
-                        <th className="p-3">Nama Pembeli</th>
-                        <th className="p-3">Kontak (WhatsApp / Email)</th>
-                        <th className="p-3">Nomor Kursi</th>
-                        <th className="p-3">Total Bayar</th>
-                        <th className="p-3">Status Bayar</th>
+                        <th className="p-3">Attendee Name</th>
+                        <th className="p-3">Contact (WhatsApp / Email)</th>
+                        <th className="p-3">Seats</th>
+                        <th className="p-3">Total Amount</th>
+                        <th className="p-3">Payment Status</th>
                         <th className="p-3">Gate Check-In</th>
-                        <th className="p-3 text-right print:hidden">Aksi</th>
+                        <th className="p-3 text-right print:hidden">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 font-medium">
@@ -891,7 +883,7 @@ export default function AdminPage() {
                           <td className="p-3 font-mono font-black text-[#182B49]">
                             <div>{o.id}</div>
                             <div className="text-[10px] text-slate-400 font-sans font-normal">
-                              {new Date(o.createdAt).toLocaleTimeString('id-ID', {
+                              {new Date(o.createdAt).toLocaleTimeString('en-US', {
                                 hour: '2-digit',
                                 minute: '2-digit',
                                 day: 'numeric',
@@ -919,7 +911,7 @@ export default function AdminPage() {
                               target="_blank"
                               rel="noreferrer"
                               className="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-900 font-bold text-xs"
-                              title="Chat WhatsApp"
+                              title="Chat on WhatsApp"
                             >
                               <Phone className="w-3.5 h-3.5 text-emerald-600" />
                               <span>{o.customer.phone}</span>
@@ -950,7 +942,7 @@ export default function AdminPage() {
                               Rp {o.totalAmount.toLocaleString('id-ID')}
                             </span>
                             <div className="text-[10px] text-slate-400 uppercase">
-                              {o.paymentMethod || 'QRIS'}
+                              {o.paymentMethod || 'BANK_TRANSFER'}
                             </div>
                           </td>
 
@@ -959,17 +951,17 @@ export default function AdminPage() {
                             {o.paymentStatus === 'paid' ? (
                               <div className="space-y-1.5">
                                 <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full font-bold text-[10px]">
-                                  <CheckCircle2 className="w-3 h-3 text-emerald-600" /> PAID (LUNAS)
+                                  <CheckCircle2 className="w-3 h-3 text-emerald-600" /> PAID (VERIFIED)
                                 </span>
                                 <a
                                   href={buildSendTicketWaUrl(o)}
                                   target="_blank"
                                   rel="noreferrer"
                                   className="inline-flex items-center gap-1 bg-[#25D366] hover:bg-[#20ba59] text-white px-2 py-1 rounded-md text-[10px] font-bold shadow-xs transition-transform active:scale-95"
-                                  title="Kirim link E-Ticket resmi ke WhatsApp pembeli"
+                                  title="Send official E-Ticket link to attendee via WhatsApp"
                                 >
                                   <MessageCircle className="w-3 h-3 fill-current" />
-                                  <span>Kirim Tiket WA</span>
+                                  <span>Send Ticket WA</span>
                                 </a>
                               </div>
                             ) : (
@@ -982,17 +974,17 @@ export default function AdminPage() {
                                     onClick={() => handleMarkAsPaid(o.id)}
                                     className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-2 py-0.5 rounded text-[10px] font-bold text-center"
                                   >
-                                    ✓ Approve Lunas
+                                    ✓ Approve Payment
                                   </button>
                                   <a
                                     href={buildFollowUpWaUrl(o)}
                                     target="_blank"
                                     rel="noreferrer"
                                     className="inline-flex items-center gap-1 bg-amber-500 hover:bg-amber-600 text-white px-2 py-0.5 rounded text-[10px] font-bold justify-center"
-                                    title="Ingatkan pembeli via WhatsApp untuk segera transfer"
+                                    title="Remind attendee via WhatsApp to complete bank transfer"
                                   >
                                     <MessageCircle className="w-3 h-3" />
-                                    <span>Tagih WA</span>
+                                    <span>Remind WA</span>
                                   </a>
                                 </div>
                               </div>
@@ -1005,7 +997,7 @@ export default function AdminPage() {
                               <button
                                 onClick={() => handleToggleCheckIn(o.id)}
                                 className="inline-flex items-center gap-1 text-emerald-800 font-bold text-[10px] bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-300 print:border-0"
-                                title="Klik untuk membatalkan check-in"
+                                title="Click to undo check-in"
                               >
                                 <UserCheck className="w-3.5 h-3.5" />
                                 <span>Checked In</span>
@@ -1014,9 +1006,9 @@ export default function AdminPage() {
                               <button
                                 onClick={() => handleToggleCheckIn(o.id)}
                                 className="inline-flex items-center gap-1 text-slate-600 hover:text-emerald-700 text-[10px] font-bold bg-slate-100 hover:bg-emerald-50 px-2 py-1 rounded-lg border border-slate-300 print:hidden"
-                                title="Klik untuk manual check-in"
+                                title="Click to manually check in guest"
                               >
-                                <span>Check-In Tamu</span>
+                                <span>Check-In Guest</span>
                               </button>
                             )}
                           </td>
@@ -1026,15 +1018,15 @@ export default function AdminPage() {
                             <button
                               onClick={() => setSelectedOrder(o)}
                               className="text-[11px] font-bold text-[#182B49] bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded-lg border border-slate-300"
-                              title="Lihat Rincian Pesanan"
+                              title="View Order Details"
                             >
-                              Detail
+                              Details
                             </button>
 
                             <button
                               onClick={() => setEditingOrder(o)}
                               className="text-[11px] font-bold text-slate-700 bg-slate-100 hover:bg-amber-50 hover:text-amber-800 px-2 py-1 rounded-lg border border-slate-300 inline-flex items-center gap-1"
-                              title="Edit Data Pembeli (CRUD Update)"
+                              title="Edit Attendee Info (CRUD Update)"
                             >
                               <Edit3 className="w-3 h-3" />
                               <span>Edit</span>
@@ -1044,15 +1036,15 @@ export default function AdminPage() {
                               href={`/ticket/${o.id}`}
                               target="_blank"
                               className="text-[11px] font-bold text-blue-600 hover:text-blue-800 underline"
-                              title="Buka E-Ticket"
+                              title="Open E-Ticket Pass"
                             >
-                              Tiket
+                              Ticket
                             </Link>
 
                             <button
                               onClick={() => handleDeleteOrder(o.id)}
                               className="text-slate-400 hover:text-red-600 p-1 rounded hover:bg-red-50 transition-colors"
-                              title="Tolak / Hapus Order (Lepas Kursi)"
+                              title="Cancel / Delete Order (Release Seats)"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -1076,7 +1068,7 @@ export default function AdminPage() {
                 <div className="flex items-center gap-2 text-xs font-bold text-amber-900">
                   <Info className="w-4 h-4 text-amber-600 shrink-0" />
                   <span>
-                    Klik kursi manapun pada denah di bawah untuk melihat nama pemilik, nomor WhatsApp, atau membuat reservasi khusus VIP.
+                    Click any seat on the floor map below to inspect attendee details, contact info, or assign honorary VIP reservations.
                   </span>
                 </div>
               </div>
@@ -1088,13 +1080,13 @@ export default function AdminPage() {
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <span className="font-bebas text-2xl text-[#F4B32A]">
-                          KURSI {inspectedSeat.label}
+                          SEAT {inspectedSeat.label}
                         </span>
                         <span
                           className="text-xs font-bold px-2 py-0.5 rounded text-white"
                           style={{ backgroundColor: CATEGORY_INFO[inspectedSeat.category].color }}
                         >
-                          {inspectedSeat.category} (Rp{inspectedSeat.price.toLocaleString('id-ID')})
+                          {inspectedSeat.category} (Rp {inspectedSeat.price.toLocaleString('id-ID')})
                         </span>
                         <span
                           className={`text-xs font-black uppercase px-2 py-0.5 rounded ${
@@ -1114,12 +1106,12 @@ export default function AdminPage() {
                         (() => {
                           const ownerOrder = orders.find((o) => o.id === inspectedSeat.orderId);
                           if (!ownerOrder) {
-                            return <p className="text-xs text-slate-300">Order ID: {inspectedSeat.orderId}</p>;
+                            return <p className="text-xs text-slate-300">Order ID: #{inspectedSeat.orderId}</p>;
                           }
                           return (
                             <div className="mt-2 text-xs space-y-1 text-slate-200">
                               <div>
-                                Nama Pembeli: <strong className="text-white text-sm">{ownerOrder.customer.fullName}</strong>
+                                Attendee Name: <strong className="text-white text-sm">{ownerOrder.customer.fullName}</strong>
                               </div>
                               <div className="flex items-center gap-3">
                                 <span>WhatsApp: <strong className="text-emerald-400">{ownerOrder.customer.phone}</strong></span>
@@ -1131,7 +1123,7 @@ export default function AdminPage() {
                                   target="_blank"
                                   className="bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded text-xs font-bold inline-flex items-center gap-1"
                                 >
-                                  <span>Buka Tiket {ownerOrder.id}</span>
+                                  <span>View E-Ticket #{ownerOrder.id}</span>
                                   <ExternalLink className="w-3 h-3" />
                                 </Link>
                               </div>
@@ -1140,7 +1132,7 @@ export default function AdminPage() {
                         })()
                       ) : (
                         <div className="mt-2 text-xs text-slate-300">
-                          Kursi ini masih kosong. Anda dapat mengalokasikannya ke tamu kehormatan melalui tab <strong>Reservasi Manual / VIP</strong>.
+                          This seat is currently available. You can allocate it to special guests via the <strong>Manual / VIP Reservation</strong> tab.
                         </div>
                       )}
                     </div>
@@ -1155,7 +1147,7 @@ export default function AdminPage() {
                 </div>
               )}
 
-              {/* Grid of all 400 seats */}
+              {/* Grid of all 300 seats */}
               <div className="grid grid-cols-4 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-1.5 max-h-[500px] overflow-y-auto p-2 bg-[#FAF6ED] rounded-2xl border border-slate-300">
                 {seats.map((seat) => (
                   <button
@@ -1184,10 +1176,10 @@ export default function AdminPage() {
               
               <div className="mb-4">
                 <h3 className="font-bebas text-2xl text-[#182B49]">
-                  PENERBITAN TIKET MANUAL / RESERVASI VIP
+                  MANUAL TICKET ISSUANCE & VIP RESERVATION
                 </h3>
                 <p className="text-xs text-slate-600 font-medium">
-                  Gunakan formulir ini untuk menerbitkan tiket bagi Tamu VIP, Dosen, Sponsor, atau pembayaran tunai di tempat.
+                  Use this form to issue tickets for VIP Guests, Faculty, Sponsors, or on-site cash payments.
                 </p>
               </div>
 
@@ -1195,12 +1187,12 @@ export default function AdminPage() {
                 
                 <div>
                   <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                    Nama Tamu / Penerima Tiket *
+                    Guest / Recipient Full Name *
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="Contoh: Bpk. Dekan / Sponsor Utama"
+                    placeholder="e.g. Dean of Communication / Primary Sponsor"
                     value={manualForm.fullName}
                     onChange={(e) => setManualForm({ ...manualForm, fullName: e.target.value })}
                     className="w-full px-3 py-2 bg-[#FAF6ED] rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:border-[#182B49]"
@@ -1210,7 +1202,7 @@ export default function AdminPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                      Nomor WhatsApp / HP
+                      WhatsApp / Phone Number
                     </label>
                     <input
                       type="tel"
@@ -1223,7 +1215,7 @@ export default function AdminPage() {
 
                   <div>
                     <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                      Alamat Email
+                      Email Address
                     </label>
                     <input
                       type="email"
@@ -1237,7 +1229,7 @@ export default function AdminPage() {
 
                 <div>
                   <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                    Pilih Nomor Kursi yang Masih Tersedia * ({availableSeatsList.length} Tersedia)
+                    Select Available Seat * ({availableSeatsList.length} Available)
                   </label>
                   <select
                     required
@@ -1245,10 +1237,10 @@ export default function AdminPage() {
                     onChange={(e) => setManualForm({ ...manualForm, seatId: e.target.value })}
                     className="w-full px-3 py-2 bg-[#FAF6ED] rounded-xl border border-slate-300 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#182B49]"
                   >
-                    <option value="">-- Pilih Kursi --</option>
+                    <option value="">-- Choose Seat --</option>
                     {availableSeatsList.map((s) => (
                       <option key={s.id} value={s.id}>
-                        {s.label} • {s.category} ({s.section === 'BALCONY' ? 'Balkon' : 'Main Floor'}) - Rp{s.price.toLocaleString('id-ID')}
+                        {s.label} • {s.category} ({s.section === 'BALCONY' ? 'Balcony' : 'Main Floor'}) - Rp {s.price.toLocaleString('id-ID')}
                       </option>
                     ))}
                   </select>
@@ -1256,17 +1248,17 @@ export default function AdminPage() {
 
                 <div>
                   <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                    Jenis Reservasi / Metode
+                    Reservation Type / Payment Method
                   </label>
                   <select
                     value={manualForm.paymentMethod}
                     onChange={(e) => setManualForm({ ...manualForm, paymentMethod: e.target.value })}
                     className="w-full px-3 py-2 bg-[#FAF6ED] rounded-xl border border-slate-300 text-xs font-bold text-slate-800 focus:outline-none"
                   >
-                    <option value="INVITATION_VIP">Undangan Gratis / VIP Guest</option>
+                    <option value="INVITATION_VIP">Complimentary VIP Invitation</option>
                     <option value="SPONSOR_COMP">Sponsor & Media Partner</option>
-                    <option value="CASH_ON_SITE">Bayar Tunai di Tempat (Cash)</option>
-                    <option value="DIRECT_TRANSFER">Transfer Manual Bank Panitia</option>
+                    <option value="CASH_ON_SITE">On-Site Cash Payment</option>
+                    <option value="DIRECT_TRANSFER">Direct Bank Transfer</option>
                   </select>
                 </div>
 
@@ -1274,10 +1266,10 @@ export default function AdminPage() {
                   <button
                     type="submit"
                     disabled={isCreatingManual}
-                    className="bg-[#C1272D] hover:bg-[#a61f25] text-white px-6 py-3 rounded-xl font-bebas text-lg tracking-wider border-2 border-[#0F1C30] shadow-[0_3px_0_#0F1C30] transition-all flex items-center gap-2"
+                    className="bg-[#C1272D] hover:bg-[#a61f25] text-white px-6 py-3 rounded-xl font-bebas text-lg tracking-wider border-2 border-[#0F1C30] shadow-[0_3px_0_#0F1C30] transition-all flex items-center gap-2 cursor-pointer"
                   >
                     <PlusCircle className="w-5 h-5 text-[#F4B32A]" />
-                    <span>{isCreatingManual ? 'MEMPROSES...' : 'TERBITKAN TIKET TAMU RESMI'}</span>
+                    <span>{isCreatingManual ? 'PROCESSING...' : 'ISSUE OFFICIAL GUEST TICKET'}</span>
                   </button>
                 </div>
 
@@ -1294,10 +1286,10 @@ export default function AdminPage() {
                 <div>
                   <div className="flex items-center gap-2 text-emerald-950 font-bebas text-xl">
                     <MessageCircle className="w-5 h-5 text-emerald-600 fill-emerald-600" />
-                    <span>TEMPLATE KOMUNIKASI WHATSAPP PANITIA</span>
+                    <span>OFFICIAL WHATSAPP COMMITTEE COMMUNICATION TEMPLATES</span>
                   </div>
                   <p className="text-xs text-emerald-800 font-medium mt-0.5">
-                    Nomor WhatsApp Resmi Panitia Ticketing: <strong>0819-1534-8866</strong> • Akun Instagram: <strong>@chordsofcomfort.theater</strong>
+                    Official WhatsApp Ticketing Contact: <strong>0819-1534-8866</strong> • Official Instagram: <strong>@chordsofcomfort.theater</strong>
                   </p>
                 </div>
 
@@ -1308,7 +1300,7 @@ export default function AdminPage() {
                   className="bg-[#25D366] hover:bg-[#20ba59] text-white px-4 py-2 rounded-xl text-xs font-bold border border-slate-900 shadow-sm flex items-center gap-1.5 shrink-0 self-start sm:self-auto"
                 >
                   <MessageCircle className="w-4 h-4 fill-current" />
-                  <span>Buka WA Panitia (081915348866)</span>
+                  <span>Open Committee WA (081915348866)</span>
                 </a>
               </div>
 
@@ -1319,12 +1311,12 @@ export default function AdminPage() {
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <span className="bg-emerald-100 text-emerald-900 font-bold text-[10px] uppercase px-2.5 py-0.5 rounded-full border border-emerald-300">
-                        Template 1: Pembayaran Lunas (Kirim E-Ticket)
+                        Template 1: Verified Payment (Send E-Ticket)
                       </span>
                       <button
                         onClick={() =>
                           copyToClipboard(
-                            `Halo Kak [Nama Pembeli]! ✨\n\nPembayaran tiket *Chords of Comfort* (LSPR COMM30-6SP • LSPR Theater 35th Festival) kamu sudah *BERHASIL DIVERIFIKASI*! 🎉🎟️\n\n*DETAIL TIKET RESMI:*\n• Order ID: *#[Order ID]*\n• Kursi: *[Nomor Kursi]* ([Kategori])\n• Total: Rp [Total Tagihan]\n• Status: *LUNAS (PAID)*\n\n*LINK E-TICKET & QR CODE KAMU:*\n👉 https://chords-of-comfort-ticketing.vercel.app/ticket/[Order ID]\n\n⚠️ *PENTING:*\n1. Simpan link atau screenshot QR Code pada tiket di atas.\n2. Tunjukkan QR Code kepada panitia di meja registrasi saat Open Gate (Pkl 17:00 WIB, 19 Des 2026).\n\nSampai jumpa di panggung teater musikal! 🎭🌟\nInstagram: @chordsofcomfort.theater\nInfo / Bantuan: WA 0819-1534-8866`,
+                            `Hello [Attendee Name]! ✨\n\nYour ticket payment for *Chords of Comfort* (LSPR COMM30-6SP • The 35th LSPR Theater Festival) has been *SUCCESSFULLY VERIFIED*! 🎉🎟️\n\n*OFFICIAL TICKET DETAILS:*\n• Order ID: *#[Order ID]*\n• Name: [Attendee Name]\n• Seats: *[Seat Numbers]* ([Category])\n• Total: Rp [Total Amount]\n• Status: *PAID (VERIFIED)*\n\n*YOUR OFFICIAL E-TICKET & QR PASS:*\n👉 https://chords-of-comfort-ticketing.vercel.app/ticket/[Order ID]\n\n⚠️ *IMPORTANT INSTRUCTIONS:*\n1. Save your ticket link or take a screenshot of the QR Code.\n2. Present your QR Code at the registration desk upon gate opening (January 2027 • Amani Palladium Theatre, LSPR Bekasi).\n\nWe look forward to welcoming you to the musical! 🎭🌟\nInstagram: @chordsofcomfort.theater\nSupport: WA 0819-1534-8866`,
                             'tmpl_1'
                           )
                         }
@@ -1333,41 +1325,41 @@ export default function AdminPage() {
                         {copiedTemplate === 'tmpl_1' ? (
                           <>
                             <Check className="w-3.5 h-3.5 text-emerald-600" />
-                            <span className="text-emerald-700">Tersalin!</span>
+                            <span className="text-emerald-700">Copied!</span>
                           </>
                         ) : (
                           <>
                             <Copy className="w-3.5 h-3.5 text-slate-500" />
-                            <span>Salin Teks</span>
+                            <span>Copy Text</span>
                           </>
                         )}
                       </button>
                     </div>
 
-                    <h4 className="font-bebas text-lg text-[#182B49]">KIRIM TIKET RESMI BERHASIL (PAID)</h4>
+                    <h4 className="font-bebas text-lg text-[#182B49]">OFFICIAL TICKET VERIFIED (PAID)</h4>
                     <p className="text-[11px] text-slate-500 mb-2 font-medium">
-                      Gunakan template ini setelah bukti transfer diverifikasi di rekening panitia.
+                      Use this template once bank transfer proof is verified in committee accounts.
                     </p>
 
                     <div className="bg-white p-3 rounded-xl border border-slate-300 text-xs font-mono text-slate-700 whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto">
-{`Halo Kak [Nama Pembeli]! ✨
+{`Hello [Attendee Name]! ✨
 
-Pembayaran tiket *Chords of Comfort* (LSPR COMM30-6SP • LSPR Theater 35th Festival) kamu sudah *BERHASIL DIVERIFIKASI*! 🎉🎟️
+Your ticket payment for *Chords of Comfort* (LSPR COMM30-6SP • The 35th LSPR Theater Festival) has been *SUCCESSFULLY VERIFIED*! 🎉🎟️
 
-*DETAIL TIKET RESMI:*
+*OFFICIAL TICKET DETAILS:*
 • Order ID: *#[Order ID]*
-• Kursi: *[Nomor Kursi]* ([Kategori])
-• Total: Rp [Total Tagihan]
-• Status: *LUNAS (PAID)*
+• Seats: *[Seat Numbers]* ([Category])
+• Total: Rp [Total Amount]
+• Status: *PAID (VERIFIED)*
 
-*LINK E-TICKET & QR CODE KAMU:*
+*YOUR OFFICIAL E-TICKET & QR PASS:*
 👉 https://chords-of-comfort-ticketing.vercel.app/ticket/[Order ID]
 
-⚠️ *PENTING:*
-1. Simpan link atau screenshot QR Code pada tiket di atas.
-2. Tunjukkan QR Code kepada panitia di meja registrasi saat Open Gate (Pkl 17:00 WIB, 19 Des 2026).
+⚠️ *IMPORTANT INSTRUCTIONS:*
+1. Save your ticket link or take a screenshot of the QR Code.
+2. Present your QR Code at the registration desk upon gate opening (January 2027 • Amani Palladium Theatre, LSPR Bekasi).
 
-Sampai jumpa di panggung teater musikal! 🎭🌟
+We look forward to welcoming you to the musical! 🎭🌟
 Instagram: @chordsofcomfort.theater`}
                     </div>
                   </div>
@@ -1378,12 +1370,12 @@ Instagram: @chordsofcomfort.theater`}
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <span className="bg-amber-100 text-amber-900 font-bold text-[10px] uppercase px-2.5 py-0.5 rounded-full border border-amber-300">
-                        Template 2: Pengingat Transfer (Pending)
+                        Template 2: Payment Reminder (Pending)
                       </span>
                       <button
                         onClick={() =>
                           copyToClipboard(
-                            `Halo Kak [Nama Pembeli]! 👋\n\nKami dari Panitia Ticketing *Chords of Comfort* (LSPR COMM30-6SP).\n\nMengingatkan reservasi tiket kamu:\n• Order ID: *#[Order ID]*\n• Kursi: *[Nomor Kursi]*\n• Total Tagihan: *Rp [Total Tagihan]*\n• Status: *Menunggu Transfer*\n\n*Rekening Pembayaran Panitia:*\n- BCA: *7650892101* (a.n. Viona)\n- Mandiri: *1220019283741*\n- E-Wallet (GoPay/Dana): *081915348866*\n\nMohon segera kirimkan bukti transfernya ya kak agar nomor kursi tidak otomatis terlepas ke pembeli lain. Terima kasih banyak! 🙏🎭`,
+                            `Hello [Attendee Name]! 👋\n\nThis is the Ticketing Team for *Chords of Comfort* (LSPR COMM30-6SP).\n\nFriendly reminder regarding your ticket reservation:\n• Order ID: *#[Order ID]*\n• Seats: *[Seat Numbers]*\n• Total Amount: *Rp [Total Amount]*\n• Status: *Awaiting Bank Transfer*\n\n*Committee Bank Accounts:*\n- BCA: *7650892101* (a.n. Viona)\n- Mandiri: *1220019283741*\n- E-Wallet (GoPay/Dana): *081915348866*\n\nPlease reply with your transfer receipt to secure your reserved seats before they are automatically released. Thank you! 🙏🎭`,
                             'tmpl_2'
                           )
                         }
@@ -1392,39 +1384,39 @@ Instagram: @chordsofcomfort.theater`}
                         {copiedTemplate === 'tmpl_2' ? (
                           <>
                             <Check className="w-3.5 h-3.5 text-emerald-600" />
-                            <span className="text-emerald-700">Tersalin!</span>
+                            <span className="text-emerald-700">Copied!</span>
                           </>
                         ) : (
                           <>
                             <Copy className="w-3.5 h-3.5 text-slate-500" />
-                            <span>Salin Teks</span>
+                            <span>Copy Text</span>
                           </>
                         )}
                       </button>
                     </div>
 
-                    <h4 className="font-bebas text-lg text-[#182B49]">TAGIHAN / REMINDER TRANSFER PENDING</h4>
+                    <h4 className="font-bebas text-lg text-[#182B49]">TRANSFER REMINDER FOR PENDING ORDERS</h4>
                     <p className="text-[11px] text-slate-500 mb-2 font-medium">
-                      Kirimkan jika pembeli sudah memesan di web namun belum mengirimkan bukti transfer.
+                      Send to attendees who booked seats on the site but have not yet submitted payment receipts.
                     </p>
 
                     <div className="bg-white p-3 rounded-xl border border-slate-300 text-xs font-mono text-slate-700 whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto">
-{`Halo Kak [Nama Pembeli]! 👋
+{`Hello [Attendee Name]! 👋
 
-Kami dari Panitia Ticketing *Chords of Comfort* (LSPR COMM30-6SP).
+This is the Ticketing Team for *Chords of Comfort* (LSPR COMM30-6SP).
 
-Mengingatkan reservasi tiket kamu:
+Friendly reminder regarding your ticket reservation:
 • Order ID: *#[Order ID]*
-• Kursi: *[Nomor Kursi]*
-• Total Tagihan: *Rp [Total Tagihan]*
-• Status: *Menunggu Transfer*
+• Seats: *[Seat Numbers]*
+• Total Amount: *Rp [Total Amount]*
+• Status: *Awaiting Bank Transfer*
 
-*Rekening Pembayaran Panitia:*
+*Committee Bank Accounts:*
 - BCA: *7650892101* (a.n. Viona)
 - Mandiri: *1220019283741*
 - E-Wallet (GoPay/Dana): *081915348866*
 
-Mohon segera kirimkan bukti transfernya ya kak agar nomor kursi tidak otomatis terlepas ke pembeli lain. Terima kasih banyak! 🙏🎭`}
+Please reply with your transfer receipt to secure your reserved seats before they are automatically released. Thank you! 🙏🎭`}
                     </div>
                   </div>
                 </div>
@@ -1434,12 +1426,12 @@ Mohon segera kirimkan bukti transfernya ya kak agar nomor kursi tidak otomatis t
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <span className="bg-red-100 text-red-900 font-bold text-[10px] uppercase px-2.5 py-0.5 rounded-full border border-red-300">
-                        Template 3: Pembatalan / Waktu Habis
+                        Template 3: Order Cancellation / Expired
                       </span>
                       <button
                         onClick={() =>
                           copyToClipboard(
-                            `Halo Kak [Nama Pembeli], mohon maaf pesanan tiket Chords of Comfort kamu (*Order ID: #[Order ID]*) telah kami batalkan karena batas waktu pembayaran telah berakhir atau bukti transfer tidak valid. Kursi telah dirilis kembali untuk pembeli lain. Jika ada kendala silakan hubungi kami di 0819-1534-8866. Terima kasih!`,
+                            `Hello [Attendee Name], we regret to inform you that your reservation for Chords of Comfort (*Order ID: #[Order ID]*) has been cancelled due to payment window expiration or an unverified transfer receipt. Your seats have been released back to the floor. If you have any questions, please contact us at 0819-1534-8866. Thank you!`,
                             'tmpl_3'
                           )
                         }
@@ -1448,41 +1440,41 @@ Mohon segera kirimkan bukti transfernya ya kak agar nomor kursi tidak otomatis t
                         {copiedTemplate === 'tmpl_3' ? (
                           <>
                             <Check className="w-3.5 h-3.5 text-emerald-600" />
-                            <span className="text-emerald-700">Tersalin!</span>
+                            <span className="text-emerald-700">Copied!</span>
                           </>
                         ) : (
                           <>
                             <Copy className="w-3.5 h-3.5 text-slate-500" />
-                            <span>Salin Teks</span>
+                            <span>Copy Text</span>
                           </>
                         )}
                       </button>
                     </div>
 
-                    <h4 className="font-bebas text-lg text-[#182B49]">PEMBATALAN PESANAN (REJECT / EXPIRED)</h4>
+                    <h4 className="font-bebas text-lg text-[#182B49]">ORDER CANCELLATION NOTICE</h4>
                     <p className="text-[11px] text-slate-500 mb-2 font-medium">
-                      Kirimkan saat admin membatalkan pesanan karena tidak kunjung transfer.
+                      Send when the committee cancels an order due to payment window expiry.
                     </p>
 
                     <div className="bg-white p-3 rounded-xl border border-slate-300 text-xs font-mono text-slate-700 whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto">
-{`Halo Kak [Nama Pembeli], mohon maaf pesanan tiket Chords of Comfort kamu (*Order ID: #[Order ID]*) telah kami batalkan karena batas waktu pembayaran telah berakhir atau bukti transfer tidak valid. Kursi telah dirilis kembali untuk pembeli lain. 
+{`Hello [Attendee Name], we regret to inform you that your reservation for Chords of Comfort (*Order ID: #[Order ID]*) has been cancelled due to payment window expiration or an unverified transfer receipt. Your seats have been released back to the floor. 
 
-Jika ada kendala silakan hubungi kami di 0819-1534-8866. Terima kasih!`}
+If you have any questions, please contact us at 0819-1534-8866. Thank you!`}
                     </div>
                   </div>
                 </div>
 
-                {/* Template 4: Rundown & Hari-H Guide */}
+                {/* Template 4: Rundown & Show Day Guide */}
                 <div className="bg-[#FAF6ED] p-4 sm:p-5 rounded-2xl border-2 border-slate-300 shadow-sm flex flex-col justify-between space-y-3">
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <span className="bg-blue-100 text-blue-900 font-bold text-[10px] uppercase px-2.5 py-0.5 rounded-full border border-blue-300">
-                        Template 4: Pengingat Hari-H & Open Gate
+                        Template 4: Show Day & Gate Guide
                       </span>
                       <button
                         onClick={() =>
                           copyToClipboard(
-                            `Halo Penonton Setia Chords of Comfort! 🎭✨\n\nBesok adalah hari pementasan Musical Theater *COMM30-6SP: Chords of Comfort* (LSPR Theater 35th Festival)!\n\n📍 *LOKASI:* Auditorium LSPR Sudirman Park, Lt. 2, Jakarta Pusat\n⏰ *OPEN GATE:* 17:00 WIB\n🎬 *CURTAIN RAISER / SHOW START:* 18:30 WIB\n\n⚠️ *PANDUAN MASUK VENUE:*\n• Siapkan E-Ticket kamu dari link resmi.\n• Tunjukkan QR Code pada layar ponsel kepada petugas scanner.\n• Datang tepat waktu sebelum pintu teater ditutup.\n\nSampai bertemu di venue! 🌟`,
+                            `Hello Chords of Comfort Attendees! 🎭✨\n\nThe musical theater production *COMM30-6SP: Chords of Comfort* (The 35th LSPR Theater Festival) is coming up!\n\n📍 *VENUE:* Amani Palladium Theatre, LSPR Bekasi, Indonesia\n⏰ *SCHEDULE:* January 2027 (Date & Showtime TBA)\n\n⚠️ *ENTRY GUIDELINES:*\n• Have your official E-Ticket ready from your confirmation link.\n• Present the QR Code on your mobile screen to gate scanners.\n• Please arrive promptly prior to auditorium doors closing.\n\nSee you at the theatre! 🌟`,
                             'tmpl_4'
                           )
                         }
@@ -1491,37 +1483,36 @@ Jika ada kendala silakan hubungi kami di 0819-1534-8866. Terima kasih!`}
                         {copiedTemplate === 'tmpl_4' ? (
                           <>
                             <Check className="w-3.5 h-3.5 text-emerald-600" />
-                            <span className="text-emerald-700">Tersalin!</span>
+                            <span className="text-emerald-700">Copied!</span>
                           </>
                         ) : (
                           <>
                             <Copy className="w-3.5 h-3.5 text-slate-500" />
-                            <span>Salin Teks</span>
+                            <span>Copy Text</span>
                           </>
                         )}
                       </button>
                     </div>
 
-                    <h4 className="font-bebas text-lg text-[#182B49]">PENGINGAT HARI-H & PANDUAN GATE</h4>
+                    <h4 className="font-bebas text-lg text-[#182B49]">SHOW DAY REMINDER & GATE GUIDELINES</h4>
                     <p className="text-[11px] text-slate-500 mb-2 font-medium">
-                      Kirimkan serentak H-1 atau pada pagi hari pementasan untuk mengingatkan penonton.
+                      Broadcast to attendees prior to show day to prepare their entry passes.
                     </p>
 
                     <div className="bg-white p-3 rounded-xl border border-slate-300 text-xs font-mono text-slate-700 whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto">
-{`Halo Penonton Setia Chords of Comfort! 🎭✨
+{`Hello Chords of Comfort Attendees! 🎭✨
 
-Besok adalah hari pementasan Musical Theater *COMM30-6SP: Chords of Comfort* (LSPR Theater 35th Festival)!
+The musical theater production *COMM30-6SP: Chords of Comfort* (The 35th LSPR Theater Festival) is coming up!
 
-📍 *LOKASI:* Auditorium LSPR Sudirman Park, Lt. 2, Jakarta Pusat
-⏰ *OPEN GATE:* 17:00 WIB
-🎬 *SHOW START:* 18:30 WIB
+📍 *VENUE:* Amani Palladium Theatre, LSPR Bekasi, Indonesia
+⏰ *SCHEDULE:* January 2027 (Date & Showtime TBA)
 
-⚠️ *PANDUAN MASUK VENUE:*
-• Siapkan E-Ticket kamu dari link resmi.
-• Tunjukkan QR Code pada layar ponsel kepada petugas scanner.
-• Datang tepat waktu sebelum pintu teater ditutup.
+⚠️ *ENTRY GUIDELINES:*
+• Have your official E-Ticket ready from your confirmation link.
+• Present the QR Code on your mobile screen to gate scanners.
+• Please arrive promptly prior to auditorium doors closing.
 
-Sampai bertemu di venue! 🌟`}
+See you at the theatre! 🌟`}
                     </div>
                   </div>
                 </div>
@@ -1543,7 +1534,7 @@ Sampai bertemu di venue! 🌟`}
             <div className="bg-[#182B49] text-white p-5 border-b-4 border-[#F4B32A] flex items-center justify-between">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-300">
-                  DETAIL TRANSAKSI & CRUD
+                  TRANSACTION DETAILS & ACTIONS
                 </span>
                 <h3 className="font-bebas text-2xl text-[#FAF6ED] leading-none">
                   ORDER: #{selectedOrder.id}
@@ -1561,7 +1552,7 @@ Sampai bertemu di venue! 🌟`}
               
               <div className="flex items-start justify-between">
                 <div className="space-y-1">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">Nama Pembeli:</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Attendee Name:</span>
                   <div className="font-bold text-slate-900 text-lg">{selectedOrder.customer.fullName}</div>
                   <div className="text-xs text-slate-600 font-medium">
                     {selectedOrder.customer.email} • {selectedOrder.customer.phone}
@@ -1576,19 +1567,19 @@ Sampai bertemu di venue! 🌟`}
                   className="bg-amber-100 hover:bg-amber-200 text-amber-900 px-3 py-1.5 rounded-xl text-xs font-bold border border-amber-300 flex items-center gap-1.5"
                 >
                   <Edit3 className="w-3.5 h-3.5" />
-                  <span>Edit Data</span>
+                  <span>Edit Info</span>
                 </button>
               </div>
 
               <div className="p-3 bg-[#FAF6ED] rounded-xl border border-slate-300 space-y-2">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-600 border-b border-slate-200 pb-1">
-                  <span>Kursi Dipesan:</span>
-                  <span>{selectedOrder.items.length} Tiket</span>
+                  <span>Reserved Seats:</span>
+                  <span>{selectedOrder.items.length} Tickets</span>
                 </div>
                 {selectedOrder.items.map((it, idx) => (
                   <div key={idx} className="flex items-center justify-between text-xs">
                     <span className="font-bebas text-sm text-[#182B49]">
-                      Kursi {it.seatLabel} ({it.category})
+                      Seat {it.seatLabel} ({it.category})
                     </span>
                     <span className="font-bold text-[#C1272D]">
                       Rp {it.price.toLocaleString('id-ID')}
@@ -1602,11 +1593,11 @@ Sampai bertemu di venue! 🌟`}
               </div>
 
               <div className="text-xs space-y-1 text-slate-600">
-                <div>Metode Bayar: <strong>{selectedOrder.paymentMethod || 'TRANSFER_BANK'}</strong></div>
-                <div>Status Bayar: <strong className="uppercase">{selectedOrder.paymentStatus}</strong></div>
-                <div>Waktu Pemesanan: <strong>{new Date(selectedOrder.createdAt).toLocaleString('id-ID')}</strong></div>
+                <div>Payment Method: <strong>{selectedOrder.paymentMethod || 'BANK_TRANSFER'}</strong></div>
+                <div>Payment Status: <strong className="uppercase">{selectedOrder.paymentStatus}</strong></div>
+                <div>Order Timestamp: <strong>{new Date(selectedOrder.createdAt).toLocaleString('en-US')}</strong></div>
                 {selectedOrder.paidAt && (
-                  <div>Waktu Lunas: <strong>{new Date(selectedOrder.paidAt).toLocaleString('id-ID')}</strong></div>
+                  <div>Verified At: <strong>{new Date(selectedOrder.paidAt).toLocaleString('en-US')}</strong></div>
                 )}
               </div>
 
@@ -1614,7 +1605,7 @@ Sampai bertemu di venue! 🌟`}
               <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-300 space-y-2">
                 <span className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
                   <MessageCircle className="w-4 h-4 text-emerald-600 fill-current" />
-                  <span>Kirim Pesan WhatsApp ke Pembeli:</span>
+                  <span>Send WhatsApp Message to Attendee:</span>
                 </span>
                 <div className="flex flex-col gap-1.5">
                   <a
@@ -1624,7 +1615,7 @@ Sampai bertemu di venue! 🌟`}
                     className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-xs"
                   >
                     <MessageCircle className="w-4 h-4 fill-current" />
-                    <span>Kirim Link E-Ticket Resmi (Sudah Lunas)</span>
+                    <span>Send Official E-Ticket Pass (Paid)</span>
                   </a>
 
                   {selectedOrder.paymentStatus !== 'paid' && (
@@ -1635,7 +1626,7 @@ Sampai bertemu di venue! 🌟`}
                       className="w-full bg-amber-500 hover:bg-amber-600 text-white py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-xs"
                     >
                       <MessageCircle className="w-4 h-4" />
-                      <span>Tagih Bukti Transfer ke Pembeli</span>
+                      <span>Send Payment Reminder (Pending)</span>
                     </a>
                   )}
                 </div>
@@ -1648,7 +1639,7 @@ Sampai bertemu di venue! 🌟`}
                   className="w-full bg-[#182B49] text-white py-2.5 rounded-xl font-bebas text-center text-base tracking-wider hover:bg-[#C1272D] transition-colors flex items-center justify-center gap-1.5"
                 >
                   <Printer className="w-4 h-4 text-[#F4B32A]" />
-                  <span>LIHAT & CETAK E-TIKET RESMI</span>
+                  <span>VIEW & PRINT OFFICIAL E-TICKET</span>
                 </Link>
 
                 {selectedOrder.paymentStatus !== 'paid' && (
@@ -1659,7 +1650,7 @@ Sampai bertemu di venue! 🌟`}
                     }}
                     className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl font-bebas text-base tracking-wider transition-colors cursor-pointer"
                   >
-                    APPROVE / TERIMA PEMBAYARAN LUNAS
+                    APPROVE / VERIFY PAYMENT
                   </button>
                 )}
 
@@ -1667,7 +1658,7 @@ Sampai bertemu di venue! 🌟`}
                   onClick={() => handleDeleteOrder(selectedOrder.id)}
                   className="w-full bg-slate-100 hover:bg-rose-50 text-rose-700 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer"
                 >
-                  Tolak / Hapus Order Ini (Lepas Kursi Jadi Tersedia)
+                  Cancel / Delete Order (Release Seats to Available)
                 </button>
               </div>
 
@@ -1685,7 +1676,7 @@ Sampai bertemu di venue! 🌟`}
             <div className="bg-[#182B49] text-white p-5 border-b-4 border-[#F4B32A] flex items-center justify-between">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-300">
-                  EDIT DATA PEMBELI (CRUD)
+                  EDIT ATTENDEE INFORMATION (CRUD)
                 </span>
                 <h3 className="font-bebas text-2xl text-[#FAF6ED] leading-none">
                   ORDER: #{editingOrder.id}
@@ -1702,7 +1693,7 @@ Sampai bertemu di venue! 🌟`}
             <form onSubmit={handleUpdateCustomer} className="p-6 space-y-4">
               <div>
                 <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                  Nama Lengkap Pembeli *
+                  Attendee Full Name *
                 </label>
                 <input
                   type="text"
@@ -1720,7 +1711,7 @@ Sampai bertemu di venue! 🌟`}
 
               <div>
                 <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                  Nomor WhatsApp / HP *
+                  WhatsApp / Phone Number *
                 </label>
                 <input
                   type="tel"
@@ -1738,7 +1729,7 @@ Sampai bertemu di venue! 🌟`}
 
               <div>
                 <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                  Alamat Email *
+                  Email Address *
                 </label>
                 <input
                   type="email"
@@ -1756,11 +1747,11 @@ Sampai bertemu di venue! 🌟`}
 
               <div>
                 <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                  Catatan / Keterangan
+                  Internal Notes
                 </label>
                 <input
                   type="text"
-                  placeholder="Contoh: Panitia Ticketing / Rekan Kampus"
+                  placeholder="e.g. VIP Committee / Campus Guest"
                   value={editingOrder.customer.notes || ''}
                   onChange={(e) =>
                     setEditingOrder({
@@ -1778,13 +1769,13 @@ Sampai bertemu di venue! 🌟`}
                   onClick={() => setEditingOrder(null)}
                   className="px-4 py-2 bg-slate-200 hover:bg-slate-300 rounded-xl text-xs font-bold text-slate-700 transition-colors"
                 >
-                  Batal
+                  Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#182B49] hover:bg-[#C1272D] text-white rounded-xl text-xs font-bold transition-colors"
+                  className="px-5 py-2 bg-[#182B49] hover:bg-[#C1272D] text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
                 >
-                  Simpan Perubahan
+                  Save Changes
                 </button>
               </div>
             </form>

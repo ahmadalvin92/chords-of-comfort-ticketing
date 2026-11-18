@@ -120,12 +120,12 @@ export function holdSeats(
   for (const id of seatIds) {
     const seat = db.seats.find((s) => s.id === id);
     if (!seat) {
-      return { success: false, error: `Kursi ${id} tidak ditemukan.` };
+      return { success: false, error: `Seat ${id} not found.` };
     }
     if (seat.status === 'sold') {
-      unavailable.push(`${seat.label} (sudah terjual)`);
+      unavailable.push(`${seat.label} (already sold)`);
     } else if (seat.status === 'held' && seat.heldBy !== sessionId) {
-      unavailable.push(`${seat.label} (sedang dipilih pembeli lain)`);
+      unavailable.push(`${seat.label} (temporarily held by another buyer)`);
     } else {
       targetSeats.push(seat);
     }
@@ -134,7 +134,7 @@ export function holdSeats(
   if (unavailable.length > 0) {
     return {
       success: false,
-      error: `Beberapa kursi tidak tersedia: ${unavailable.join(', ')}`,
+      error: `Some selected seats are unavailable: ${unavailable.join(', ')}`,
     };
   }
 
@@ -173,7 +173,7 @@ export function createOrder(
   customer: CustomerInfo,
   seatIds: string[],
   sessionId: string,
-  paymentMethod: string = 'QRIS'
+  paymentMethod: string = 'TRANSFER_MANUAL'
 ): { success: boolean; order?: Order; error?: string } {
   const db = ensureDbFile();
   cleanupExpiredHolds(db);
@@ -183,13 +183,13 @@ export function createOrder(
   for (const id of seatIds) {
     const seat = db.seats.find((s) => s.id === id);
     if (!seat) {
-      return { success: false, error: `Kursi dengan ID ${id} tidak ditemukan.` };
+      return { success: false, error: `Seat with ID ${id} not found.` };
     }
     if (seat.status === 'sold') {
-      return { success: false, error: `Kursi ${seat.label} sudah terjual.` };
+      return { success: false, error: `Seat ${seat.label} is already sold.` };
     }
     if (seat.status === 'held' && seat.heldBy !== sessionId) {
-      return { success: false, error: `Kursi ${seat.label} sedang dipesan oleh pengguna lain.` };
+      return { success: false, error: `Seat ${seat.label} is currently reserved by another buyer.` };
     }
     selectedSeats.push(seat);
   }
@@ -232,7 +232,7 @@ export function createOrder(
     qrPayload,
   };
 
-  // Hold seats permanently with orderId
+  // Hold seats with orderId
   selectedSeats.forEach((seat) => {
     seat.status = 'held';
     seat.heldBy = orderId;
@@ -253,7 +253,7 @@ export function confirmPayment(
   const order = db.orders.find((o) => o.id === orderId);
 
   if (!order) {
-    return { success: false, error: `Order ${orderId} tidak ditemukan.` };
+    return { success: false, error: `Order ${orderId} not found.` };
   }
 
   if (order.paymentStatus === 'paid') {
@@ -308,7 +308,7 @@ export function validateTicketQR(qrPayload: string): CheckInResult {
   if (!orderId) {
     return {
       status: 'INVALID',
-      message: 'Format QR Code tidak dikenali!',
+      message: 'Unrecognized QR Code format!',
     };
   }
 
@@ -316,14 +316,14 @@ export function validateTicketQR(qrPayload: string): CheckInResult {
   if (!order) {
     return {
       status: 'INVALID',
-      message: `Tiket tidak ditemukan dalam database (ID: ${orderId})`,
+      message: `Ticket not found in database (ID: ${orderId})`,
     };
   }
 
   if (order.paymentStatus !== 'paid') {
     return {
       status: 'INVALID',
-      message: `Tiket belum lunas (Status: ${order.paymentStatus.toUpperCase()})`,
+      message: `Ticket payment incomplete (Status: ${order.paymentStatus.toUpperCase()})`,
     };
   }
 
@@ -333,7 +333,7 @@ export function validateTicketQR(qrPayload: string): CheckInResult {
     const firstCheckInTime = order.items[0]?.checkedInAt;
     return {
       status: 'ALREADY_CHECKED_IN',
-      message: `Tiket sudah pernah digunakan untuk check-in!`,
+      message: `Ticket has already been checked in!`,
       checkedInAt: firstCheckInTime,
       order: {
         id: order.id,
@@ -356,7 +356,7 @@ export function validateTicketQR(qrPayload: string): CheckInResult {
 
   return {
     status: 'VALID',
-    message: `Tiket Valid! Selamat Menikmati Pertunjukan 🎉`,
+    message: `Ticket Valid! Enjoy the performance 🎉`,
     checkedInAt: now,
     order: {
       id: order.id,
@@ -384,7 +384,7 @@ export function manualToggleCheckIn(orderId: string): { success: boolean; isChec
   const order = db.orders.find((o) => o.id === orderId);
 
   if (!order) {
-    return { success: false, error: `Order ${orderId} tidak ditemukan.` };
+    return { success: false, error: `Order ${orderId} not found.` };
   }
 
   // Toggle state
@@ -405,7 +405,7 @@ export function deleteOrder(orderId: string): { success: boolean; error?: string
   const orderIdx = db.orders.findIndex((o) => o.id === orderId);
 
   if (orderIdx === -1) {
-    return { success: false, error: `Order ${orderId} tidak ditemukan.` };
+    return { success: false, error: `Order ${orderId} not found.` };
   }
 
   const order = db.orders[orderIdx];
@@ -434,7 +434,7 @@ export function updateCustomerInfo(
   const order = db.orders.find((o) => o.id === orderId);
 
   if (!order) {
-    return { success: false, error: `Order ${orderId} tidak ditemukan.` };
+    return { success: false, error: `Order ${orderId} not found.` };
   }
 
   order.customer = {
@@ -458,10 +458,10 @@ export function manualCreateOrder(
   for (const id of seatIds) {
     const seat = db.seats.find((s) => s.id === id);
     if (!seat) {
-      return { success: false, error: `Kursi ${id} tidak ditemukan.` };
+      return { success: false, error: `Seat ${id} not found.` };
     }
     if (seat.status === 'sold') {
-      return { success: false, error: `Kursi ${seat.label} sudah terjual.` };
+      return { success: false, error: `Seat ${seat.label} is already sold.` };
     }
     selectedSeats.push(seat);
   }

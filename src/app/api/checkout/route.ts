@@ -8,14 +8,14 @@ export async function POST(request: Request) {
 
     if (!customer?.fullName || !customer?.email || !customer?.phone) {
       return NextResponse.json(
-        { success: false, error: 'Data pemesan tidak lengkap (Nama, Email, dan No HP wajib diisi).' },
+        { success: false, error: 'Customer information incomplete (Full Name, Email, and Phone Number are required).' },
         { status: 400 }
       );
     }
 
     if (!seatIds || !Array.isArray(seatIds) || seatIds.length === 0) {
       return NextResponse.json(
-        { success: false, error: 'Silakan pilih minimal 1 kursi.' },
+        { success: false, error: 'Please select at least 1 seat.' },
         { status: 400 }
       );
     }

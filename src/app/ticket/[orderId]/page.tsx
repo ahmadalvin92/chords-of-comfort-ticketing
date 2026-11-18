@@ -36,7 +36,7 @@ function TicketContent({
         const data = await res.json();
 
         if (!res.ok || !data.success) {
-          throw new Error(data.error || 'Tiket tidak ditemukan.');
+          throw new Error(data.error || 'Ticket not found.');
         }
 
         setOrder(data.order);
@@ -70,7 +70,7 @@ function TicketContent({
           <Ticket className="w-6 h-6 text-[#F4B32A]" />
         </div>
         <div className="font-bebas text-2xl text-[#182B49] tracking-wider">
-          MEMUAT E-TICKET RESMI...
+          LOADING OFFICIAL E-TICKET...
         </div>
       </div>
     );
@@ -82,17 +82,21 @@ function TicketContent({
         <div className="w-16 h-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4 border-2 border-red-300">
           <AlertCircle className="w-8 h-8" />
         </div>
-        <h2 className="font-bebas text-3xl text-[#182B49] mb-2">TIKET TIDAK DITEMUKAN</h2>
-        <p className="text-slate-600 text-sm max-w-md mb-6">{error || 'Silakan periksa kembali Order ID Anda.'}</p>
+        <h2 className="font-bebas text-3xl text-[#182B49] mb-2">TICKET NOT FOUND</h2>
+        <p className="text-slate-600 text-sm max-w-md mb-6">{error || 'Please verify your Order ID.'}</p>
         <Link
           href="/"
           className="bg-[#182B49] text-white px-6 py-2.5 rounded-xl font-bebas text-lg tracking-wider border-2 border-[#0F1C30] hover:bg-[#C1272D] transition-colors"
         >
-          Kembali ke Beranda
+          Return to Homepage
         </Link>
       </div>
     );
   }
+
+  const waConfirmUrl = `https://wa.me/6281915348866?text=${encodeURIComponent(
+    `Hello Chords of Comfort Ticketing Team! I would like to confirm my transfer payment for Order ID: #${order.id} under the name: ${order.customer.fullName}.`
+  )}`;
 
   return (
     <div className="min-h-screen bg-[#F8F5EE] py-8 px-4 sm:px-6 lg:px-8">
@@ -104,7 +108,7 @@ function TicketContent({
           className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-[#182B49] transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Kembali ke Website</span>
+          <span>Back to Website</span>
         </Link>
 
         <div className="flex items-center gap-3">
@@ -113,7 +117,7 @@ function TicketContent({
             className="cursor-pointer inline-flex items-center gap-2 bg-[#182B49] hover:bg-[#0F1C30] text-white px-4 py-2 rounded-xl text-xs font-bold border-2 border-[#0F1C30] shadow-sm hover:translate-y-0.5 transition-all"
           >
             <Printer className="w-4 h-4 text-[#F4B32A]" />
-            <span>Cetak / Simpan PDF</span>
+            <span>Print / Save PDF</span>
           </button>
         </div>
       </div>
@@ -130,10 +134,10 @@ function TicketContent({
               </div>
               <div>
                 <div className="font-bebas text-lg leading-tight text-emerald-900">
-                  E-TICKET RESMI SUDAH AKTIF (LUNAS)
+                  OFFICIAL E-TICKET ACTIVE (PAID)
                 </div>
                 <p className="text-xs text-emerald-700 font-medium">
-                  Pembayaran Terverifikasi • Tunjukkan QR Code ini kepada panitia gate saat hari-H.
+                  Payment Verified • Present this QR Code to registration staff on show day.
                 </p>
               </div>
             </div>
@@ -149,20 +153,20 @@ function TicketContent({
               </div>
               <div>
                 <div className="font-bebas text-lg leading-tight text-amber-900">
-                  MENUNGGU VERIFIKASI PEMBAYARAN TRANSFER
+                  AWAITING PAYMENT VERIFICATION
                 </div>
                 <p className="text-xs text-amber-800 font-medium">
-                  Kursi Anda sedang ditahan. Mohon kirimkan foto bukti transfer ke WhatsApp panitia agar e-ticket resmi diaktifkan.
+                  Your seats are temporarily held. Please send your transfer receipt to WhatsApp to activate your official e-ticket.
                 </p>
               </div>
             </div>
             <a
-              href={`https://wa.me/6281915348866?text=Halo%20Panitia%20Ticketing%20Chords%20of%20Comfort%2C%20saya%20mau%20konfirmasi%20transfer%20untuk%20Order%20ID%3A%20${order.id}%20an%20${encodeURIComponent(order.customer.fullName)}`}
+              href={waConfirmUrl}
               target="_blank"
               rel="noreferrer"
               className="bg-[#25D366] hover:bg-[#20ba59] text-white px-4 py-2 rounded-xl text-xs font-bold border border-slate-900 shadow-sm flex items-center gap-1.5 shrink-0"
             >
-              <span>Kirim Bukti ke WhatsApp (0819-1534-8866)</span>
+              <span>Send Receipt via WhatsApp (0819-1534-8866)</span>
             </a>
           </div>
         )}
@@ -185,7 +189,7 @@ function TicketContent({
                     CHORDS OF COMFORT
                   </h1>
                   <p className="text-xs font-semibold text-slate-300">
-                    LSPR COMM30-6SP Musical Theater • Sudirman Park Jakarta
+                    The 35th LSPR Theater Festival • COMM30-6SP • Amani Palladium Theatre
                   </p>
                 </div>
               </div>
@@ -196,7 +200,7 @@ function TicketContent({
                 </div>
                 <div className="font-mono font-black text-xl text-[#F4B32A]">{order.id}</div>
                 <div className="text-[10px] font-semibold text-emerald-400">
-                  PAID: {order.paidAt ? new Date(order.paidAt).toLocaleDateString('id-ID') : 'PAID'}
+                  STATUS: {order.paymentStatus === 'paid' ? 'PAID' : 'PENDING VERIFICATION'}
                 </div>
               </div>
             </div>
@@ -211,7 +215,7 @@ function TicketContent({
               {/* Customer Box */}
               <div>
                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                  Nama Pemegang Tiket
+                  Ticket Holder Name
                 </span>
                 <div className="font-bebas text-3xl text-[#182B49] leading-tight">
                   {order.customer.fullName}
@@ -226,30 +230,30 @@ function TicketContent({
                 <div className="space-y-1">
                   <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-slate-500">
                     <Calendar className="w-3.5 h-3.5 text-[#C1272D]" />
-                    <span>Tanggal & Waktu</span>
+                    <span>Schedule</span>
                   </div>
                   <div className="font-bebas text-lg text-[#182B49] leading-none">
-                    Sabtu, 19 Des 2026
+                    January 2027
                   </div>
-                  <div className="text-xs font-bold text-slate-600">18:30 WIB (Gate 17:00)</div>
+                  <div className="text-xs font-bold text-slate-600">Showtime TBA (Gate Open TBA)</div>
                 </div>
 
                 <div className="space-y-1">
                   <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-slate-500">
                     <MapPin className="w-3.5 h-3.5 text-blue-600" />
-                    <span>Lokasi Venue</span>
+                    <span>Venue Location</span>
                   </div>
                   <div className="font-bebas text-lg text-[#182B49] leading-none">
-                    Auditorium LSPR
+                    Amani Palladium Theatre
                   </div>
-                  <div className="text-xs font-bold text-slate-600">Sudirman Park Lt. 2</div>
+                  <div className="text-xs font-bold text-slate-600">LSPR Bekasi, Indonesia</div>
                 </div>
               </div>
 
               {/* Seat Badges */}
               <div className="pt-3 border-t-2 border-dashed border-slate-200">
                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-2">
-                  Nomor Kursi & Kategori Terdaftar ({order.items.length} Kursi)
+                  Assigned Seats & Categories ({order.items.length} Seats)
                 </span>
                 <div className="flex flex-wrap gap-2">
                   {order.items.map((item, idx) => (
@@ -258,10 +262,10 @@ function TicketContent({
                       className="bg-[#F8F5EE] border-2 border-[#0F1C30] rounded-xl px-3 py-1.5 shadow-[0_2px_0_#0F1C30]"
                     >
                       <div className="font-bebas text-xl text-[#C1272D] leading-none">
-                        KURSI {item.seatLabel}
+                        SEAT {item.seatLabel}
                       </div>
                       <div className="text-[10px] font-bold text-slate-600">
-                        {item.category} • Rp{item.price.toLocaleString('id-ID')}
+                        {item.category} • Rp {item.price.toLocaleString('id-ID')}
                       </div>
                     </div>
                   ))}
@@ -274,7 +278,7 @@ function TicketContent({
             <div className="md:col-span-5 flex flex-col items-center justify-center p-6 bg-[#FAF6ED] rounded-2xl border-2 border-dashed border-[#182B49] text-center">
               
               <div className="text-[10px] font-black uppercase tracking-widest text-slate-600 mb-2">
-                SCAN SAAT MEMASUKI GATE
+                SCAN AT VENUE GATE
               </div>
 
               <div className="p-3 bg-white rounded-2xl border-2 border-[#0F1C30] shadow-md">
@@ -297,7 +301,7 @@ function TicketContent({
                   {order.items[0]?.ticketCode}
                 </div>
                 <div className="text-[10px] font-bold text-slate-500 mt-0.5">
-                  1 QR Code berlaku untuk seluruh kursi di pesanan ini
+                  1 QR Code admits all seats under this order
                 </div>
               </div>
 
@@ -308,7 +312,7 @@ function TicketContent({
           {/* Ticket Footer / Instructions */}
           <div className="bg-[#F8F5EE] p-4 border-t-2 border-dashed border-slate-300 text-center text-xs font-medium text-slate-600 flex flex-col sm:flex-row items-center justify-between gap-2">
             <span>
-              ★ Tunjukkan tiket ini (cetak atau dari layar ponsel) kepada petugas di pintu masuk LSPR Sudirman Park.
+              ★ Present this ticket (printed or on mobile screen) to registration staff at Amani Palladium Theatre, LSPR Bekasi.
             </span>
             <span className="font-mono font-bold text-slate-400">
               NON-REFUNDABLE • COMM30-6SP
@@ -328,7 +332,7 @@ function TicketContent({
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#182B49] hover:bg-[#0F1C30] text-white px-6 py-3.5 rounded-xl font-bebas text-lg tracking-wider border-2 border-[#0F1C30] shadow-[0_3px_0_#0F1C30] transition-all"
           >
             <ArrowLeft className="w-5 h-5 text-[#F4B32A]" />
-            <span>KEMBALI KE BERANDA (BELI TIKET LAGI)</span>
+            <span>RETURN TO HOMEPAGE</span>
           </Link>
 
           <button
@@ -336,7 +340,7 @@ function TicketContent({
             className="w-full sm:w-auto cursor-pointer inline-flex items-center justify-center gap-2 bg-[#C1272D] hover:bg-[#a61f25] text-white px-6 py-3.5 rounded-xl font-bebas text-lg tracking-wider border-2 border-[#0F1C30] shadow-[0_3px_0_#0F1C30] transition-all"
           >
             <Printer className="w-5 h-5 text-[#F4B32A]" />
-            <span>CETAK / SIMPAN SEBAGAI PDF</span>
+            <span>PRINT / SAVE AS PDF</span>
           </button>
         </div>
 
@@ -355,7 +359,7 @@ export default function TicketPage({
     <Suspense
       fallback={
         <div className="min-h-screen bg-[#F8F5EE] flex flex-col items-center justify-center p-4">
-          <div className="font-bebas text-2xl text-[#182B49]">MEMUAT TIKET...</div>
+          <div className="font-bebas text-2xl text-[#182B49]">LOADING TICKET...</div>
         </div>
       }
     >

@@ -1,187 +1,129 @@
 # 🎭 Chords of Comfort — Official Ticketing System
 
 > **LSPR COMM30-6SP Musical Theater Production**  
-> *American High School Musical Theater Experience at Auditorium LSPR Sudirman Park*
+> *American High School Musical Theater Experience at Amani Palladium Theatre, LSPR Bekasi*  
+> *Production of The 35th LSPR Theater Festival*
 
 ![Banner](public/assets/ticket-wristband-ref.jpeg)
 
 ---
 
-## 📌 Tentang Project
+## 📌 About the Project
 
-**Chords of Comfort** adalah platform sistem penjualan tiket pementasan teater musikal karya mahasiswa **LSPR Institute of Communication & Business** angkatan **COMM30-6SP**. 
+**Chords of Comfort** is a full-stack digital ticketing platform built for the musical theater production by **LSPR Institute of Communication & Business** students from class **COMM30-6SP** as part of **The 35th LSPR Theater Festival**.
 
-Sistem ini dirancang bukan sekadar tampilan mockup, melainkan **aplikasi web reservasi tiket daring *full-stack* fungsional** yang menangani alur menyeluruh mulai dari pemilihan nomor kursi visual, penguncian kursi real-time (*anti double-booking*), integrasi gerbang pembayaran online (QRIS & Virtual Account), pengiriman E-Ticket instan via email, dashboard pelaporan panitia, hingga pemindai QR Code kamera HP untuk check-in penonton di hari-H pementasan.
+The application is a **production-ready ticketing and audience check-in system** covering the entire lifecycle: visual seat selection, real-time concurrency locking (anti-double booking), WhatsApp-based payment confirmation, official admit-one E-Ticket generation with encrypted QR Codes, an administrative control dashboard (`/admin`), and a mobile camera-based gate scanner (`/scanner`) for show day admission.
 
 ---
 
-## 🖼️ Tampilan Visual & Desain Sistem
+## 🎟️ Event Details
 
-Konsep antarmuka mengusung tema **American High School / Varsity Scrapbook Collage** (terinspirasi dari gaya *Golf le Fleur* & tiket retro *Admit-One*) dengan identitas warna resmi **Varsity Navy (`#182B49`)**, **Crimson Red (`#C1272D`)**, **Varsity Yellow (`#F4B32A`)**, dan **Paper Cream (`#F8F5EE`)**.
+* **Event Name:** CHORDS OF COMFORT
+* **Tagline:** *"Where Love, Friendship, and Dreams Find Their Way Home."*
+* **Production:** COMM30-6SP • The 35th LSPR Theater Festival
+* **Venue:** Amani Palladium Theatre, LSPR Bekasi, Indonesia  
+  *(Transpark Juanda, Jl. Ir. H. Juanda No. 220, Duren Jaya, East Bekasi, Bekasi City, West Java 17111)*
+* **Date & Schedule:** January 2027 • Date & Showtime TBA
+* **Total Venue Capacity:** 300 Seats (225 Main Floor + 75 Balcony)
+* **Official Hotline (WhatsApp):** `0819-1534-8866` ([wa.me/6281915348866](https://wa.me/6281915348866))
+* **Official Instagram:** `@chordsofcomfort.theater` ([instagram.com/chordsofcomfort.theater](https://www.instagram.com/chordsofcomfort.theater?jplx=MXM3c3J3bGQ1NXJ5Zg==))
 
-### 1. Interactive 300-Seat Seating Plan (Denah Kursi)
-Denah kursi interaktif memetakan kapasitas total 300 kursi di venue Auditorium LSPR Sudirman Park secara presisi:
-- **Main Floor (225 Kursi Total)**:
-  - 20 VIP (Row A & B, Kursi 11–20) • Rp 50.000
-  - 205 Regular (Row A–H) • Rp 35.000
-- **Balcony (75 Kursi Total)**:
-  - 9 VIP Balcony (Row AA, Kursi 9–17) • Rp 50.000
-  - 66 Regular (Row AA–AC) • Rp 35.000
+---
+
+## 🖼️ Visual Aesthetic & Design System
+
+The visual identity embodies an **American High School Musical & Varsity Scrapbook** aesthetic (inspired by vintage yearbooks, letterman jackets, and retro admit-one event stubs):
+
+* **Varsity Navy:** `#182B49`
+* **Crimson Red:** `#C1272D`
+* **Varsity Gold / Yellow:** `#F4B32A`
+* **Paper Cream / Ivory:** `#F8F5EE` / `#FAF6ED`
+* **Typography:** `Bebas Neue` (Display & Titles) and `Plus Jakarta Sans` (Body & Interface)
+
+### 300-Seat Venue Seating Plan
+* **Main Floor (225 Seats Total)**:
+  * 20 VIP Main Floor (Rows A & B, Seats 11–20) • Rp 50,000
+  * 205 Regular Theater Pass (Rows A–H) • Rp 35,000
+* **Balcony (75 Seats Total)**:
+  * 9 VIP Balcony (Row AA, Seats 9–17) • Rp 50,000
+  * 66 Regular Theater Pass (Rows AA–AC) • Rp 35,000
 
 ![Seating Plan Venue](public/assets/seat-plan.jpeg)
 
-### 2. Inspirasi Tiket & Wristband Admit-One
-Desain E-ticket digital mengadaptasi format fisik tiket konser vintage dengan kode batang, perforasi gerigi, dan QR Code verifikasi.
-
-![Ticket & Wristband Preview](public/assets/ticket-wristband-ref.jpeg)
-
-### 3. Cast & Produksi Teater
-Dokumentasi profil pemeran (*cast*) bertema seragam retro sekolah.
-
-![Cast & Retro Theme](public/assets/cast-photo.jpeg)
-
 ---
 
-## 💻 Bahasa Pemrograman & Tech Stack
+## 💻 Tech Stack & Architecture
 
-Aplikasi ini dibangun menggunakan arsitektur modern berkecepatan tinggi:
-
-| Lapisan / Komponen | Teknologi | Keterangan & Alasan Penggunaan |
+| Layer | Technology | Purpose |
 | :--- | :--- | :--- |
-| **Bahasa Pemrograman** | **TypeScript (JavaScript)** | Memberikan *type safety* ketat untuk mencegah bug pada kalkulasi harga tiket dan status kursi. |
-| **Bahasa Database** | **SQL (PostgreSQL)** | Mendukung *ACID Transactions* dan fungsi *Row-Level Lock* (`SELECT FOR UPDATE`) untuk memastikan tidak terjadi *race condition* atau *double-booking*. |
-| **Frontend Framework** | **Next.js 16 (App Router)** | Framework React full-stack dengan performa Server Components & Turbopack. |
-| **UI Library** | **React 19** | Komponen interaktif responsif untuk denah kursi, modal form, dan scanner. |
-| **Styling & CSS** | **Tailwind CSS v4** | Utility-first styling untuk merancang estetika scrapbook, varsity badge, dan texturing retro. |
-| **Database & Realtime** | **Supabase / PostgreSQL** | Database transaksional cloud berkecepatan tinggi dengan auto-realtime sync. |
-| **Payment Gateway** | **Midtrans (Snap API)** | Pemrosesan pembayaran otomatis dengan webhook resmi: QRIS (GoPay, OVO, Dana, BCA) & Virtual Account. |
-| **Email Service** | **Resend API** | Pengiriman otomatis email konfirmasi pemesanan dan E-ticket resmi ke inbox customer. |
-| **QR Code Engine** | **`qrcode`** | Generator kode QR beresolusi tinggi dengan enkripsi payload verifikasi. |
-| **Gate Check-In Scanner** | **`html5-qrcode`** | Pemindai kode QR berbasis kamera browser HP (tanpa perlu install aplikasi dari App Store/Play Store). |
-| **Icons & FX** | **Lucide React & Canvas-Confetti** | Set ikon modern dan efek selebrasi saat transaksi sukses. |
+| **Language** | **TypeScript** | Strict type safety for ticket calculations, seat inventory, and order schemas |
+| **Framework** | **Next.js 16 (App Router)** | Full-stack React framework with Server Components and Turbopack |
+| **UI Library** | **React 19** | Modern interactive components for seat selection, modals, and scanner |
+| **Styling** | **Tailwind CSS v4** | Utility-first styling with retro scrapbook & varsity aesthetics |
+| **Database Store** | **Serverless JSON Store (`/tmp` persistence)** | Concurrency-safe local and Vercel serverless database engine |
+| **QR Engine** | **`qrcode`** | High-resolution scannable QR Code generation with order payload |
+| **Gate Scanner** | **`html5-qrcode`** | Zero-install web camera scanner for gatekeeper smartphones |
+| **Icons & FX** | **Lucide React & Canvas-Confetti** | Modern icons and festive celebration effects |
 
 ---
 
-## 🚀 Fitur Unggulan
+## 🚀 Key Features
 
-### 1. Seating Plan Interaktif & Anti Double-Booking
-- Customer dapat melihat denah panggung dan memilih nomor kursi secara visual.
-- Status kursi dinamis: **Available** (warna kategori), **Selected** (highlight putih-cyan), **Held** (kuning berkedip), dan **Sold** (abu-abu terkunci).
-- **Seat Locking Timer**: Kursi yang diklik customer langsung dikunci sementara selama **10 menit**. Customer lain tidak dapat memilih kursi tersebut saat proses isi form & bayar berlangsung.
-- Batasan jumlah tiket maksimal 6 kursi per transaksi.
+### 1. Interactive Seating Plan & Concurrency Locking
+* Real-time seat statuses: **Available**, **Selected**, **Held**, and **Sold**.
+* **10-minute hold window**: When an attendee selects seats and begins checkout, seats are temporarily locked to prevent duplicate purchases.
+* Responsive viewport with zoom controls and horizontal scroll support for mobile devices.
 
-### 2. WhatsApp Integration & Transfer Manual (Tanpa Potongan Payment Gateway)
-- **Kontak Resmi Hotline WhatsApp:** `0819-1534-8866` ([wa.me/6281915348866](https://wa.me/6281915348866))
-- **Akun Instagram Resmi:** `@chordsofcomfort.theater` ([instagram.com/chordsofcomfort.theater](https://www.instagram.com/chordsofcomfort.theater?jplx=MXM3c3J3bGQ1NXJ5Zg==))
-- **Metode Pembayaran:** Transfer Rekening Bank Panitia (BCA: `7650892101`, Mandiri: `1220019283741`, E-Wallet: `081915348866`) & QRIS.
-- **Konfirmasi 1-Klik:** Setelah memesan, customer cukup klik tombol *"Kirim Bukti Transfer ke WhatsApp Panitia"* yang otomatis membuka WhatsApp dengan template pesan rapi memuat Order ID, Nama, Nomor Kursi, dan Nominal Tagihan.
-- Dilengkapi **Sandbox / Simulator Pembayaran** bawaan untuk pengujian instan.
+### 2. WhatsApp Checkout & Transfer Workflow
+* Direct committee payment channels: BCA (`7650892101` a.n. Viona), Mandiri (`1220019283741`), and E-Wallets (`081915348866`).
+* **1-Click WhatsApp Confirmation**: Pre-fills an English message with Order ID, Attendee Name, Seat Numbers, and Total Bill sent directly to `0819-1534-8866`.
+* Integrated interactive payment simulation modal for frictionless end-to-end testing.
 
-### 3. Automatic E-Ticket Delivery & WhatsApp Ticket Generator
-- Terbit otomatis setelah pembayaran terverifikasi.
-- Panitia di Admin Dashboard memiliki tombol **"Kirim Tiket WA"** 1-klik untuk langsung mengirimkan tautan E-Ticket resmi beserta QR Code ke nomor WhatsApp pembeli.
-- Dilengkapi **Print-Friendly PDF Mode** (`window.print()`).
-- Memuat nama pemegang tiket, Order ID unik (e.g. `LSPR-6SP-XXXXXX`), tanggal pementasan, nomor kursi, dan QR Code validasi gate.
+### 3. Official E-Ticket Pass (`/ticket/[orderId]`)
+* Vintage admit-one design featuring retro perforations, barcode, and high-resolution QR verification code.
+* Displays attendee name, unique Order ID (e.g. `LSPR-6SP-XXXXXX`), seating category, and venue instructions.
+* Print & PDF export mode with print-optimized stylesheets (`window.print()`).
 
-### 4. Admin Dashboard Panitia & CRUD Lengkap (`/admin`)
-- **Login Petugas Resmi:**
-  - Viona: `meovivi@vinsky.com` / `viona1002`
-  - Alvin: `vinsky@vinsky.com` / `alvin123`
-- **Fitur CRUD Lengkap:**
-  - **Create:** Penerbitan tiket manual untuk Tamu Kehormatan / VIP / Undangan Kampus.
-  - **Read:** Tabel transaksi komprehensif, pencarian cepat, denah kursi interaktif & pemilik.
-  - **Update:** Edit data pembeli (Nama, No WA, Email) jika terdapat typo, serta ubah status bayar (`Approve Lunas`) dan toggle Check-In gate.
-  - **Delete:** Tolak / batalkan pesanan jika belum transfer dalam batas waktu (kursi otomatis kembali *Available* untuk pembeli lain).
-- **Template Chat WhatsApp Lengkap:**
-  - Tab khusus berisi 4 template resmi: *Pengiriman E-Ticket Lunas*, *Follow-up / Reminder Transfer Pending*, *Pembatalan Pesanan*, dan *Pengingat Hari-H / Open Gate*.
-- **Export to CSV (Excel)** dengan satu klik untuk backup dan arsip helpdesk fisik.
-- Tombol **Reset Data** untuk membersihkan data uji coba sebelum penjualan resmi dibuka.
+### 4. Admin Management Dashboard (`/admin`)
+* **Authorized Committee Accounts:**
+  * Viona: `meovivi@vinsky.com` / `viona1002`
+  * Alvin: `vinsky@vinsky.com` / `alvin123`
+* **Comprehensive CRUD Controls:**
+  * **Create:** Manual issuance of tickets for VIP Guests, Faculty, Sponsors, and on-site cash purchases.
+  * **Read:** Live order table, search/filter engine, real-time KPI metrics, and seat occupancy inspector.
+  * **Update:** Edit attendee contact information, approve payments (`Approve Payment`), and toggle gate check-in.
+  * **Delete:** Cancel unpaid reservations, automatically releasing seats back to available inventory.
+* **WhatsApp Templates Hub:** 4 standardized communication templates for instant 1-click dispatch.
+* **CSV Export:** One-click download of all transaction and attendance records for offline backup.
 
-### 5. Mobile QR Gate Scanner (`/scanner`)
-- Cukup dibuka melalui browser ponsel panitia di pintu masuk venue LSPR Sudirman Park.
-- Validasi instan:
-  - 🟢 **VALID**: Tiket sah, menampilkan detail nama dan nomor kursi disertai nada beep tinggi.
-  - 🟡 **ALREADY CHECKED IN**: Tiket sudah pernah dipindai sebelumnya (mencegah tiket digandakan atau di-share).
-  - 🔴 **INVALID**: Tiket tidak ditemukan atau belum lunas.
-- Dilengkapi kolom **Input Manual Order ID** jika kamera menghadapi pencahayaan minim.
+### 5. Mobile Gate QR Scanner (`/scanner`)
+* Fast in-browser camera scanner with visual and audio feedback (Success, Already Checked In, Invalid).
+* Manual Order ID / Ticket Code lookup fallback for damaged or unscannable screens.
+* Live 10-item recent check-in history.
 
 ---
 
-## 📂 Struktur Direktori
+## 🛠️ Getting Started
 
-```plaintext
-chords-of-comfort-ticketing/
-├── public/
-│   └── assets/                  # Foto cast, denah kursi, dan aset retro
-├── src/
-│   ├── app/
-│   │   ├── admin/               # Halaman Dashboard Admin Panitia
-│   │   ├── api/
-│   │   │   ├── admin/           # Endpoint API manajemen & reset
-│   │   │   ├── checkin/         # Endpoint validasi QR gate scanner
-│   │   │   ├── checkout/        # Endpoint pembuatan order & Snap token
-│   │   │   ├── payment/         # Endpoint konfirmasi & webhook Midtrans
-│   │   │   ├── seats/           # Endpoint status kursi & atomic lock
-│   │   │   └── ticket/          # Endpoint detail e-ticket per Order ID
-│   │   ├── scanner/             # Halaman Mobile Camera QR Gate Scanner
-│   │   ├── ticket/[orderId]/    # Halaman E-Ticket Resmi Admit-One
-│   │   ├── globals.css          # Styling Tailwind & efek scrapbook tape
-│   │   ├── layout.tsx           # Layout dasar & Google Fonts (Bebas Neue)
-│   │   └── page.tsx             # Halaman Beranda Pembelian Tiket
-│   ├── components/              # Komponen UI (Navbar, Hero, SeatPlan, dll)
-│   ├── data/                    # Data inisialisasi 400 kursi venue
-│   ├── lib/                     # Data store persistent & integrasi Resend
-│   └── types/                   # Definisi TypeScript
-├── supabase/
-│   └── schema.sql               # Skema PostgreSQL & atomic locking trigger
-├── PANDUAN_PENGGUNAAN.md        # SOP operasional panitia ticketing & gate
-├── .env.example                 # Template Environment Variables
-└── package.json
-```
-
----
-
-## 🛠️ Cara Menjalankan Project di Lokal
-
-### 1. Clone Repository
 ```bash
+# Clone the repository
 git clone https://github.com/ahmadalvin92/chords-of-comfort-ticketing.git
+
+# Navigate to project directory
 cd chords-of-comfort-ticketing
-```
 
-### 2. Install Dependensi
-```bash
+# Install dependencies
 npm install
-```
 
-### 3. Konfigurasi Environment Variables (Opsional)
-Salin `.env.example` menjadi `.env.local`:
-```bash
-cp .env.example .env.local
-```
-*(Catatan: Tanpa mengisi API Key Midtrans atau Resend pun, sistem sudah otomatis berjalan dalam **Simulator Mode** sehingga seluruh fitur tetap 100% dapat dicoba secara offline).*
-
-### 4. Jalankan Server Development
-```bash
+# Run development server
 npm run dev
 ```
-Buka browser di **[http://localhost:3000](http://localhost:3000)**.
+
+Open [http://localhost:3000](http://localhost:3000) to view the application.
 
 ---
 
-## 🌐 Deploy ke Production (Vercel)
+## 📄 License & Credits
 
-1. Hubungkan repository GitHub ini ke akun [Vercel](https://vercel.com).
-2. Tambahkan Environment Variable sesuai kebutuhan (`MIDTRANS_SERVER_KEY`, `RESEND_API_KEY`).
-3. Klik **Deploy** — website akan langsung aktif online dengan SSL gratis.
-
----
-
-## 👥 Tim Produksi & Kredit
-
-- **Penyelenggara**: LSPR Institute of Communication & Business — COMM30-6SP
-- **Judul Pementasan**: Chords of Comfort: The Musical
-- **Venue**: Auditorium LSPR Sudirman Park, Lantai 2, Jakarta Pusat
-- **Kapasitas**: 400 Kursi (Reserved Seating)
-
-*© 2026 LSPR COMM30-6SP Musical Theater Production. All rights reserved.*
+Organized by **COMM30-6SP • The 35th LSPR Theater Festival**  
+LSPR Institute of Communication & Business, 2026–2027. All rights reserved.

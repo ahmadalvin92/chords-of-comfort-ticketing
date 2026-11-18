@@ -1,70 +1,68 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Seat, CustomerInfo, Order } from '@/types/ticket';
+import { Seat, CustomerInfo } from '@/types/ticket';
 import {
   X,
-  Ticket,
+  Clock,
+  ShieldCheck,
   User,
   Mail,
   Phone,
-  ShieldCheck,
-  CreditCard,
-  QrCode,
-  Building,
+  Ticket,
   AlertCircle,
-  Clock,
+  ArrowRight,
   ArrowLeft,
+  Sparkles,
 } from 'lucide-react';
 
 interface CheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedSeats: Seat[];
-  onOrderCreated: (order: Order, snapToken?: string, hasLiveMidtrans?: boolean) => void;
+  onConfirmCheckout: (customer: CustomerInfo, paymentMethod: string) => Promise<void>;
+  loading: boolean;
+  error?: string | null;
 }
 
 export default function CheckoutModal({
   isOpen,
   onClose,
   selectedSeats,
-  onOrderCreated,
+  onConfirmCheckout,
+  loading,
+  error,
 }: CheckoutModalProps) {
-  const [customer, setCustomer] = useState<CustomerInfo>({
+  const [formData, setFormData] = useState<CustomerInfo>({
     fullName: '',
     email: '',
     phone: '',
     notes: '',
   });
 
-  const [paymentMethod, setPaymentMethod] = useState<'TRANSFER_BCA' | 'TRANSFER_MANDIRI' | 'EWALLET' | 'QRIS'>('TRANSFER_BCA');
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<string>('TRANSFER_MANUAL');
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({});
 
-  // 10-minute countdown for holding seats
-  const [timeLeftSeconds, setTimeLeftSeconds] = useState(600);
+  // 10-Minute Concurrency Hold Countdown Timer
+  const [secondsRemaining, setSecondsRemaining] = useState(600); // 10 mins
 
-  // Handle browser back button (popstate) & lock body scroll
   useEffect(() => {
     if (!isOpen) return;
 
-    setTimeLeftSeconds(600);
-    document.body.style.overflow = 'hidden';
-
-    // Push state into browser history so pressing device Back button closes modal
-    window.history.pushState({ modal: 'checkout' }, '');
-
+    // Listen to browser popstate (back button) to gracefully close modal
     const handlePopState = () => {
       onClose();
     };
-
     window.addEventListener('popstate', handlePopState);
+    window.history.pushState({ modalOpen: true }, '');
 
-    const timer = setInterval(() => {
-      setTimeLeftSeconds((prev) => {
+    const interval = setInterval(() => {
+      setSecondsRemaining((prev) => {
         if (prev <= 1) {
-          clearInterval(timer);
+          clearInterval(interval);
+          alert('Your reservation hold window has expired. Selected seats have been returned to available.');
+          onClose();
           return 0;
         }
         return prev - 1;
@@ -72,9 +70,8 @@ export default function CheckoutModal({
     }, 1000);
 
     return () => {
-      document.body.style.overflow = '';
+      clearInterval(interval);
       window.removeEventListener('popstate', handlePopState);
-      clearInterval(timer);
     };
   }, [isOpen, onClose]);
 
@@ -82,372 +79,272 @@ export default function CheckoutModal({
 
   const totalAmount = selectedSeats.reduce((sum, s) => sum + s.price, 0);
 
-  const formatTimer = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  const formatTimer = (totalSec: number) => {
+    const mins = Math.floor(totalSec / 60);
+    const secs = totalSec % 60;
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
-  const handleBack = () => {
-    // If modal had pushed state, going back in history is handled gracefully
-    onClose();
+  const validate = () => {
+    const errors: { [key: string]: string } = {};
+    if (!formData.fullName.trim()) {
+      errors.fullName = 'Please enter your full name as shown on your ID.';
+    }
+    if (!formData.email.trim() || !/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.email = 'Please provide a valid email address for E-Ticket delivery.';
+    }
+    if (!formData.phone.trim() || formData.phone.length < 8) {
+      errors.phone = 'Please provide an active WhatsApp number (min. 8 digits).';
+    }
+    if (!agreeTerms) {
+      errors.agreeTerms = 'Please confirm agreement to the audience entry guidelines.';
+    }
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMsg(null);
-
-    if (!customer.fullName.trim() || !customer.email.trim() || !customer.phone.trim()) {
-      setErrorMsg('Mohon lengkapi Nama, Email, dan Nomor WhatsApp Anda.');
-      return;
-    }
-
-    if (!customer.email.includes('@') || !customer.email.includes('.')) {
-      setErrorMsg('Format email tidak valid. Pastikan email benar untuk penerimaan e-ticket.');
-      return;
-    }
-
-    if (!agreedToTerms) {
-      setErrorMsg('Silakan setujui syarat & ketentuan sebelum melanjutkan.');
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      // Get or create customer sessionId in browser
-      let sessionId = localStorage.getItem('lspr_session_id');
-      if (!sessionId) {
-        sessionId = `sess_${Math.random().toString(36).substring(2, 10)}`;
-        localStorage.setItem('lspr_session_id', sessionId);
-      }
-
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customer,
-          seatIds: selectedSeats.map((s) => s.id),
-          sessionId,
-          paymentMethod,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Terjadi kesalahan saat memproses pesanan.');
-      }
-
-      onOrderCreated(data.order, data.snapToken, data.hasLiveMidtrans);
-    } catch (err) {
-      setErrorMsg((err as Error).message);
-    } finally {
-      setIsSubmitting(false);
-    }
+    if (!validate()) return;
+    await onConfirmCheckout(formData, paymentMethod);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
-      <div className="relative w-full max-w-2xl bg-[#F8F5EE] rounded-2xl sm:rounded-3xl border-3 sm:border-4 border-[#0F1C30] shadow-[0_12px_0_#0F1C30] overflow-hidden my-4 sm:my-8 max-h-[92vh] flex flex-col animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
+      
+      {/* Modal Container */}
+      <div className="relative w-full max-w-xl bg-white rounded-3xl border-4 border-[#0F1C30] shadow-[0_16px_0_#0F1C30] overflow-hidden my-6 animate-in zoom-in-95 duration-200">
         
-        {/* Sticky Header with Explicit BACK Button */}
-        <div className="sticky top-0 z-30 bg-[#182B49] text-white p-3.5 sm:p-5 border-b-4 border-[#F4B32A] flex items-center justify-between shrink-0 shadow-md">
-          
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Prominent Back Button on the left */}
-            <button
-              type="button"
-              onClick={handleBack}
-              className="cursor-pointer flex items-center gap-1.5 bg-[#C1272D] hover:bg-[#a61f25] text-white px-3 py-1.5 rounded-xl text-xs font-bold border-2 border-[#F4B32A] shadow-sm transition-all active:scale-95"
-              title="Kembali ke Pilihan Kursi"
-            >
-              <ArrowLeft className="w-4 h-4 text-[#F4B32A]" />
-              <span className="font-bebas text-sm tracking-wider">KEMBALI</span>
-            </button>
+        {/* Top Header */}
+        <div className="bg-[#182B49] text-white p-5 sm:p-6 border-b-4 border-[#F4B32A] relative">
+          <div className="flex items-center justify-between gap-4">
+            
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="p-1.5 rounded-xl bg-slate-800 hover:bg-[#C1272D] text-slate-300 hover:text-white transition-colors cursor-pointer"
+                title="Back to Seat Plan"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
 
-            <div>
-              <h3 className="font-bebas text-lg sm:text-2xl tracking-wider text-[#FAF6ED] leading-none">
-                FORM PEMBELIAN TIKET
-              </h3>
-              <p className="text-[10px] sm:text-xs text-slate-300 font-medium hidden sm:block">
-                COMM30-6SP Musical Theater • LSPR Sudirman Park
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* Quick Timer in header on mobile */}
-            <div className="bg-amber-400 text-[#0F1C30] px-2.5 py-1 rounded-lg font-mono text-xs font-black flex items-center gap-1 border border-[#0F1C30]">
-              <Clock className="w-3.5 h-3.5 animate-spin" />
-              <span>{formatTimer(timeLeftSeconds)}</span>
+              <div>
+                <div className="inline-flex items-center gap-1.5 bg-[#C1272D] text-[#FAF6ED] px-2.5 py-0.5 rounded text-xs font-bebas tracking-wider mb-1">
+                  <Sparkles className="w-3 h-3 text-[#F4B32A]" />
+                  <span>STEP 1: ATTENDEE INFORMATION</span>
+                </div>
+                <h3 className="font-bebas text-2xl sm:text-3xl text-[#FAF6ED] tracking-wide leading-none">
+                  BOOKING REGISTRATION
+                </h3>
+                <p className="text-[11px] text-slate-300 font-semibold mt-0.5">
+                  COMM30-6SP Musical Theater • Amani Palladium Theatre, LSPR Bekasi
+                </p>
+              </div>
             </div>
 
             <button
-              onClick={handleBack}
-              className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
-              title="Tutup"
+              onClick={onClose}
+              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+              aria-label="Close modal"
             >
-              <X className="w-5 h-5 sm:w-6 sm:h-6" />
+              <X className="w-6 h-6" />
             </button>
-          </div>
 
+          </div>
         </div>
 
-        {/* Hold Countdown Notice Banner */}
-        <div className="bg-amber-100 border-b-2 border-amber-300 px-4 py-2 flex items-center justify-between text-[11px] sm:text-xs font-bold text-amber-900 shrink-0">
-          <div className="flex items-center gap-1.5">
-            <Ticket className="w-3.5 h-3.5 text-amber-700" />
-            <span>Kursi ditahan sementara selama proses pengisian form:</span>
+        {/* 10-Minute Lock Timer Bar */}
+        <div className="bg-amber-100 border-b-2 border-amber-300 px-4 py-2.5 flex items-center justify-between text-xs text-amber-900 font-bold">
+          <div className="flex items-center gap-2">
+            <Clock className="w-4 h-4 text-amber-700 animate-spin" />
+            <span>Seats held for your order:</span>
           </div>
-          <span className="font-mono bg-amber-200 px-2 py-0.5 rounded text-amber-950 font-black">
-            {formatTimer(timeLeftSeconds)}
+          <span className="font-mono text-sm bg-amber-200 px-2 py-0.5 rounded-md border border-amber-400 text-amber-950 font-black">
+            {formatTimer(secondsRemaining)}
           </span>
         </div>
 
-        {/* Scrollable Form Body */}
-        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-5 overflow-y-auto flex-1">
+        {/* Modal Form Body */}
+        <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-5 max-h-[75vh] overflow-y-auto">
           
-          {errorMsg && (
-            <div className="bg-red-100 border-2 border-red-400 text-red-800 p-3 rounded-xl text-xs font-bold flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
-              <span>{errorMsg}</span>
+          {error && (
+            <div className="bg-red-100 border-2 border-red-400 text-red-800 p-3 rounded-2xl text-xs font-bold flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 shrink-0 text-red-600" />
+              <span>{error}</span>
             </div>
           )}
 
-          {/* Section 1: Customer Info */}
+          {/* Attendee Form Inputs */}
           <div className="space-y-3.5">
-            <div className="flex items-center gap-2 font-bebas text-base sm:text-lg text-[#182B49]">
-              <User className="w-4 h-4 text-[#C1272D]" />
-              <span>DATA DIRI PEMBELI (SESUAI IDENTITAS)</span>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                Full Name (As shown on ID) *
+              </label>
+              <div className="relative">
+                <User className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Jessica Althea"
+                  value={formData.fullName}
+                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                  className="w-full pl-9 pr-3 py-2.5 bg-[#FAF6ED] rounded-xl border-2 border-slate-300 focus:border-[#182B49] focus:outline-none text-xs font-semibold text-slate-900"
+                />
+              </div>
+              {validationErrors.fullName && (
+                <p className="text-[11px] text-red-600 font-bold mt-1">{validationErrors.fullName}</p>
+              )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
-                <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                  Nama Lengkap *
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  Active WhatsApp Number *
                 </label>
                 <div className="relative">
-                  <User className="w-4 h-4 absolute left-3 top-3.5 text-slate-400" />
-                  <input
-                    type="text"
-                    required
-                    placeholder="Contoh: Jessica Aurelia"
-                    value={customer.fullName}
-                    onChange={(e) => setCustomer({ ...customer, fullName: e.target.value })}
-                    className="w-full pl-9 pr-3 py-2.5 bg-white rounded-xl border-2 border-slate-300 focus:border-[#182B49] focus:outline-none text-sm font-medium"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                  Nomor WhatsApp/HP *
-                </label>
-                <div className="relative">
-                  <Phone className="w-4 h-4 absolute left-3 top-3.5 text-slate-400" />
+                  <Phone className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
                   <input
                     type="tel"
                     required
                     placeholder="081234567890"
-                    value={customer.phone}
-                    onChange={(e) => setCustomer({ ...customer, phone: e.target.value })}
-                    className="w-full pl-9 pr-3 py-2.5 bg-white rounded-xl border-2 border-slate-300 focus:border-[#182B49] focus:outline-none text-sm font-medium"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    className="w-full pl-9 pr-3 py-2.5 bg-[#FAF6ED] rounded-xl border-2 border-slate-300 focus:border-[#182B49] focus:outline-none text-xs font-semibold text-slate-900"
                   />
                 </div>
+                {validationErrors.phone && (
+                  <p className="text-[11px] text-red-600 font-bold mt-1">{validationErrors.phone}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  Email Address *
+                </label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                  <input
+                    type="email"
+                    required
+                    placeholder="jessica@gmail.com"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full pl-9 pr-3 py-2.5 bg-[#FAF6ED] rounded-xl border-2 border-slate-300 focus:border-[#182B49] focus:outline-none text-xs font-semibold text-slate-900"
+                  />
+                </div>
+                {validationErrors.email && (
+                  <p className="text-[11px] text-red-600 font-bold mt-1">{validationErrors.email}</p>
+                )}
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                Alamat Email (Untuk Pengiriman E-Ticket) *
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                Special Inquiries / Notes (Optional)
               </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 absolute left-3 top-3.5 text-slate-400" />
-                <input
-                  type="email"
-                  required
-                  placeholder="jessica@gmail.com"
-                  value={customer.email}
-                  onChange={(e) => setCustomer({ ...customer, email: e.target.value })}
-                  className="w-full pl-9 pr-3 py-2.5 bg-white rounded-xl border-2 border-slate-300 focus:border-[#182B49] focus:outline-none text-sm font-medium"
-                />
-              </div>
-              <p className="text-[11px] text-slate-500 font-semibold mt-1">
-                E-Ticket ber-QR Code akan dikirim otomatis ke alamat email ini setelah bayar.
-              </p>
+              <input
+                type="text"
+                placeholder="e.g. Need wheelchair accessibility assistance"
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                className="w-full px-3 py-2.5 bg-[#FAF6ED] rounded-xl border-2 border-slate-300 focus:border-[#182B49] focus:outline-none text-xs font-medium text-slate-900"
+              />
             </div>
           </div>
 
-          {/* Section 2: Selected Seats Summary */}
-          <div className="bg-white p-3.5 sm:p-4 rounded-2xl border-2 border-[#182B49] shadow-sm space-y-2.5">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-              <span className="font-bebas text-base sm:text-lg text-[#182B49]">RINGKASAN PESANAN</span>
-              <span className="text-xs font-bold text-slate-500">{selectedSeats.length} Kursi Dipilih</span>
+          {/* Order Summary Box */}
+          <div className="bg-[#FAF6ED] p-4 rounded-2xl border-2 border-slate-300 space-y-2.5">
+            <div className="flex items-center justify-between text-xs font-bold text-slate-600 border-b border-slate-200 pb-1.5">
+              <span>Order Summary</span>
+              <span>{selectedSeats.length} Seats Selected</span>
             </div>
 
-            <div className="max-h-32 overflow-y-auto space-y-1.5 pr-1">
-              {selectedSeats.map((seat) => (
-                <div
-                  key={seat.id}
-                  className="flex items-center justify-between text-xs font-semibold py-1 border-b border-dashed border-slate-100 last:border-0"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="font-bebas text-xs sm:text-sm bg-slate-100 px-2 py-0.5 rounded border border-slate-300">
-                      {seat.label}
-                    </span>
-                    <span className="text-slate-700">
-                      {seat.category} ({seat.section === 'BALCONY' ? 'Balkon' : 'Main Floor'})
-                    </span>
+            <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
+              {selectedSeats.map((s) => (
+                <div key={s.id} className="flex items-center justify-between text-xs font-medium">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bebas text-sm text-[#182B49]">SEAT {s.label}</span>
+                    <span className="text-[10px] text-slate-500">({s.category})</span>
                   </div>
-                  <span className="font-bold text-[#182B49]">
-                    Rp {seat.price.toLocaleString('id-ID')}
+                  <span className="font-bold text-slate-900">
+                    Rp {s.price.toLocaleString('id-ID')}
                   </span>
                 </div>
               ))}
             </div>
 
-            <div className="pt-2 border-t border-slate-300 flex items-center justify-between">
-              <span className="font-bebas text-lg sm:text-xl text-[#182B49]">TOTAL TAGIHAN</span>
+            <div className="pt-2 border-t-2 border-dashed border-slate-300 flex items-center justify-between">
+              <span className="font-bebas text-lg text-[#182B49]">TOTAL DUE:</span>
               <span className="font-bebas text-2xl text-[#C1272D]">
-                Rp {totalAmount.toLocaleString('id-ID')}
+                RP {totalAmount.toLocaleString('id-ID')}
               </span>
             </div>
           </div>
 
-          {/* Section 3: Payment Method */}
-          <div className="space-y-2.5">
-            <div className="flex items-center justify-between">
-              <label className="block text-xs font-bold uppercase text-slate-700">
-                Pilih Metode Pembayaran Transfer
-              </label>
-              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
-                Konfirmasi via WhatsApp Panitia
-              </span>
-            </div>
-            
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              
+          {/* Payment Method Selector */}
+          <div className="space-y-2">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+              Payment Confirmation Channel:
+            </label>
+            <div className="grid grid-cols-2 gap-2 text-xs">
               <button
                 type="button"
-                onClick={() => setPaymentMethod('TRANSFER_BCA')}
-                className={`p-3 rounded-xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between ${
-                  paymentMethod === 'TRANSFER_BCA'
-                    ? 'border-[#182B49] bg-amber-50 shadow-sm ring-2 ring-[#F4B32A]'
-                    : 'border-slate-200 bg-white hover:border-slate-300'
+                onClick={() => setPaymentMethod('TRANSFER_MANUAL')}
+                className={`p-3 rounded-xl border-2 text-left font-bold transition-all cursor-pointer ${
+                  paymentMethod === 'TRANSFER_MANUAL'
+                    ? 'border-[#182B49] bg-amber-50 text-[#182B49]'
+                    : 'border-slate-300 bg-white text-slate-600'
                 }`}
               >
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Building className="w-4 h-4 text-blue-600 shrink-0" />
-                  <span className="font-bold text-xs text-slate-900">BCA Transfer</span>
-                </div>
-                <p className="text-[10px] text-slate-500">Cek Rekening Panitia</p>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setPaymentMethod('TRANSFER_MANDIRI')}
-                className={`p-3 rounded-xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between ${
-                  paymentMethod === 'TRANSFER_MANDIRI'
-                    ? 'border-[#182B49] bg-amber-50 shadow-sm ring-2 ring-[#F4B32A]'
-                    : 'border-slate-200 bg-white hover:border-slate-300'
-                }`}
-              >
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Building className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span className="font-bold text-xs text-slate-900">Mandiri</span>
-                </div>
-                <p className="text-[10px] text-slate-500">Livin / Transfer ATM</p>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setPaymentMethod('EWALLET')}
-                className={`p-3 rounded-xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between ${
-                  paymentMethod === 'EWALLET'
-                    ? 'border-[#182B49] bg-amber-50 shadow-sm ring-2 ring-[#F4B32A]'
-                    : 'border-slate-200 bg-white hover:border-slate-300'
-                }`}
-              >
-                <div className="flex items-center gap-1.5 mb-1">
-                  <CreditCard className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span className="font-bold text-xs text-slate-900">E-Wallet</span>
-                </div>
-                <p className="text-[10px] text-slate-500">GoPay / Dana / OVO</p>
+                <div className="font-bebas text-sm">BANK TRANSFER + WA</div>
+                <div className="text-[10px] font-normal text-slate-500">BCA, Mandiri, E-Wallet</div>
               </button>
 
               <button
                 type="button"
                 onClick={() => setPaymentMethod('QRIS')}
-                className={`p-3 rounded-xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between ${
+                className={`p-3 rounded-xl border-2 text-left font-bold transition-all cursor-pointer ${
                   paymentMethod === 'QRIS'
-                    ? 'border-[#182B49] bg-amber-50 shadow-sm ring-2 ring-[#F4B32A]'
-                    : 'border-slate-200 bg-white hover:border-slate-300'
+                    ? 'border-[#182B49] bg-amber-50 text-[#182B49]'
+                    : 'border-slate-300 bg-white text-slate-600'
                 }`}
               >
-                <div className="flex items-center gap-1.5 mb-1">
-                  <QrCode className="w-4 h-4 text-[#C1272D] shrink-0" />
-                  <span className="font-bold text-xs text-slate-900">QRIS Scan</span>
-                </div>
-                <p className="text-[10px] text-slate-500">Scan Semua E-Wallet</p>
+                <div className="font-bebas text-sm">QRIS INSTANT</div>
+                <div className="text-[10px] font-normal text-slate-500">GoPay, OVO, Dana, Shopee</div>
               </button>
-
-            </div>
-
-            <div className="bg-emerald-50 border border-emerald-300 p-2.5 rounded-xl text-emerald-900 text-xs flex items-center gap-2">
-              <span className="text-base">📱</span>
-              <span>
-                Setelah klik <strong>Lanjut ke Pembayaran</strong>, Anda akan menerima nomor rekening transfer & diarahkan kirim struk ke WhatsApp panitia di <strong>0819-1534-8866</strong>.
-              </span>
             </div>
           </div>
 
-          {/* Section 4: Terms */}
-          <div className="pt-1">
+          {/* Terms Agreement Checkbox */}
+          <div>
             <label className="flex items-start gap-2.5 cursor-pointer">
               <input
                 type="checkbox"
-                checked={agreedToTerms}
-                onChange={(e) => setAgreedToTerms(e.target.checked)}
-                className="mt-1 w-4 h-4 rounded border-slate-300 text-[#182B49] focus:ring-[#182B49]"
+                checked={agreeTerms}
+                onChange={(e) => setAgreeTerms(e.target.checked)}
+                className="mt-0.5 rounded border-slate-400 text-[#C1272D] focus:ring-[#C1272D]"
               />
-              <span className="text-[11px] sm:text-xs text-slate-600 font-medium leading-relaxed">
-                Saya menyetujui bahwa nomor kursi yang dipilih tidak dapat ditukar dan tiket yang sudah dibeli bersifat non-refundable sesuai ketentuan panitia LSPR COMM30-6SP.
+              <span className="text-[11px] text-slate-600 font-medium leading-relaxed">
+                I agree to the theatre guidelines and confirm that all ticket purchases are non-refundable. Official QR passes will be generated upon receipt verification.
               </span>
             </label>
+            {validationErrors.agreeTerms && (
+              <p className="text-[11px] text-red-600 font-bold mt-1">{validationErrors.agreeTerms}</p>
+            )}
           </div>
 
-          {/* Double Action Buttons: Back + Proceed */}
-          <div className="pt-2 space-y-2.5">
+          {/* Submit Button */}
+          <div className="pt-2">
             <button
               type="submit"
-              disabled={isSubmitting || timeLeftSeconds <= 0}
-              className="w-full cursor-pointer bg-[#C1272D] hover:bg-[#a61f25] disabled:bg-slate-400 text-white py-3.5 sm:py-4 rounded-xl font-bebas text-xl sm:text-2xl tracking-wider border-3 border-[#0F1C30] shadow-[0_4px_0_#0F1C30] hover:translate-y-0.5 active:translate-y-1 transition-all flex items-center justify-center gap-2"
+              disabled={loading}
+              className="w-full cursor-pointer bg-[#C1272D] hover:bg-[#a61f25] disabled:bg-slate-400 text-white py-4 rounded-2xl font-bebas text-xl tracking-wider border-3 border-[#0F1C30] shadow-[0_4px_0_#0F1C30] hover:translate-y-0.5 active:translate-y-1 transition-all flex items-center justify-center gap-2"
             >
-              {isSubmitting ? (
-                <span className="animate-pulse">MEMPROSES TRANSAKSI...</span>
-              ) : (
-                <>
-                  <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-[#F4B32A]" />
-                  <span>LANJUT KE PEMBAYARAN ONLINE</span>
-                </>
-              )}
+              <ShieldCheck className="w-5 h-5 text-[#F4B32A]" />
+              <span>{loading ? 'SECURING RESERVATION...' : 'PROCEED TO PAYMENT CONFIRMATION'}</span>
+              <ArrowRight className="w-5 h-5 ml-1" />
             </button>
-
-            {/* Bottom Explicit BACK Button for easy access on mobile */}
-            <button
-              type="button"
-              onClick={handleBack}
-              className="w-full cursor-pointer bg-[#EBE5D8] hover:bg-[#ded6c4] text-[#182B49] py-3 rounded-xl font-bebas text-lg tracking-wider border-2 border-[#182B49] shadow-[0_2px_0_#182B49] hover:translate-y-0.5 transition-all flex items-center justify-center gap-2"
-            >
-              <ArrowLeft className="w-4 h-4 text-[#C1272D]" />
-              <span>← KEMBALI KE DENAH KURSI (BATAL / UBAH)</span>
-            </button>
-          </div>
-
-          <div className="flex items-center justify-center gap-2 text-[10px] sm:text-[11px] font-bold text-slate-500 pb-2">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Integrasi Aman Payment Gateway Midtrans & Xendit</span>
           </div>
 
         </form>

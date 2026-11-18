@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     if (action === 'manual_create') {
       if (!customer?.fullName || !seatIds || seatIds.length === 0) {
         return NextResponse.json(
-          { success: false, error: 'Nama dan kursi wajib dipilih.' },
+          { success: false, error: 'Guest name and seat must be specified.' },
           { status: 400 }
         );
       }

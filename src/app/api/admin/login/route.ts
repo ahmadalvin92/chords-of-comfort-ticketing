@@ -22,7 +22,7 @@ export async function POST(request: Request) {
 
     if (!email || !password) {
       return NextResponse.json(
-        { success: false, error: 'Email dan password wajib diisi.' },
+        { success: false, error: 'Email and password are required.' },
         { status: 400 }
       );
     }
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
 
     if (!matchedUser) {
       return NextResponse.json(
-        { success: false, error: 'Email atau password salah. Periksa kembali akun panitia Anda.' },
+        { success: false, error: 'Invalid email or password. Please verify your committee credentials.' },
         { status: 401 }
       );
     }

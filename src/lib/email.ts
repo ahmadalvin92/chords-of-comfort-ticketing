@@ -31,7 +31,7 @@ export async function sendTicketEmail(order: Order): Promise<{ success: boolean;
     <html>
     <head>
       <meta charset="utf-8">
-      <title>E-Ticket Musical Theater LSPR COMM30-6SP</title>
+      <title>Official E-Ticket - Musical Theater LSPR COMM30-6SP</title>
     </head>
     <body style="font-family:'Helvetica Neue', Arial, sans-serif; background-color:#F8F5EE; margin:0; padding:20px; color:#182B49;">
       <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width:600px; background-color:#ffffff; border:3px solid #0F1C30; border-radius:16px; overflow:hidden; box-shadow:0 6px 0 #0F1C30;">
@@ -43,10 +43,10 @@ export async function sendTicketEmail(order: Order): Promise<{ success: boolean;
               COMM30-6SP
             </div>
             <h1 style="color:#FAF6ED; margin:0; font-size:24px; text-transform:uppercase; letter-spacing:1px;">
-              THEATER PRODUCTION
+              CHORDS OF COMFORT
             </h1>
             <p style="color:#F4B32A; margin:4px 0 0; font-size:12px; font-weight:bold; text-transform:uppercase; letter-spacing:2px;">
-              LSPR Institute of Communication & Business
+              The 35th LSPR Theater Festival • LSPR Bekasi
             </p>
           </td>
         </tr>
@@ -55,10 +55,10 @@ export async function sendTicketEmail(order: Order): Promise<{ success: boolean;
         <tr>
           <td style="padding:28px 24px;">
             <h2 style="color:#182B49; margin:0 0 8px; font-size:18px;">
-              Halo, ${order.customer.fullName}! 👋
+              Hello, ${order.customer.fullName}! 👋
             </h2>
             <p style="color:#4B5563; font-size:14px; line-height:1.5; margin:0 0 20px;">
-              Terima kasih! Pembayaran Anda telah kami terima dan diverifikasi. Berikut adalah bukti reservasi dan E-Ticket resmi Anda untuk pementasan <strong>Musical Theater LSPR COMM30-6SP</strong>.
+              Thank you! Your payment has been received and verified. Below is your official reservation details and E-Ticket for <strong>Chords of Comfort</strong> presented by COMM30-6SP.
             </p>
 
             <!-- Ticket Card Box -->
@@ -71,19 +71,19 @@ export async function sendTicketEmail(order: Order): Promise<{ success: boolean;
                       <td style="padding:4px 0; font-family:monospace; font-weight:900; font-size:14px; text-align:right; color:#182B49;">${order.id}</td>
                     </tr>
                     <tr>
-                      <td style="padding:4px 0; color:#6B7280; font-size:11px; text-transform:uppercase; font-weight:bold;">Jadwal:</td>
-                      <td style="padding:4px 0; font-weight:bold; text-align:right;">Sabtu, 19 Des 2026 • 18:30 WIB</td>
+                      <td style="padding:4px 0; color:#6B7280; font-size:11px; text-transform:uppercase; font-weight:bold;">Schedule:</td>
+                      <td style="padding:4px 0; font-weight:bold; text-align:right;">January 2027 • Showtime TBA</td>
                     </tr>
                     <tr>
-                      <td style="padding:4px 0; color:#6B7280; font-size:11px; text-transform:uppercase; font-weight:bold;">Lokasi Venue:</td>
-                      <td style="padding:4px 0; font-weight:bold; text-align:right;">Auditorium LSPR Sudirman Park Lt. 2</td>
+                      <td style="padding:4px 0; color:#6B7280; font-size:11px; text-transform:uppercase; font-weight:bold;">Venue:</td>
+                      <td style="padding:4px 0; font-weight:bold; text-align:right;">Amani Palladium Theatre, LSPR Bekasi</td>
                     </tr>
                     <tr>
-                      <td style="padding:4px 0; color:#6B7280; font-size:11px; text-transform:uppercase; font-weight:bold;">Nomor Kursi:</td>
+                      <td style="padding:4px 0; color:#6B7280; font-size:11px; text-transform:uppercase; font-weight:bold;">Seat Numbers:</td>
                       <td style="padding:4px 0; text-align:right;">${seatBadgesHtml}</td>
                     </tr>
                     <tr>
-                      <td style="padding:8px 0 0; color:#6B7280; font-size:11px; text-transform:uppercase; font-weight:bold; border-top:1px dashed #D1D5DB;">Total Bayar:</td>
+                      <td style="padding:8px 0 0; color:#6B7280; font-size:11px; text-transform:uppercase; font-weight:bold; border-top:1px dashed #D1D5DB;">Total Paid:</td>
                       <td style="padding:8px 0 0; font-weight:900; font-size:16px; text-align:right; color:#C1272D; border-top:1px dashed #D1D5DB;">Rp ${order.totalAmount.toLocaleString('id-ID')}</td>
                     </tr>
                   </table>
@@ -96,14 +96,14 @@ export async function sendTicketEmail(order: Order): Promise<{ success: boolean;
               <tr>
                 <td align="center">
                   <a href="${ticketUrl}" target="_blank" style="display:inline-block; background-color:#C1272D; color:#ffffff; font-size:16px; font-weight:bold; text-decoration:none; padding:14px 28px; border-radius:10px; border:2px solid #0F1C30; box-shadow:0 4px 0 #0F1C30;">
-                    🎟️ BUKA & CETAK E-TICKET LENGKAP
+                    🎟️ VIEW & PRINT OFFICIAL E-TICKET
                   </a>
                 </td>
               </tr>
             </table>
 
             <p style="color:#6B7280; font-size:12px; margin:24px 0 0; line-height:1.4; text-align:center;">
-              ⚠️ <em>Harap tunjukkan kode QR pada E-Ticket saat registrasi masuk di venue. Jangan berikan kode QR kepada orang lain.</em>
+              ⚠️ <em>Please present the QR Code on your E-Ticket upon check-in at the theatre entrance. Do not share your QR Code with unauthorized persons.</em>
             </p>
           </td>
         </tr>
@@ -111,7 +111,7 @@ export async function sendTicketEmail(order: Order): Promise<{ success: boolean;
         <!-- Footer -->
         <tr>
           <td style="background-color:#FAF6ED; padding:16px; text-align:center; font-size:11px; color:#6B7280; border-top:1px solid #E5E7EB;">
-            © 2026 LSPR COMM30-6SP Musical Theater Production. All rights reserved.
+            © 2027 LSPR COMM30-6SP Musical Theater Production. All rights reserved.
           </td>
         </tr>
 
@@ -123,7 +123,7 @@ export async function sendTicketEmail(order: Order): Promise<{ success: boolean;
     const { error } = await resend.emails.send({
       from: fromEmail,
       to: order.customer.email,
-      subject: `🎟️ E-Ticket Musical Theater LSPR COMM30-6SP [${order.id}]`,
+      subject: `[CONFIRMED] Your Official E-Ticket for Chords of Comfort (#${order.id})`,
       html: htmlContent,
     });
 
@@ -134,8 +134,7 @@ export async function sendTicketEmail(order: Order): Promise<{ success: boolean;
 
     return { success: true };
   } catch (err) {
-    console.error('Failed to trigger email:', err);
+    console.error('Email sending exception:', err);
     return { success: false, error: (err as Error).message };
   }
 }
-
