@@ -8,12 +8,12 @@ export async function POST(request: Request) {
 
     if (!orderId) {
       return NextResponse.json(
-        { success: false, error: 'Order ID wajib diisi.' },
+        { success: false, error: 'Order ID is required.' },
         { status: 400 }
       );
     }
 
-    const result = confirmPayment(orderId, paymentMethod || 'QRIS');
+    const result = confirmPayment(orderId, paymentMethod || 'TRANSFER_BCA');
     if (!result.success) {
       return NextResponse.json(result, { status: 404 });
     }

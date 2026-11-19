@@ -13,12 +13,12 @@ export async function POST(request: Request) {
     const { action, orderId, paymentMethod, customer, seatIds, isPaid } = body;
 
     if (!action) {
-      return NextResponse.json({ success: false, error: 'Aksi tidak valid.' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Invalid action.' }, { status: 400 });
     }
 
     if (action === 'mark_paid') {
       if (!orderId) {
-        return NextResponse.json({ success: false, error: 'Order ID wajib diisi.' }, { status: 400 });
+        return NextResponse.json({ success: false, error: 'Order ID is required.' }, { status: 400 });
       }
       const res = confirmPayment(orderId, paymentMethod || 'MANUAL_TRANSFER');
       return NextResponse.json(res);
@@ -26,7 +26,7 @@ export async function POST(request: Request) {
 
     if (action === 'toggle_checkin') {
       if (!orderId) {
-        return NextResponse.json({ success: false, error: 'Order ID wajib diisi.' }, { status: 400 });
+        return NextResponse.json({ success: false, error: 'Order ID is required.' }, { status: 400 });
       }
       const res = manualToggleCheckIn(orderId);
       return NextResponse.json(res);
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
 
     if (action === 'delete_order') {
       if (!orderId) {
-        return NextResponse.json({ success: false, error: 'Order ID wajib diisi.' }, { status: 400 });
+        return NextResponse.json({ success: false, error: 'Order ID is required.' }, { status: 400 });
       }
       const res = deleteOrder(orderId);
       return NextResponse.json(res);
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
 
     if (action === 'update_customer') {
       if (!orderId || !customer) {
-        return NextResponse.json({ success: false, error: 'Order ID dan data customer wajib diisi.' }, { status: 400 });
+        return NextResponse.json({ success: false, error: 'Order ID and customer data are required.' }, { status: 400 });
       }
       const res = updateCustomerInfo(orderId, customer);
       return NextResponse.json(res);
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
       return NextResponse.json(res);
     }
 
-    return NextResponse.json({ success: false, error: 'Aksi tidak dikenali.' }, { status: 400 });
+    return NextResponse.json({ success: false, error: 'Unknown action.' }, { status: 400 });
   } catch (error) {
     return NextResponse.json(
       { success: false, error: (error as Error).message },

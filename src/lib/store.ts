@@ -130,7 +130,9 @@ export function holdSeats(
     if (!seat) {
       return { success: false, error: `Seat ${id} not found.` };
     }
-    if (seat.status === 'sold') {
+    if (seat.category === 'VIP' || seat.category === 'VIP_BALCONY') {
+      unavailable.push(`${seat.label} (VIP seats are reserved for invitations only)`);
+    } else if (seat.status === 'sold') {
       unavailable.push(`${seat.label} (already sold)`);
     } else if (seat.status === 'held' && seat.heldBy !== sessionId) {
       unavailable.push(`${seat.label} (temporarily held by another buyer)`);
@@ -192,6 +194,9 @@ export function createOrder(
     const seat = db.seats.find((s) => s.id === id);
     if (!seat) {
       return { success: false, error: `Seat with ID ${id} not found.` };
+    }
+    if (seat.category === 'VIP' || seat.category === 'VIP_BALCONY') {
+      return { success: false, error: `Seat ${seat.label} is VIP and exclusively reserved for invitations.` };
     }
     if (seat.status === 'sold') {
       return { success: false, error: `Seat ${seat.label} is already sold.` };

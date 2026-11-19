@@ -8,7 +8,7 @@ export async function POST(request: Request) {
 
     if (!qrPayload) {
       return NextResponse.json(
-        { status: 'INVALID', message: 'Payload QR Code kosong!' },
+        { status: 'INVALID', message: 'QR Code payload is empty.' },
         { status: 400 }
       );
     }

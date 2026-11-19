@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const orderResult = createOrder(customer, seatIds, sessionId, paymentMethod || 'QRIS');
+    const orderResult = createOrder(customer, seatIds, sessionId, paymentMethod || 'TRANSFER_BCA');
 
     if (!orderResult.success || !orderResult.order) {
       return NextResponse.json(orderResult, { status: 409 });
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
             id: item.seatId,
             price: item.price,
             quantity: 1,
-            name: `Tiket ${item.category} (${item.seatLabel})`,
+            name: `Ticket ${item.category} (${item.seatLabel})`,
           })),
         };
 

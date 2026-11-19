@@ -77,6 +77,9 @@ export default function SeatPlan({
   };
 
   const getSeatColor = (seat: Seat, isSelected: boolean) => {
+    if (seat.category === 'VIP' || seat.category === 'VIP_BALCONY') {
+      return 'bg-[#C1272D] text-white/90 border border-[#8E1C21] cursor-not-allowed opacity-90 shadow-xs';
+    }
     if (seat.status === 'sold') {
       return 'bg-slate-700 text-slate-500 border border-slate-800 cursor-not-allowed opacity-50 line-through';
     }
@@ -86,9 +89,6 @@ export default function SeatPlan({
     if (isSelected) {
       return 'bg-[#F4B32A] text-[#0F1C30] border-[#0F1C30] font-black shadow-[0_0_12px_rgba(244,179,42,0.8)] scale-110 z-20 ring-2 ring-white';
     }
-    if (seat.category === 'VIP' || seat.category === 'VIP_BALCONY') {
-      return 'bg-[#C1272D] text-white border border-[#961C20] hover:scale-115 hover:z-10 shadow-xs cursor-pointer';
-    }
     return 'bg-[#3B82F6] text-white border border-[#1D4ED8] hover:scale-115 hover:z-10 shadow-xs cursor-pointer';
   };
 
@@ -97,17 +97,22 @@ export default function SeatPlan({
       return <div key={slotKey} className="w-6 h-6 sm:w-7 sm:h-7 shrink-0" />;
     }
 
+    const isVip = seat.category === 'VIP' || seat.category === 'VIP_BALCONY';
     const isSelected = selectedSeatIds.includes(seat.id);
-    const isDisabled = seat.status === 'sold' || (seat.status === 'held' && !isSelected);
+    const isDisabled = seat.status === 'sold' || (seat.status === 'held' && !isSelected) || isVip;
 
     return (
       <button
         key={seat.id}
-        onClick={() => onToggleSeat(seat.id)}
+        onClick={() => {
+          if (isVip) return;
+          onToggleSeat(seat.id);
+        }}
         onMouseEnter={() => setHoveredSeat(seat)}
         onMouseLeave={() => setHoveredSeat(null)}
         disabled={isDisabled}
-        aria-label={`Seat ${seat.label} - ${seat.category} - Rp ${seat.price.toLocaleString('id-ID')}`}
+        aria-label={`Seat ${seat.label} - ${isVip ? 'VIP (Reserved)' : seat.category} - Rp ${seat.price.toLocaleString('id-ID')}`}
+        title={isVip ? `Seat ${seat.label} is RESERVED (VIP / Invitation Only)` : `Seat ${seat.label}`}
         className={`w-6 h-6 sm:w-7 sm:h-7 rounded-md text-[10px] sm:text-[11px] font-bold flex items-center justify-center shrink-0 transition-transform ${getSeatColor(
           seat,
           isSelected
@@ -254,7 +259,7 @@ export default function SeatPlan({
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="bg-[#C1272D] text-white font-bebas text-xs sm:text-sm px-3 py-1 rounded-md border border-[#0F1C30] font-bold">
-                        20 VIP
+                        20 VIP (RESERVED)
                       </span>
                       <span className="bg-[#3B82F6] text-white font-bebas text-xs sm:text-sm px-3 py-1 rounded-md border border-[#0F1C30] font-bold">
                         205 REGULAR
@@ -326,7 +331,7 @@ export default function SeatPlan({
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="bg-[#C1272D] text-white font-bebas text-xs sm:text-sm px-3 py-1 rounded-md border border-[#0F1C30] font-bold">
-                        9 VIP
+                        9 VIP (RESERVED)
                       </span>
                       <span className="bg-[#3B82F6] text-white font-bebas text-xs sm:text-sm px-3 py-1 rounded-md border border-[#0F1C30] font-bold">
                         66 REGULAR
@@ -381,13 +386,13 @@ export default function SeatPlan({
           {hoveredSeat && (
             <div className="absolute bottom-4 left-4 z-30 bg-[#0F1C30]/95 backdrop-blur-sm border-2 border-[#F4B32A] p-2.5 rounded-xl text-xs space-y-0.5 shadow-xl animate-in fade-in duration-100">
               <div className="font-bebas text-base text-[#F4B32A] leading-tight">
-                SEAT {hoveredSeat.label} • {hoveredSeat.category}
+                SEAT {hoveredSeat.label} • {hoveredSeat.category === 'VIP' || hoveredSeat.category === 'VIP_BALCONY' ? 'VIP (RESERVED)' : hoveredSeat.category}
               </div>
               <div className="text-[11px] text-slate-300">
                 Tier Price: <strong>Rp {hoveredSeat.price.toLocaleString('id-ID')}</strong> • {hoveredSeat.section === 'BALCONY' ? 'Balcony Level' : 'Main Floor Level'}
               </div>
-              <div className="text-[10px] text-emerald-400 font-bold uppercase">
-                Status: {hoveredSeat.status === 'sold' ? 'SOLD OUT' : hoveredSeat.status === 'held' ? 'TEMPORARILY HELD' : 'AVAILABLE TO SELECT'}
+              <div className={`text-[10px] font-bold uppercase ${hoveredSeat.category === 'VIP' || hoveredSeat.category === 'VIP_BALCONY' ? 'text-amber-400 font-black' : 'text-emerald-400'}`}>
+                Status: {hoveredSeat.category === 'VIP' || hoveredSeat.category === 'VIP_BALCONY' ? 'RESERVED (INVITATION ONLY • NOT FOR PUBLIC PURCHASE)' : hoveredSeat.status === 'sold' ? 'SOLD OUT' : hoveredSeat.status === 'held' ? 'TEMPORARILY HELD' : 'AVAILABLE TO SELECT'}
               </div>
             </div>
           )}
@@ -396,10 +401,10 @@ export default function SeatPlan({
           <div className="pt-6 border-t border-slate-700 flex flex-wrap items-center justify-center gap-4 text-xs font-semibold">
             <div className="flex items-center gap-1.5">
               <div className="w-4 h-4 rounded bg-[#C1272D] border border-[#0F1C30]" />
-              <span>VIP Tier (Rp 50.000)</span>
+              <span>VIP Tier (Reserved / Invitation Only)</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-4 h-4 rounded bg-[#4B88E2] border border-[#0F1C30]" />
+              <div className="w-4 h-4 rounded bg-[#3B82F6] border border-[#0F1C30]" />
               <span>Regular Pass (Rp 35.000)</span>
             </div>
             <div className="flex items-center gap-1.5">
@@ -407,7 +412,7 @@ export default function SeatPlan({
               <span>Your Selection</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-4 h-4 rounded bg-slate-400 opacity-60 border border-slate-500 line-through" />
+              <div className="w-4 h-4 rounded bg-slate-700 opacity-60 border border-slate-800 line-through" />
               <span>Sold Out</span>
             </div>
           </div>

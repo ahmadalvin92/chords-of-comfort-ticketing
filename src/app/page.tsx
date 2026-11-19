@@ -55,6 +55,12 @@ export default function Home() {
   };
 
   const handleToggleSeat = async (seatId: string) => {
+    const targetSeat = seats.find((s) => s.id === seatId);
+    if (targetSeat && (targetSeat.category === 'VIP' || targetSeat.category === 'VIP_BALCONY')) {
+      alert('VIP seats (Red) are exclusively reserved for special guests and cannot be booked online.');
+      return;
+    }
+
     const sessionId = getSessionId();
     const isCurrentlySelected = selectedSeatIds.includes(seatId);
 

@@ -84,7 +84,7 @@ export default function ScannerPage() {
     } catch (err) {
       const errorResult: CheckInResult = {
         status: 'INVALID',
-        message: 'Gagal menghubungi server validasi.',
+        message: 'Failed to connect to validation server.',
       };
       setScanResult(errorResult);
       playSound('invalid');
@@ -117,7 +117,7 @@ export default function ScannerPage() {
       setIsScanning(true);
     } catch (err) {
       console.error('Camera start error:', err);
-      alert('Tidak dapat mengakses kamera. Pastikan izin kamera telah diberikan di browser Anda.');
+      alert('Unable to access camera. Please ensure camera permissions are granted in your browser.');
     }
   };
 
@@ -162,15 +162,15 @@ export default function ScannerPage() {
             <Link
               href="/"
               className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-700"
-              title="Ke Halaman Utama"
+              title="Back to Home"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Beranda</span>
+              <span>Home</span>
             </Link>
             <Link
               href="/admin"
               className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-700"
-              title="Ke Dashboard Panitia"
+              title="Go to Admin Dashboard"
             >
               <span>Admin</span>
             </Link>
@@ -214,7 +214,7 @@ export default function ScannerPage() {
             </div>
 
             <div className="font-bebas text-3xl tracking-wider uppercase leading-tight">
-              {scanResult.status === 'VALID' && 'TIKET VALID - CHECKED IN'}
+              {scanResult.status === 'VALID' && 'VALID TICKET - CHECKED IN'}
               {scanResult.status === 'ALREADY_CHECKED_IN' && 'ALREADY CHECKED IN!'}
               {scanResult.status === 'INVALID' && 'INVALID TICKET!'}
             </div>
@@ -224,7 +224,7 @@ export default function ScannerPage() {
             {scanResult.order && (
               <div className="mt-4 pt-3 border-t border-white/20 text-left space-y-1.5 text-xs">
                 <div>
-                  <span className="opacity-70">Nama Tamu: </span>
+                  <span className="opacity-70">Guest Name: </span>
                   <strong className="text-white font-bold">{scanResult.order.customerName}</strong>
                 </div>
                 <div>
@@ -232,7 +232,7 @@ export default function ScannerPage() {
                   <strong className="font-mono text-amber-300">{scanResult.order.id}</strong>
                 </div>
                 <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                  <span className="opacity-70">Kursi: </span>
+                  <span className="opacity-70">Seats: </span>
                   {scanResult.order.seatLabels.map((lbl, idx) => (
                     <span
                       key={idx}
@@ -260,16 +260,16 @@ export default function ScannerPage() {
           {!isScanning && (
             <div className="absolute inset-4 rounded-2xl bg-slate-900/90 flex flex-col items-center justify-center p-6 text-center">
               <Camera className="w-12 h-12 text-[#F4B32A] mb-3 animate-bounce" />
-              <h3 className="font-bebas text-2xl text-white">KAMERA CHECK-IN GATE</h3>
+              <h3 className="font-bebas text-2xl text-white">GATE CHECK-IN CAMERA</h3>
               <p className="text-xs text-slate-300 max-w-xs mb-5">
-                Buka kamera HP Anda untuk mulai memindai QR Code pengunjung di pintu masuk LSPR Sudirman Park.
+                Open your device camera to scan attendee QR codes at the Amani Palladium Theatre entrance gate.
               </p>
               <button
                 onClick={startScanner}
                 className="cursor-pointer bg-[#C1272D] hover:bg-[#a61f25] text-white px-6 py-3 rounded-xl font-bebas text-lg tracking-wider border-2 border-[#F4B32A] shadow-md flex items-center gap-2"
               >
                 <Camera className="w-5 h-5 text-[#F4B32A]" />
-                AKTIFKAN KAMERA SCANNER
+                ENABLE CAMERA SCANNER
               </button>
             </div>
           )}
@@ -278,13 +278,13 @@ export default function ScannerPage() {
             <div className="mt-3 flex items-center justify-between">
               <span className="text-[11px] font-bold text-emerald-400 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                Kamera aktif - Siap scan
+                Camera active • Ready to scan
               </span>
               <button
                 onClick={stopScanner}
                 className="text-xs font-bold text-slate-400 hover:text-white px-3 py-1 rounded-lg bg-slate-800"
               >
-                Hentikan Kamera
+                Stop Camera
               </button>
             </div>
           )}
@@ -294,12 +294,12 @@ export default function ScannerPage() {
         <div className="bg-[#182B49] p-5 rounded-2xl border-2 border-slate-700">
           <div className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-2 flex items-center gap-2">
             <Search className="w-3.5 h-3.5 text-[#F4B32A]" />
-            <span>Input Manual Order ID / Ticket Code</span>
+            <span>Manual Order ID / Ticket Code Input</span>
           </div>
           <form onSubmit={handleManualSubmit} className="flex gap-2">
             <input
               type="text"
-              placeholder="Contoh: LSPR-6SP-XXXXXX"
+              placeholder="e.g. LSPR-6SP-XXXXXX"
               value={manualCode}
               onChange={(e) => setManualCode(e.target.value)}
               className="flex-1 bg-[#0F1C30] border border-slate-600 rounded-xl px-3 py-2 text-xs font-mono uppercase text-white focus:outline-none focus:border-[#F4B32A]"
@@ -309,7 +309,7 @@ export default function ScannerPage() {
               disabled={isSubmittingManual || !manualCode.trim()}
               className="bg-[#F4B32A] hover:bg-amber-400 disabled:opacity-50 text-[#0F1C30] px-4 py-2 rounded-xl font-bebas text-sm border border-[#0F1C30]"
             >
-              VALIDASI
+              VALIDATE
             </button>
           </form>
         </div>
@@ -318,7 +318,7 @@ export default function ScannerPage() {
         {history.length > 0 && (
           <div className="bg-[#182B49] p-4 rounded-2xl border-2 border-slate-700 space-y-2">
             <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              Riwayat Scan Terbaru (10 Terakhir)
+              Recent Gate Scans (Last 10)
             </div>
             <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
               {history.map((item, idx) => (
@@ -328,7 +328,7 @@ export default function ScannerPage() {
                 >
                   <div>
                     <span className="font-bold text-white">
-                      {item.order?.customerName || 'Tamu'}
+                      {item.order?.customerName || 'Guest'}
                     </span>{' '}
                     <span className="text-slate-400 text-[10px]">
                       ({item.order?.seatLabels.join(', ')})
