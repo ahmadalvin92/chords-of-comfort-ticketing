@@ -27,7 +27,7 @@ export default function CategoriesSection({ onSelectCategory }: CategoriesSectio
 
         {/* Pricing Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          
+
           {/* VIP Main Floor */}
           <div className="relative bg-white rounded-3xl border-4 border-[#0F1C30] shadow-[0_8px_0_#0F1C30] p-6 space-y-6 flex flex-col justify-between hover:-translate-y-1 transition-transform">
             <div className="space-y-4">

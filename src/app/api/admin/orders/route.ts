@@ -1,10 +1,23 @@
 import { NextResponse } from 'next/server';
-import { getAllOrders, getSeats } from '@/lib/store';
+import { getAllOrders, getSeats, mergeSupabaseOrders, mergeSupabaseSeats } from '@/lib/store';
+import { fetchOrdersFromSupabase, fetchSeatsFromSupabase } from '@/lib/supabase';
 import { CATEGORY_INFO } from '@/data/initialSeats';
 import { TicketCategory } from '@/types/ticket';
 
 export async function GET() {
   try {
+    // Attempt Supabase Realtime Sync
+    try {
+      const [sbOrders, sbSeats] = await Promise.all([
+        fetchOrdersFromSupabase(),
+        fetchSeatsFromSupabase(),
+      ]);
+      if (sbOrders && sbOrders.length > 0) mergeSupabaseOrders(sbOrders);
+      if (sbSeats && sbSeats.length > 0) mergeSupabaseSeats(sbSeats);
+    } catch (err) {
+      console.warn('[Admin Orders API] Supabase sync fallback:', err);
+    }
+
     const orders = getAllOrders();
     const seats = getSeats();
 

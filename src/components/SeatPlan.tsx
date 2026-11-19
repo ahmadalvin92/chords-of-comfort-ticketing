@@ -141,31 +141,28 @@ export default function SeatPlan({
           <div className="flex items-center gap-2 bg-[#182B49] p-1.5 rounded-2xl border-2 border-slate-700 self-start md:self-auto">
             <button
               onClick={() => setActiveSection('ALL')}
-              className={`cursor-pointer px-3.5 py-1.5 rounded-xl font-bebas text-xs sm:text-sm tracking-wider transition-all ${
-                activeSection === 'ALL'
-                  ? 'bg-[#C1272D] text-white shadow-sm'
-                  : 'text-slate-300 hover:text-white'
-              }`}
+              className={`cursor-pointer px-3.5 py-1.5 rounded-xl font-bebas text-xs sm:text-sm tracking-wider transition-all ${activeSection === 'ALL'
+                ? 'bg-[#C1272D] text-white shadow-sm'
+                : 'text-slate-300 hover:text-white'
+                }`}
             >
               ALL TIERS (300)
             </button>
             <button
               onClick={() => setActiveSection('MAIN')}
-              className={`cursor-pointer px-3.5 py-1.5 rounded-xl font-bebas text-xs sm:text-sm tracking-wider transition-all ${
-                activeSection === 'MAIN'
-                  ? 'bg-[#C1272D] text-white shadow-sm'
-                  : 'text-slate-300 hover:text-white'
-              }`}
+              className={`cursor-pointer px-3.5 py-1.5 rounded-xl font-bebas text-xs sm:text-sm tracking-wider transition-all ${activeSection === 'MAIN'
+                ? 'bg-[#C1272D] text-white shadow-sm'
+                : 'text-slate-300 hover:text-white'
+                }`}
             >
               MAIN FLOOR (225)
             </button>
             <button
               onClick={() => setActiveSection('BALCONY')}
-              className={`cursor-pointer px-3.5 py-1.5 rounded-xl font-bebas text-xs sm:text-sm tracking-wider transition-all ${
-                activeSection === 'BALCONY'
-                  ? 'bg-[#C1272D] text-white shadow-sm'
-                  : 'text-slate-300 hover:text-white'
-              }`}
+              className={`cursor-pointer px-3.5 py-1.5 rounded-xl font-bebas text-xs sm:text-sm tracking-wider transition-all ${activeSection === 'BALCONY'
+                ? 'bg-[#C1272D] text-white shadow-sm'
+                : 'text-slate-300 hover:text-white'
+                }`}
             >
               BALCONY (75)
             </button>
@@ -192,7 +189,7 @@ export default function SeatPlan({
 
         {/* Seating Map Interactive Board */}
         <div className="relative bg-[#182B49] rounded-3xl border-4 border-slate-700 shadow-[0_12px_0_#060c15] p-4 sm:p-8 overflow-hidden">
-          
+
           {/* Zoom & Reset Floating Controls */}
           <div className="absolute top-4 right-4 z-30 flex items-center gap-1.5 bg-[#0F1C30]/90 backdrop-blur-md p-1.5 rounded-xl border border-slate-700">
             <button
@@ -236,7 +233,7 @@ export default function SeatPlan({
               {/* ================= MAIN FLOOR AREA ================= */}
               {(activeSection === 'ALL' || activeSection === 'MAIN') && (
                 <div className="space-y-6">
-                  
+
                   {/* Physical Stage Banner matching poster */}
                   <div className="relative max-w-md mx-auto mb-4">
                     <div className="relative flex items-center justify-center">
@@ -308,7 +305,7 @@ export default function SeatPlan({
               {/* ================= BALCONY AREA ================= */}
               {(activeSection === 'ALL' || activeSection === 'BALCONY') && (
                 <div className="space-y-6 pt-6 border-t-2 border-dashed border-slate-700">
-                  
+
                   {/* Balcony Stage Ribbon */}
                   <div className="relative max-w-md mx-auto mb-4">
                     <div className="relative flex items-center justify-center">

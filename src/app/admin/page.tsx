@@ -59,7 +59,7 @@ export default function AdminPage() {
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'paid' | 'pending'>('ALL');
   const [categoryFilter, setCategoryFilter] = useState<TicketCategory | 'ALL'>('ALL');
   const [checkInFilter, setCheckInFilter] = useState<'ALL' | 'checked_in' | 'not_checked_in'>('ALL');
-  const [activeTab, setActiveTab] = useState<'transactions' | 'seat_inspector' | 'manual_order' | 'wa_templates'>('transactions');
+  const [activeTab, setActiveTab] = useState<'transactions' | 'users' | 'seat_inspector' | 'manual_order' | 'wa_templates'>('transactions');
 
   // Modals & Inspectors
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -282,20 +282,20 @@ export default function AdminPage() {
     }
   };
 
-  // WhatsApp Message Builders in natural English
+  // WhatsApp Message Builders with robust URL-encoding (protecting #, emojis, and newlines)
   const buildSendTicketWaUrl = (o: Order) => {
     const cleanPhone = o.customer.phone.replace(/[^0-9]/g, '').replace(/^0/, '62');
     const seatsStr = o.items.map((i) => i.seatLabel).join(', ');
     const catStr = o.items[0]?.category || 'REGULAR';
-    const msg = `Hello ${encodeURIComponent(o.customer.fullName)}! ✨%0A%0AYour ticket payment for *Chords of Comfort* (LSPR COMM30-6SP • The 35th LSPR Theater Festival) has been *SUCCESSFULLY VERIFIED*! 🎉🎟️%0A%0A*OFFICIAL TICKET DETAILS:*%0A• Order ID: *#${o.id}*%0A• Name: ${encodeURIComponent(o.customer.fullName)}%0A• Seats: *${encodeURIComponent(seatsStr)}* (${encodeURIComponent(catStr)})%0A• Total Paid: Rp ${o.totalAmount.toLocaleString('id-ID')}%0A• Status: *PAID (VERIFIED)*%0A%0A*YOUR OFFICIAL E-TICKET & QR PASS:*%0A👉 https://chords-of-comfort-ticketing.vercel.app/ticket/${o.id}%0A%0A⚠️ *IMPORTANT INSTRUCTIONS:*%0A1. Save your ticket link or take a screenshot of the QR Code.%0A2. Present your QR Code at the registration desk upon gate opening (January 2027 • Amani Palladium Theatre, LSPR Bekasi).%0A%0AWe look forward to seeing you at the musical! 🎭🌟%0AInstagram: @chordsofcomfort.theater%0ASupport: WA 0819-1534-8866`;
-    return `https://wa.me/${cleanPhone}?text=${msg}`;
+    const plainMsg = `Hello ${o.customer.fullName}! ✨\n\nYour ticket payment for *Chords of Comfort* (LSPR COMM30-6SP • The 35th LSPR Theater Festival) has been *SUCCESSFULLY VERIFIED*! 🎉🎟️\n\n*OFFICIAL TICKET DETAILS:*\n• Order ID: *#${o.id}*\n• Name: ${o.customer.fullName}\n• Seats: *${seatsStr}* (${catStr})\n• Total Paid: Rp ${o.totalAmount.toLocaleString('id-ID')}\n• Status: *PAID (VERIFIED)*\n\n*YOUR OFFICIAL E-TICKET & QR PASS:*\n👉 https://chords-of-comfort-ticketing.vercel.app/ticket/${o.id}\n\n⚠️ *IMPORTANT INSTRUCTIONS:*\n1. Save your ticket link or take a screenshot of the QR Code.\n2. Present your QR Code at the registration desk upon gate opening (January 2027 • Amani Palladium Theatre, LSPR Bekasi).\n\nWe look forward to seeing you at the musical! 🎭🌟\nInstagram: @chordsofcomfort.theater\nSupport: WA 0819-1534-8866`;
+    return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(plainMsg)}`;
   };
 
   const buildFollowUpWaUrl = (o: Order) => {
     const cleanPhone = o.customer.phone.replace(/[^0-9]/g, '').replace(/^0/, '62');
     const seatsStr = o.items.map((i) => i.seatLabel).join(', ');
-    const msg = `Hello ${encodeURIComponent(o.customer.fullName)}! 👋%0A%0AThis is the Ticketing Team for *Chords of Comfort* (LSPR COMM30-6SP).%0A%0AFriendly reminder regarding your ticket reservation:%0A• Order ID: *#${o.id}*%0A• Seats: *${encodeURIComponent(seatsStr)}*%0A• Total Amount: *Rp ${o.totalAmount.toLocaleString('id-ID')}*%0A• Status: *Awaiting Bank Transfer*%0A%0A*Committee Bank Accounts:*%0A- BCA: *7650892101* (a.n. Viona)%0A- Mandiri: *1220019283741*%0A- E-Wallet (GoPay/Dana): *081915348866*%0A%0APlease reply with your transfer receipt to secure your reserved seats before they are automatically released. Thank you! 🙏🎭`;
-    return `https://wa.me/${cleanPhone}?text=${msg}`;
+    const plainMsg = `Hello ${o.customer.fullName}! 👋\n\nThis is the Ticketing Team for *Chords of Comfort* (LSPR COMM30-6SP).\n\nFriendly reminder regarding your ticket reservation:\n• Order ID: *#${o.id}*\n• Name: ${o.customer.fullName}\n• Seats: *${seatsStr}*\n• Total Amount: *Rp ${o.totalAmount.toLocaleString('id-ID')}*\n• Status: *Awaiting Bank Transfer*\n\n*Committee Bank Account (BCA Only):*\n- Bank BCA: *7650892101* (a.n. Viona)\n\nPlease reply with your transfer receipt to secure your reserved seats before they are automatically released. Thank you! 🙏🎭`;
+    return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(plainMsg)}`;
   };
 
   const copyToClipboard = (text: string, id: string) => {
@@ -765,7 +765,19 @@ export default function AdminPage() {
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                Orders & Attendees ({orders.length})
+                Orders & Transactions ({orders.length})
+              </button>
+
+              <button
+                onClick={() => setActiveTab('users')}
+                className={`cursor-pointer px-4 py-2.5 rounded-xl font-bebas text-base tracking-wider transition-all shrink-0 flex items-center gap-1.5 ${
+                  activeTab === 'users'
+                    ? 'bg-[#182B49] text-white shadow-sm'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                <Users className="w-4 h-4 text-[#F4B32A]" />
+                <span>Attendees CMS ({orders.length})</span>
               </button>
 
               <button
@@ -804,16 +816,27 @@ export default function AdminPage() {
               </button>
             </div>
 
-            {/* Quick Reset Demo button */}
-            <button
-              onClick={handleResetData}
-              disabled={isResetting}
-              className="cursor-pointer bg-slate-100 hover:bg-red-50 text-red-700 px-3 py-1.5 rounded-xl text-xs font-bold border border-red-300 transition-colors flex items-center gap-1.5 shrink-0 self-end md:self-auto"
-              title="Reset transaction records"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Reset Demo Data</span>
-            </button>
+            {/* Quick Export & Reset Demo buttons */}
+            <div className="flex items-center gap-2 self-end md:self-auto shrink-0">
+              <button
+                onClick={handleExportCSV}
+                className="cursor-pointer bg-[#182B49] hover:bg-[#0F1C30] text-[#FAF6ED] px-3.5 py-2 rounded-xl text-xs font-bold border border-slate-700 transition-colors flex items-center gap-1.5 shadow-sm"
+                title="Download attendee database as CSV"
+              >
+                <Download className="w-3.5 h-3.5 text-[#F4B32A]" />
+                <span>Export CSV</span>
+              </button>
+
+              <button
+                onClick={handleResetData}
+                disabled={isResetting}
+                className="cursor-pointer bg-slate-100 hover:bg-red-50 text-red-700 px-3 py-2 rounded-xl text-xs font-bold border border-red-300 transition-colors flex items-center gap-1.5"
+                title="Reset transaction records"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset Demo</span>
+              </button>
+            </div>
 
           </div>
 
@@ -1056,6 +1079,252 @@ export default function AdminPage() {
                   </table>
                 )}
               </div>
+
+            </div>
+          )}
+
+          {/* ================= TAB: ATTENDEE & USER MANAGEMENT (CMS) ================= */}
+          {activeTab === 'users' && (
+            <div className="p-4 sm:p-5 space-y-6">
+              
+              {/* Header & Quick Stats */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
+                <div>
+                  <h3 className="font-bebas text-2xl text-[#182B49] tracking-wider leading-none">
+                    ATTENDEE DIRECTORY & USER MANAGEMENT (CMS)
+                  </h3>
+                  <p className="text-xs text-slate-500 font-medium mt-1">
+                    Manage registered attendees, verify transfer receipts, update attendee information, or send official E-Tickets.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="bg-emerald-50 text-emerald-800 border border-emerald-300 px-3 py-1 rounded-xl text-xs font-bold">
+                    {orders.filter((o) => o.paymentStatus === 'paid').length} Paid
+                  </span>
+                  <span className="bg-amber-50 text-amber-800 border border-amber-300 px-3 py-1 rounded-xl text-xs font-bold">
+                    {orders.filter((o) => o.paymentStatus !== 'paid').length} Pending
+                  </span>
+                  <button
+                    onClick={handleExportCSV}
+                    className="cursor-pointer bg-[#182B49] text-white hover:bg-[#0F1C30] px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm"
+                  >
+                    <Download className="w-3.5 h-3.5 text-[#F4B32A]" />
+                    <span>Download CSV</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Search & Filter Bar */}
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5 print:hidden">
+                <div className="relative sm:col-span-2">
+                  <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search attendee by name, WhatsApp, email, or order ID..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 text-xs font-medium bg-[#FAF6ED] rounded-xl border border-slate-300 focus:outline-none focus:border-[#182B49]"
+                  />
+                </div>
+
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as any)}
+                  className="bg-[#FAF6ED] border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none"
+                >
+                  <option value="ALL">All Payment Statuses</option>
+                  <option value="paid">Paid (Verified)</option>
+                  <option value="pending">Pending Payment</option>
+                </select>
+
+                <select
+                  value={checkInFilter}
+                  onChange={(e) => setCheckInFilter(e.target.value as any)}
+                  className="bg-[#FAF6ED] border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none"
+                >
+                  <option value="ALL">All Gate Check-In Statuses</option>
+                  <option value="checked_in">Checked In</option>
+                  <option value="not_checked_in">Not Checked In</option>
+                </select>
+              </div>
+
+              {/* Attendee Profiles Cards Grid */}
+              {filteredOrders.length === 0 ? (
+                <div className="p-12 text-center text-slate-500 text-sm font-semibold bg-slate-50 rounded-2xl border border-dashed border-slate-300">
+                  No attendees found matching the query.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {filteredOrders.map((o) => {
+                    const isCheckedIn = o.items.every((i) => i.isCheckedIn);
+                    const cleanPhone = o.customer.phone.replace(/[^0-9]/g, '').replace(/^0/, '62');
+
+                    return (
+                      <div
+                        key={o.id}
+                        className="bg-[#FAF6ED] rounded-2xl border-2 border-slate-300 p-4 sm:p-5 shadow-sm space-y-4 hover:border-[#182B49] transition-all"
+                      >
+                        {/* Top: Name, Order ID & Status */}
+                        <div className="flex items-start justify-between gap-2 border-b border-slate-200 pb-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-[#182B49] text-[#F4B32A] font-bebas text-xl flex items-center justify-center shrink-0 border border-[#0F1C30]">
+                              {o.customer.fullName.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <h4 className="font-bold text-slate-900 text-sm sm:text-base leading-tight">
+                                {o.customer.fullName}
+                              </h4>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className="font-mono text-[11px] text-[#182B49] font-bold">
+                                  #{o.id}
+                                </span>
+                                <span className="text-[10px] text-slate-400">•</span>
+                                <span className="text-[10px] text-slate-500">
+                                  {new Date(o.createdAt).toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    year: 'numeric',
+                                  })}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col items-end gap-1">
+                            {o.paymentStatus === 'paid' ? (
+                              <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-300">
+                                <CheckCircle2 className="w-3 h-3 text-emerald-600" /> PAID
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-300">
+                                <Clock className="w-3 h-3 text-amber-600" /> PENDING
+                              </span>
+                            )}
+
+                            {isCheckedIn ? (
+                              <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                <UserCheck className="w-3 h-3" /> Checked In
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-slate-400 font-semibold">
+                                Gate: Unscanned
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Middle: Contact Info & Seats */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                          <div className="space-y-1.5">
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                              Contact Channels
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <a
+                                href={`https://wa.me/${cleanPhone}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2.5 py-1 rounded-lg text-[11px] shadow-xs"
+                                title="Chat on WhatsApp"
+                              >
+                                <MessageCircle className="w-3.5 h-3.5" />
+                                <span>{o.customer.phone}</span>
+                              </a>
+                            </div>
+                            <div className="text-slate-600 flex items-center gap-1.5 pt-0.5">
+                              <Mail className="w-3.5 h-3.5 text-slate-400" />
+                              <span className="truncate">{o.customer.email}</span>
+                            </div>
+                            {o.customer.notes && (
+                              <div className="text-[11px] text-amber-900 bg-amber-50 p-1.5 rounded-lg border border-amber-200 italic">
+                                "{o.customer.notes}"
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                              Assigned Seats ({o.items.length})
+                            </div>
+                            <div className="flex flex-wrap gap-1">
+                              {o.items.map((it, idx) => (
+                                <span
+                                  key={idx}
+                                  className="bg-white border border-[#182B49] text-[#182B49] font-bebas text-xs px-2 py-0.5 rounded shadow-xs"
+                                >
+                                  {it.seatLabel} ({it.category})
+                                </span>
+                              ))}
+                            </div>
+                            <div className="pt-1 flex items-baseline justify-between border-t border-slate-200">
+                              <span className="text-[11px] text-slate-500 font-medium">Total Bill:</span>
+                              <span className="font-bebas text-lg text-[#C1272D] leading-none">
+                                Rp {o.totalAmount.toLocaleString('id-ID')}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Bottom Actions Toolbar */}
+                        <div className="pt-2 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5">
+                            {o.paymentStatus === 'paid' ? (
+                              <a
+                                href={buildSendTicketWaUrl(o)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 bg-[#25D366] hover:bg-[#20ba59] text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-xs active:scale-95 transition-all"
+                                title="Send official ticket pass to user via WhatsApp"
+                              >
+                                <MessageCircle className="w-3.5 h-3.5" />
+                                <span>Send Ticket WA</span>
+                              </a>
+                            ) : (
+                              <button
+                                onClick={() => handleMarkAsPaid(o.id)}
+                                className="cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-xs flex items-center gap-1"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>Approve BCA Transfer</span>
+                              </button>
+                            )}
+
+                            <Link
+                              href={`/ticket/${o.id}`}
+                              target="_blank"
+                              className="inline-flex items-center gap-1 bg-white hover:bg-slate-100 text-slate-700 px-2.5 py-1.5 rounded-xl text-xs font-bold border border-slate-300"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                              <span>View Ticket</span>
+                            </Link>
+                          </div>
+
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => setEditingOrder(o)}
+                              className="cursor-pointer bg-blue-50 hover:bg-blue-100 text-blue-700 px-2.5 py-1.5 rounded-xl text-xs font-bold border border-blue-200 flex items-center gap-1"
+                              title="Edit attendee name, phone, email, notes"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                              <span>Edit</span>
+                            </button>
+
+                            <button
+                              onClick={() => handleDeleteOrder(o.id)}
+                              className="cursor-pointer bg-red-50 hover:bg-red-100 text-red-700 px-2.5 py-1.5 rounded-xl text-xs font-bold border border-red-200 flex items-center gap-1"
+                              title="Delete attendee reservation and release seats"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Delete</span>
+                            </button>
+                          </div>
+                        </div>
+
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
 
             </div>
           )}
@@ -1375,7 +1644,7 @@ Instagram: @chordsofcomfort.theater`}
                       <button
                         onClick={() =>
                           copyToClipboard(
-                            `Hello [Attendee Name]! 👋\n\nThis is the Ticketing Team for *Chords of Comfort* (LSPR COMM30-6SP).\n\nFriendly reminder regarding your ticket reservation:\n• Order ID: *#[Order ID]*\n• Seats: *[Seat Numbers]*\n• Total Amount: *Rp [Total Amount]*\n• Status: *Awaiting Bank Transfer*\n\n*Committee Bank Accounts:*\n- BCA: *7650892101* (a.n. Viona)\n- Mandiri: *1220019283741*\n- E-Wallet (GoPay/Dana): *081915348866*\n\nPlease reply with your transfer receipt to secure your reserved seats before they are automatically released. Thank you! 🙏🎭`,
+                            `Hello [Attendee Name]! 👋\n\nThis is the Ticketing Team for *Chords of Comfort* (LSPR COMM30-6SP).\n\nFriendly reminder regarding your ticket reservation:\n• Order ID: *#[Order ID]*\n• Seats: *[Seat Numbers]*\n• Total Amount: *Rp [Total Amount]*\n• Status: *Awaiting Bank Transfer*\n\n*Committee Bank Account (BCA Only):*\n- Bank BCA: *7650892101* (a.n. Viona)\n\nPlease reply with your transfer receipt to secure your reserved seats before they are automatically released. Thank you! 🙏🎭`,
                             'tmpl_2'
                           )
                         }
@@ -1411,10 +1680,8 @@ Friendly reminder regarding your ticket reservation:
 • Total Amount: *Rp [Total Amount]*
 • Status: *Awaiting Bank Transfer*
 
-*Committee Bank Accounts:*
-- BCA: *7650892101* (a.n. Viona)
-- Mandiri: *1220019283741*
-- E-Wallet (GoPay/Dana): *081915348866*
+*Committee Bank Account (BCA Only):*
+- Bank BCA: *7650892101* (a.n. Viona)
 
 Please reply with your transfer receipt to secure your reserved seats before they are automatically released. Thank you! 🙏🎭`}
                     </div>

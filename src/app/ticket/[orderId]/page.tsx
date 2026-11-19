@@ -14,6 +14,7 @@ import {
   MapPin,
   Sparkles,
   AlertCircle,
+  MessageCircle,
 } from 'lucide-react';
 
 function TicketContent({
@@ -94,13 +95,9 @@ function TicketContent({
     );
   }
 
-  const waConfirmUrl = `https://wa.me/6281915348866?text=${encodeURIComponent(
-    `Hello Chords of Comfort Ticketing Team! I would like to confirm my transfer payment for Order ID: #${order.id} under the name: ${order.customer.fullName}.`
-  )}`;
-
   return (
     <div className="min-h-screen bg-[#F8F5EE] py-8 px-4 sm:px-6 lg:px-8">
-      
+
       {/* Top Bar (Hidden during printing) */}
       <div className="max-w-3xl mx-auto mb-6 flex items-center justify-between print:hidden">
         <Link
@@ -124,7 +121,7 @@ function TicketContent({
 
       {/* Main E-Ticket Container */}
       <div className="max-w-3xl mx-auto space-y-6">
-        
+
         {/* Status Banner (Hidden during printing) */}
         {order.paymentStatus === 'paid' ? (
           <div className="bg-emerald-50 border-2 border-emerald-400 p-4 rounded-2xl flex items-center justify-between text-emerald-900 shadow-sm print:hidden">
@@ -142,7 +139,7 @@ function TicketContent({
               </div>
             </div>
             <span className="font-mono text-xs font-black bg-emerald-200 px-3 py-1 rounded-lg">
-              {order.id}
+              #{order.id}
             </span>
           </div>
         ) : (
@@ -153,27 +150,30 @@ function TicketContent({
               </div>
               <div>
                 <div className="font-bebas text-lg leading-tight text-amber-900">
-                  AWAITING PAYMENT VERIFICATION
+                  AWAITING BANK TRANSFER VERIFICATION
                 </div>
                 <p className="text-xs text-amber-800 font-medium">
-                  Your seats are temporarily held. Please send your transfer receipt to WhatsApp to activate your official e-ticket.
+                  Your seats are temporarily held. Please send your BCA transfer receipt to WhatsApp to activate your official ticket.
                 </p>
               </div>
             </div>
             <a
-              href={waConfirmUrl}
+              href={`https://wa.me/6281915348866?text=${encodeURIComponent(
+                `Hello Chords of Comfort Ticketing Team! I would like to confirm my BCA transfer payment for Order ID: #${order.id} under the name: ${order.customer.fullName}.`
+              )}`}
               target="_blank"
               rel="noreferrer"
               className="bg-[#25D366] hover:bg-[#20ba59] text-white px-4 py-2 rounded-xl text-xs font-bold border border-slate-900 shadow-sm flex items-center gap-1.5 shrink-0"
             >
-              <span>Send Receipt via WhatsApp (0819-1534-8866)</span>
+              <MessageCircle className="w-3.5 h-3.5" />
+              <span>Send Receipt via WhatsApp</span>
             </a>
           </div>
         )}
 
         {/* ================= PHYSICAL ADMIT-ONE RETRO TICKET DESIGN ================= */}
         <div className="bg-white rounded-3xl border-4 border-[#0F1C30] shadow-[0_12px_0_#0F1C30] overflow-hidden relative">
-          
+
           {/* Header Banner - American High School Varsity */}
           <div className="bg-[#182B49] text-white p-6 border-b-4 border-[#F4B32A] relative">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -189,7 +189,7 @@ function TicketContent({
                     CHORDS OF COMFORT
                   </h1>
                   <p className="text-xs font-semibold text-slate-300">
-                    The 35th LSPR Theater Festival • COMM30-6SP • Amani Palladium Theatre
+                    The 35th LSPR Theater Festival • COMM30-6SP Musical Theater
                   </p>
                 </div>
               </div>
@@ -198,9 +198,9 @@ function TicketContent({
                 <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                   ORDER ID
                 </div>
-                <div className="font-mono font-black text-xl text-[#F4B32A]">{order.id}</div>
+                <div className="font-mono font-black text-xl text-[#F4B32A]">#{order.id}</div>
                 <div className="text-[10px] font-semibold text-emerald-400">
-                  STATUS: {order.paymentStatus === 'paid' ? 'PAID' : 'PENDING VERIFICATION'}
+                  STATUS: {order.paymentStatus === 'paid' ? 'PAID (VERIFIED)' : 'PENDING'}
                 </div>
               </div>
             </div>
@@ -208,14 +208,14 @@ function TicketContent({
 
           {/* Ticket Body: Info & QR Code Side-by-Side */}
           <div className="p-6 sm:p-8 grid grid-cols-1 md:grid-cols-12 gap-8 items-center relative">
-            
+
             {/* Left 7 Columns: Details */}
             <div className="md:col-span-7 space-y-5">
-              
+
               {/* Customer Box */}
               <div>
                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                  Ticket Holder Name
+                  Attendee Name
                 </span>
                 <div className="font-bebas text-3xl text-[#182B49] leading-tight">
                   {order.customer.fullName}
@@ -230,12 +230,12 @@ function TicketContent({
                 <div className="space-y-1">
                   <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-slate-500">
                     <Calendar className="w-3.5 h-3.5 text-[#C1272D]" />
-                    <span>Schedule</span>
+                    <span>Date & Showtime</span>
                   </div>
                   <div className="font-bebas text-lg text-[#182B49] leading-none">
                     January 2027
                   </div>
-                  <div className="text-xs font-bold text-slate-600">Showtime TBA (Gate Open TBA)</div>
+                  <div className="text-xs font-bold text-slate-600">Showtime TBA (Gate TBA)</div>
                 </div>
 
                 <div className="space-y-1">
@@ -253,7 +253,7 @@ function TicketContent({
               {/* Seat Badges */}
               <div className="pt-3 border-t-2 border-dashed border-slate-200">
                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-2">
-                  Assigned Seats & Categories ({order.items.length} Seats)
+                  Assigned Seats ({order.items.length} Seats)
                 </span>
                 <div className="flex flex-wrap gap-2">
                   {order.items.map((item, idx) => (
@@ -276,7 +276,7 @@ function TicketContent({
 
             {/* Right 5 Columns: Official Scannable QR Code */}
             <div className="md:col-span-5 flex flex-col items-center justify-center p-6 bg-[#FAF6ED] rounded-2xl border-2 border-dashed border-[#182B49] text-center">
-              
+
               <div className="text-[10px] font-black uppercase tracking-widest text-slate-600 mb-2">
                 SCAN AT VENUE GATE
               </div>

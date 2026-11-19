@@ -111,14 +111,14 @@ export default function CheckoutModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
-      
+
       {/* Modal Container */}
       <div className="relative w-full max-w-xl bg-white rounded-3xl border-4 border-[#0F1C30] shadow-[0_16px_0_#0F1C30] overflow-hidden my-6 animate-in zoom-in-95 duration-200">
 
         {/* Top Header */}
         <div className="bg-[#182B49] text-white p-5 sm:p-6 border-b-4 border-[#F4B32A] relative">
           <div className="flex items-center justify-between gap-4">
-            
+
             <div className="flex items-center gap-3">
               <button
                 type="button"

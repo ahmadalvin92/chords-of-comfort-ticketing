@@ -46,7 +46,7 @@ export default function HeroSection({ onSelectSeatsClick }: HeroSectionProps) {
               <h1 className="font-bebas text-5xl sm:text-7xl lg:text-8xl tracking-wider text-[#182B49] leading-[0.9] drop-shadow-[0_2px_0_#FAF6ED]">
                 CHORDS OF <span className="text-[#C1272D] italic underline decoration-[#F4B32A] decoration-4">COMFORT</span>
               </h1>
-              
+
               <div className="font-bebas text-xl sm:text-2xl text-[#C1272D] tracking-widest uppercase">
                 A MUSICAL THEATER PRODUCTION
               </div>
@@ -57,7 +57,7 @@ export default function HeroSection({ onSelectSeatsClick }: HeroSectionProps) {
               <p className="font-bebas text-2xl sm:text-3xl text-[#182B49] leading-tight tracking-wide">
                 “Where Love, Friendship, and Dreams Find Their Way Home.”
               </p>
-              
+
               <p className="text-slate-700 text-sm sm:text-base leading-relaxed max-w-xl mx-auto lg:mx-0 font-medium">
                 A heartwarming musical theater production about love, friendship, unexpected connections, and finding comfort through life’s greatest challenges.
               </p>

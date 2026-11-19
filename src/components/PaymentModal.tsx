@@ -75,7 +75,7 @@ export default function PaymentModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm overflow-y-auto">
-      
+
       <div className="relative w-full max-w-lg bg-white rounded-3xl border-4 border-[#0F1C30] shadow-[0_16px_0_#0F1C30] overflow-hidden my-6 animate-in zoom-in-95 duration-200">
 
         {/* Modal Header */}
@@ -119,7 +119,7 @@ export default function PaymentModal({
 
         {/* Modal Body */}
         <div className="p-5 sm:p-6 space-y-5 max-h-[70vh] overflow-y-auto text-xs">
-          
+
           {/* Instructions Box */}
           <div className="bg-amber-50 border-2 border-amber-300 p-3.5 rounded-2xl text-amber-950 space-y-1.5 font-medium leading-relaxed">
             <div className="font-bold flex items-center gap-1.5 text-xs">

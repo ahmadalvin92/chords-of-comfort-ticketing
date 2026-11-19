@@ -51,7 +51,7 @@ export default function FaqSection() {
   return (
     <section id="faq" className="py-16 md:py-24 bg-[#FAF6ED] border-b-4 border-[#0F1C30]">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        
+
         {/* Section Heading */}
         <div className="text-center space-y-2">
           <div className="inline-flex items-center gap-2 bg-[#F4B32A] text-[#0F1C30] font-bebas text-sm px-3 py-1 rounded-md border-2 border-[#0F1C30] tracking-wider">

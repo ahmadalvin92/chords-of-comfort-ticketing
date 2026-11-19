@@ -2,6 +2,14 @@ import fs from 'fs';
 import path from 'path';
 import { Seat, Order, CheckInResult, CustomerInfo, TicketItem } from '@/types/ticket';
 import { generateInitialSeats } from '@/data/initialSeats';
+import {
+  insertOrderToSupabase,
+  updateOrderPaymentInSupabase,
+  updateCustomerInSupabase,
+  updateOrderItemsInSupabase,
+  deleteOrderFromSupabase,
+  updateSeatsStatusInSupabase,
+} from './supabase';
 
 interface DbData {
   seats: Seat[];
@@ -242,6 +250,10 @@ export function createOrder(
   db.orders.push(order);
   saveDb(db);
 
+  // Background sync with Supabase
+  insertOrderToSupabase(order).catch(console.warn);
+  updateSeatsStatusInSupabase(seatIds, 'held', orderId, Date.now() + 15 * 60 * 1000, orderId).catch(console.warn);
+
   return { success: true, order };
 }
 
@@ -278,6 +290,12 @@ export function confirmPayment(
   });
 
   saveDb(db);
+
+  // Background sync with Supabase
+  updateOrderPaymentInSupabase(orderId, 'paid', order.paidAt || new Date().toISOString()).catch(console.warn);
+  const seatIds = order.items.map((i) => i.seatId);
+  updateSeatsStatusInSupabase(seatIds, 'sold', null, null, orderId).catch(console.warn);
+
   return { success: true, order };
 }
 
@@ -354,6 +372,9 @@ export function validateTicketQR(qrPayload: string): CheckInResult {
 
   saveDb(db);
 
+  // Background sync check-in status to Supabase
+  updateOrderItemsInSupabase(order.id, order.items).catch(console.warn);
+
   return {
     status: 'VALID',
     message: `Ticket Valid! Enjoy the performance 🎉`,
@@ -397,6 +418,10 @@ export function manualToggleCheckIn(orderId: string): { success: boolean; isChec
   });
 
   saveDb(db);
+
+  // Background sync check-in status to Supabase
+  updateOrderItemsInSupabase(order.id, order.items).catch(console.warn);
+
   return { success: true, isCheckedIn: willBeCheckedIn };
 }
 
@@ -409,6 +434,7 @@ export function deleteOrder(orderId: string): { success: boolean; error?: string
   }
 
   const order = db.orders[orderIdx];
+  const seatIds = order.items.map((i) => i.seatId);
 
   // Free up associated seats
   order.items.forEach((item) => {
@@ -423,6 +449,11 @@ export function deleteOrder(orderId: string): { success: boolean; error?: string
 
   db.orders.splice(orderIdx, 1);
   saveDb(db);
+
+  // Background sync deletion and seat release to Supabase
+  deleteOrderFromSupabase(orderId).catch(console.warn);
+  updateSeatsStatusInSupabase(seatIds, 'available', null, null, null).catch(console.warn);
+
   return { success: true };
 }
 
@@ -443,6 +474,10 @@ export function updateCustomerInfo(
   };
 
   saveDb(db);
+
+  // Background sync customer updates to Supabase
+  updateCustomerInSupabase(orderId, order.customer).catch(console.warn);
+
   return { success: true, order };
 }
 
@@ -515,5 +550,72 @@ export function manualCreateOrder(
   db.orders.push(order);
   saveDb(db);
 
+  // Background sync manual order to Supabase
+  insertOrderToSupabase(order).catch(console.warn);
+  updateSeatsStatusInSupabase(
+    seatIds,
+    isPaid ? 'sold' : 'held',
+    isPaid ? null : orderId,
+    isPaid ? null : Date.now() + 60 * 60 * 1000,
+    orderId
+  ).catch(console.warn);
+
   return { success: true, order };
+}
+
+// ============================================================================
+// SUPABASE REALTIME / IN-MEMORY CACHE MERGE HELPERS
+// ============================================================================
+
+export function mergeSupabaseOrders(supabaseOrders: Order[]) {
+  const db = ensureDbFile();
+  const existingMap = new Map(db.orders.map((o) => [o.id, o]));
+  let changed = false;
+
+  supabaseOrders.forEach((so) => {
+    const existing = existingMap.get(so.id);
+    if (!existing) {
+      db.orders.push(so);
+      changed = true;
+    } else {
+      if (existing.paymentStatus !== so.paymentStatus || existing.paidAt !== so.paidAt) {
+        existing.paymentStatus = so.paymentStatus;
+        existing.paidAt = so.paidAt;
+        changed = true;
+      }
+      existing.items = so.items;
+      existing.customer = so.customer;
+    }
+  });
+
+  if (changed) {
+    saveDb(db);
+  }
+}
+
+export function mergeSupabaseSeats(supabaseSeats: Seat[]) {
+  const db = ensureDbFile();
+  const supabaseMap = new Map(supabaseSeats.map((s) => [s.id, s]));
+  let changed = false;
+
+  db.seats.forEach((seat) => {
+    const sbSeat = supabaseMap.get(seat.id);
+    if (sbSeat) {
+      if (
+        seat.status !== sbSeat.status ||
+        seat.orderId !== sbSeat.orderId ||
+        seat.heldBy !== sbSeat.heldBy
+      ) {
+        seat.status = sbSeat.status;
+        seat.orderId = sbSeat.orderId;
+        seat.heldBy = sbSeat.heldBy;
+        seat.heldUntil = sbSeat.heldUntil;
+        changed = true;
+      }
+    }
+  });
+
+  if (changed) {
+    saveDb(db);
+  }
 }
