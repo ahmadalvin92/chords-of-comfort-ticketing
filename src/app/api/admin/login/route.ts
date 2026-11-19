@@ -18,20 +18,20 @@ export const ADMIN_USERS = [
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, password } = body;
+    const { email, username, password } = body;
+    const userIdentifier = (email || username || '').trim().toLowerCase();
 
-    if (!email || !password) {
+    if (!userIdentifier || !password) {
       return NextResponse.json(
-        { success: false, error: 'Email and password are required.' },
+        { success: false, error: 'Email/username and password are required.' },
         { status: 400 }
       );
     }
 
-    const cleanEmail = email.trim().toLowerCase();
     const cleanPassword = password.trim();
 
     const matchedUser = ADMIN_USERS.find(
-      (u) => u.email.toLowerCase() === cleanEmail && u.password === cleanPassword
+      (u) => u.email.toLowerCase() === userIdentifier && u.password === cleanPassword
     );
 
     if (!matchedUser) {
