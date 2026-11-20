@@ -130,8 +130,8 @@ export function holdSeats(
     if (!seat) {
       return { success: false, error: `Seat ${id} not found.` };
     }
-    if (seat.category === 'VIP' || seat.category === 'VIP_BALCONY') {
-      unavailable.push(`${seat.label} (VIP seats are reserved for invitations only)`);
+    if (seat.category === 'VIP') {
+      unavailable.push(`${seat.label} (Main Floor VIP seats are reserved for invitations only)`);
     } else if (seat.status === 'sold') {
       unavailable.push(`${seat.label} (already sold)`);
     } else if (seat.status === 'held' && seat.heldBy !== sessionId) {
@@ -195,8 +195,8 @@ export function createOrder(
     if (!seat) {
       return { success: false, error: `Seat with ID ${id} not found.` };
     }
-    if (seat.category === 'VIP' || seat.category === 'VIP_BALCONY') {
-      return { success: false, error: `Seat ${seat.label} is VIP and exclusively reserved for invitations.` };
+    if (seat.category === 'VIP') {
+      return { success: false, error: `Seat ${seat.label} is VIP Main Floor and exclusively reserved for invitations.` };
     }
     if (seat.status === 'sold') {
       return { success: false, error: `Seat ${seat.label} is already sold.` };

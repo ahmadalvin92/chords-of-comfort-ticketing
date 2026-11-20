@@ -13,7 +13,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = confirmPayment(orderId, paymentMethod || 'TRANSFER_BCA');
+    const result = confirmPayment(orderId, paymentMethod || 'TRANSFER_MANDIRI');
     if (!result.success) {
       return NextResponse.json(result, { status: 404 });
     }

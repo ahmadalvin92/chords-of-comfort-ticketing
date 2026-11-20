@@ -153,13 +153,13 @@ function TicketContent({
                   AWAITING BANK TRANSFER VERIFICATION
                 </div>
                 <p className="text-xs text-amber-800 font-medium">
-                  Your seats are temporarily held. Please send your BCA transfer receipt to WhatsApp to activate your official ticket.
+                  Your seats are temporarily held. Please send your Bank Mandiri transfer receipt to WhatsApp to activate your official ticket.
                 </p>
               </div>
             </div>
             <a
               href={`https://wa.me/6281915348866?text=${encodeURIComponent(
-                `Hello Chords of Comfort Ticketing Team! I would like to confirm my BCA transfer payment for Order ID: #${order.id} under the name: ${order.customer.fullName}.`
+                `Hello Chords of Comfort Ticketing Team! I would like to confirm my Bank Mandiri transfer payment for Order ID: #${order.id} under the name: ${order.customer.fullName}.`
               )}`}
               target="_blank"
               rel="noreferrer"
@@ -244,9 +244,9 @@ function TicketContent({
                     <span>Venue Location</span>
                   </div>
                   <div className="font-bebas text-lg text-[#182B49] leading-none">
-                    Amani Palladium Theatre
+                    LSPR Bekasi
                   </div>
-                  <div className="text-xs font-bold text-slate-600">LSPR Bekasi, Indonesia</div>
+                  <div className="text-xs font-bold text-slate-600">Amani Palladium Theatre, Indonesia</div>
                 </div>
               </div>
 

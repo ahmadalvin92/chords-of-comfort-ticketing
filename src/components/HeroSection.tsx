@@ -82,8 +82,8 @@ export default function HeroSection({ onSelectSeatsClick }: HeroSectionProps) {
                 </div>
                 <div className="text-left">
                   <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">LOCATION</div>
-                  <div className="font-bebas text-lg text-[#182B49] leading-tight">Amani Palladium Theatre</div>
-                  <div className="text-[11px] font-semibold text-slate-600">LSPR Bekasi, Indonesia</div>
+                  <div className="font-bebas text-lg text-[#182B49] leading-tight">LSPR BEKASI</div>
+                  <div className="text-[11px] font-semibold text-slate-600">Amani Palladium Theatre, Indonesia</div>
                 </div>
               </div>
             </div>

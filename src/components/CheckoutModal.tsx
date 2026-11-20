@@ -40,7 +40,7 @@ export default function CheckoutModal({
     notes: '',
   });
 
-  const [paymentMethod, setPaymentMethod] = useState<string>('BCA_TRANSFER');
+  const [paymentMethod, setPaymentMethod] = useState<string>('MANDIRI_TRANSFER');
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({});
 
@@ -282,7 +282,7 @@ export default function CheckoutModal({
             </div>
           </div>
 
-          {/* Payment Method Display (BCA Transfer Only) */}
+          {/* Payment Method Display (Mandiri Transfer Only) */}
           <div className="space-y-1.5">
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
               Payment Method:
@@ -290,14 +290,14 @@ export default function CheckoutModal({
             <div className="p-3.5 rounded-2xl border-2 border-[#182B49] bg-amber-50/70 flex items-center justify-between">
               <div>
                 <div className="font-bebas text-base text-[#182B49] leading-tight">
-                  DIRECT BANK TRANSFER (BANK BCA)
+                  DIRECT BANK TRANSFER (BANK MANDIRI)
                 </div>
                 <div className="text-[11px] font-semibold text-slate-600 mt-0.5">
-                  BCA <span className="font-mono font-bold text-slate-900">7650892101</span> (a.n. Viona)
+                  Mandiri <span className="font-mono font-bold text-slate-900">1330037267812</span> (a.n. Viona Oktaviana)
                 </div>
               </div>
               <span className="font-bebas text-xs bg-[#182B49] text-white px-2.5 py-1 rounded-md">
-                BCA ONLY
+                MANDIRI ONLY
               </span>
             </div>
           </div>

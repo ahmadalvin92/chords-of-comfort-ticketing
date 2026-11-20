@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const orderResult = createOrder(customer, seatIds, sessionId, paymentMethod || 'TRANSFER_BCA');
+    const orderResult = createOrder(customer, seatIds, sessionId, paymentMethod || 'TRANSFER_MANDIRI');
 
     if (!orderResult.success || !orderResult.order) {
       return NextResponse.json(orderResult, { status: 409 });

@@ -294,7 +294,7 @@ export default function AdminPage() {
   const buildFollowUpWaUrl = (o: Order) => {
     const cleanPhone = o.customer.phone.replace(/[^0-9]/g, '').replace(/^0/, '62');
     const seatsStr = o.items.map((i) => i.seatLabel).join(', ');
-    const plainMsg = `Hello ${o.customer.fullName}! 👋\n\nThis is the Ticketing Team for *Chords of Comfort* (LSPR COMM30-6SP).\n\nFriendly reminder regarding your ticket reservation:\n• Order ID: *#${o.id}*\n• Name: ${o.customer.fullName}\n• Seats: *${seatsStr}*\n• Total Amount: *Rp ${o.totalAmount.toLocaleString('id-ID')}*\n• Status: *Awaiting Bank Transfer*\n\n*Committee Bank Account (BCA Only):*\n- Bank BCA: *7650892101* (a.n. Viona)\n\nPlease reply with your transfer receipt to secure your reserved seats before they are automatically released. Thank you! 🙏🎭`;
+    const plainMsg = `Hello ${o.customer.fullName}! 👋\n\nThis is the Ticketing Team for *Chords of Comfort* (LSPR COMM30-6SP).\n\nFriendly reminder regarding your ticket reservation:\n• Order ID: *#${o.id}*\n• Name: ${o.customer.fullName}\n• Seats: *${seatsStr}*\n• Total Amount: *Rp ${o.totalAmount.toLocaleString('id-ID')}*\n• Status: *Awaiting Bank Transfer*\n\n*Committee Bank Account (Bank Mandiri Only):*\n- Bank Mandiri: *1330037267812* (a.n. Viona Oktaviana)\n\nPlease reply with your transfer receipt to secure your reserved seats before they are automatically released. Thank you! 🙏🎭`;
     return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(plainMsg)}`;
   };
 
@@ -1285,7 +1285,7 @@ export default function AdminPage() {
                                 className="cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-xs flex items-center gap-1"
                               >
                                 <CheckCircle2 className="w-3.5 h-3.5" />
-                                <span>Approve BCA Transfer</span>
+                                <span>Approve Mandiri Transfer</span>
                               </button>
                             )}
 
@@ -1644,7 +1644,7 @@ Instagram: @chordsofcomfort.theater`}
                       <button
                         onClick={() =>
                           copyToClipboard(
-                            `Hello [Attendee Name]! 👋\n\nThis is the Ticketing Team for *Chords of Comfort* (LSPR COMM30-6SP).\n\nFriendly reminder regarding your ticket reservation:\n• Order ID: *#[Order ID]*\n• Seats: *[Seat Numbers]*\n• Total Amount: *Rp [Total Amount]*\n• Status: *Awaiting Bank Transfer*\n\n*Committee Bank Account (BCA Only):*\n- Bank BCA: *7650892101* (a.n. Viona)\n\nPlease reply with your transfer receipt to secure your reserved seats before they are automatically released. Thank you! 🙏🎭`,
+                            `Hello [Attendee Name]! 👋\n\nThis is the Ticketing Team for *Chords of Comfort* (LSPR COMM30-6SP).\n\nFriendly reminder regarding your ticket reservation:\n• Order ID: *#[Order ID]*\n• Seats: *[Seat Numbers]*\n• Total Amount: *Rp [Total Amount]*\n• Status: *Awaiting Bank Transfer*\n\n*Committee Bank Account (Bank Mandiri Only):*\n- Bank Mandiri: *1330037267812* (a.n. Viona Oktaviana)\n\nPlease reply with your transfer receipt to secure your reserved seats before they are automatically released. Thank you! 🙏🎭`,
                             'tmpl_2'
                           )
                         }
@@ -1680,8 +1680,8 @@ Friendly reminder regarding your ticket reservation:
 • Total Amount: *Rp [Total Amount]*
 • Status: *Awaiting Bank Transfer*
 
-*Committee Bank Account (BCA Only):*
-- Bank BCA: *7650892101* (a.n. Viona)
+*Committee Bank Account (Bank Mandiri Only):*
+- Bank Mandiri: *1330037267812* (a.n. Viona Oktaviana)
 
 Please reply with your transfer receipt to secure your reserved seats before they are automatically released. Thank you! 🙏🎭`}
                     </div>

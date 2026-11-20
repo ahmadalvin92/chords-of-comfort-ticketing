@@ -56,8 +56,8 @@ export default function Home() {
 
   const handleToggleSeat = async (seatId: string) => {
     const targetSeat = seats.find((s) => s.id === seatId);
-    if (targetSeat && (targetSeat.category === 'VIP' || targetSeat.category === 'VIP_BALCONY')) {
-      alert('VIP seats (Red) are exclusively reserved for special guests and cannot be booked online.');
+    if (targetSeat && targetSeat.category === 'VIP') {
+      alert('Main Floor VIP seats (Rows A & B) are exclusively reserved for special guests and cannot be booked online. VIP Balcony seats are available for booking!');
       return;
     }
 

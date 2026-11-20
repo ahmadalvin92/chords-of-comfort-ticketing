@@ -141,7 +141,7 @@ export default function AboutSection() {
                     THEATRE AUDITORIUM
                   </span>
                   <h4 className="font-bebas text-3xl text-[#182B49] leading-tight">
-                    Amani Palladium Theatre
+                    LSPR BEKASI • Amani Palladium Theatre
                   </h4>
                   <p className="text-xs text-slate-600 mt-1 font-medium">
                     State-of-the-art auditorium equipped with theatrical acoustics, dual-level seating (Main Floor & Balcony), full air conditioning, and convenient on-site parking at Transpark Juanda.

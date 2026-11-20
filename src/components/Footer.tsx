@@ -123,8 +123,8 @@ export default function Footer() {
               <div className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
                 <div>
-                  <strong className="block text-white">Amani Palladium Theatre</strong>
-                  <span>LSPR Bekasi, Indonesia (Transpark Juanda)</span>
+                  <strong className="block text-white">LSPR Bekasi</strong>
+                  <span>Amani Palladium Theatre (Transpark Juanda)</span>
                 </div>
               </div>
               <div className="flex items-start gap-2">

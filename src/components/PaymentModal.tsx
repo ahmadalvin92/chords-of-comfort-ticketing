@@ -43,8 +43,8 @@ export default function PaymentModal({
 
   const seatsStr = order.items.map((i) => i.seatLabel).join(', ');
 
-  // English WhatsApp confirmation message template (BCA Transfer)
-  const waConfirmationMsg = `Hello Chords of Comfort Ticketing Team! I would like to confirm my BCA transfer payment for Order ID: #${order.id} under the name: ${order.customer.fullName} for Seats: ${seatsStr} (Total: Rp ${order.totalAmount.toLocaleString('id-ID')}). Please find my payment transfer receipt attached.`;
+  // English WhatsApp confirmation message template (Mandiri Transfer)
+  const waConfirmationMsg = `Hello Chords of Comfort Ticketing Team! I would like to confirm my Bank Mandiri transfer payment for Order ID: #${order.id} under the name: ${order.customer.fullName} for Seats: ${seatsStr} (Total: Rp ${order.totalAmount.toLocaleString('id-ID')}). Please find my payment transfer receipt attached.`;
   const waUrl = `https://wa.me/6281915348866?text=${encodeURIComponent(waConfirmationMsg)}`;
 
   // Sandbox simulation payment handler for instant demonstration
@@ -127,33 +127,33 @@ export default function PaymentModal({
               <span>How to Complete Your Booking:</span>
             </div>
             <ol className="list-decimal pl-4 space-y-1 text-[11px]">
-              <li>Transfer the exact total amount to our official Bank BCA account below.</li>
+              <li>Transfer the exact total amount to our official Bank Mandiri account below.</li>
               <li>Click the green WhatsApp button below to submit your transfer receipt.</li>
               <li>Once verified by the ticketing team, your official QR E-Ticket will be activated instantly!</li>
             </ol>
           </div>
 
-          {/* Committee Bank Account (BCA Only) */}
+          {/* Committee Bank Account (Mandiri Only) */}
           <div className="space-y-2.5">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
-              Official Committee Bank Account (BCA Transfer):
+              Official Committee Bank Account (Bank Mandiri Transfer):
             </span>
 
-            {/* BCA */}
+            {/* Mandiri */}
             <div className="p-4 bg-[#FAF6ED] rounded-2xl border-3 border-[#0F1C30] shadow-[0_4px_0_#0F1C30] flex items-center justify-between">
               <div>
                 <span className="font-bebas text-xs px-2 py-0.5 rounded bg-[#182B49] text-white">
-                  BANK BCA
+                  BANK MANDIRI
                 </span>
-                <div className="font-mono text-lg text-[#182B49] font-black mt-1">7650892101</div>
-                <span className="text-xs text-slate-600 font-bold block">a.n. Viona</span>
+                <div className="font-mono text-lg text-[#182B49] font-black mt-1">1330037267812</div>
+                <span className="text-xs text-slate-600 font-bold block">a.n. Viona Oktaviana</span>
               </div>
               <button
                 type="button"
-                onClick={() => copyToClipboard('7650892101', 'BCA')}
+                onClick={() => copyToClipboard('1330037267812', 'MANDIRI')}
                 className="cursor-pointer bg-white hover:bg-slate-100 text-[#182B49] px-4 py-2 rounded-xl border-2 border-[#0F1C30] font-bold text-xs flex items-center gap-1.5 shadow-xs"
               >
-                {copiedAccount === 'BCA' ? (
+                {copiedAccount === 'MANDIRI' ? (
                   <>
                     <Check className="w-4 h-4 text-emerald-600" />
                     <span className="text-emerald-700">Copied!</span>

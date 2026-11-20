@@ -56,7 +56,7 @@ export function orderToRow(order: Order): SupabaseOrderRow {
     notes: order.customer.notes || null,
     total_amount: order.totalAmount,
     payment_status: order.paymentStatus,
-    payment_method: order.paymentMethod || 'TRANSFER_BCA',
+    payment_method: order.paymentMethod || 'TRANSFER_MANDIRI',
     items: order.items,
     qr_payload: order.qrPayload,
     paid_at: order.paidAt || null,
@@ -78,7 +78,7 @@ export function rowToOrder(row: SupabaseOrderRow): Order {
     items: Array.isArray(row.items) ? row.items : [],
     totalAmount: row.total_amount,
     paymentStatus: (row.payment_status as PaymentStatus) || 'pending',
-    paymentMethod: row.payment_method || 'TRANSFER_BCA',
+    paymentMethod: row.payment_method || 'TRANSFER_MANDIRI',
     paidAt: row.paid_at,
     qrPayload: row.qr_payload || '',
   };

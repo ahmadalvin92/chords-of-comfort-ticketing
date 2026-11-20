@@ -22,7 +22,7 @@ const FAQ_DATA: FaqItem[] = [
   {
     question: 'How do I complete payment without automated payment gateways?',
     answer:
-      'Payments are handled via direct bank transfer to Bank BCA (Account: 7650892101 a.n. Viona). Once you submit your order, click the WhatsApp confirmation button to send your transfer receipt directly to our ticketing team at 0819-1534-8866. Our committee will verify and activate your official ticket.',
+      'Payments are handled via direct bank transfer to Bank Mandiri (Account: 1330037267812 a.n. Viona Oktaviana). Once you submit your order, click the WhatsApp confirmation button to send your transfer receipt directly to our ticketing team at 0819-1534-8866. Our committee will verify and activate your official ticket.',
   },
   {
     question: 'What ticket tiers are available and what are the prices?',
