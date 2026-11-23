@@ -166,7 +166,7 @@ export default function HeroSection({ onSelectSeatsClick }: HeroSectionProps) {
                       ADMISSION PASS
                     </div>
                     <div className="font-bebas text-lg text-[#182B49] leading-tight">
-                      300 SEATS TOTAL CAPACITY
+                      297 SEATS TOTAL CAPACITY
                     </div>
                   </div>
                   <div className="font-bebas text-xl text-[#C1272D]">

@@ -131,7 +131,7 @@ export default function Footer() {
                 <Ticket className="w-4 h-4 text-[#F4B32A] shrink-0 mt-0.5" />
                 <div>
                   <strong className="block text-white">Auditorium Capacity</strong>
-                  <span>300 Seats (225 Main Floor + 75 Balcony)</span>
+                  <span>297 Seats (225 Main Floor + 72 Balcony)</span>
                 </div>
               </div>
             </div>

@@ -1,4 +1,4 @@
-import { Seat, TicketCategory } from '@/types/ticket';
+import type { Seat, TicketCategory } from '@/types/ticket';
 
 export const CATEGORY_INFO: Record<
   TicketCategory,
@@ -7,29 +7,29 @@ export const CATEGORY_INFO: Record<
   VIP: {
     name: 'VIP Main Floor',
     price: 50000,
-    color: '#E04D65', // Coral/Red as in the chart
+    color: '#E85D1A', // Orange/Red as in the chart
     badgeBg: 'bg-rose-100 text-rose-700 border-rose-400',
     border: 'border-rose-500',
-    description: 'Main Floor - Row A & B Center (Seats 11-20)',
+    description: 'Main Floor - Row A & B Center (Seats 11-20 • Reserved)',
     total: 20,
   },
   VIP_BALCONY: {
     name: 'VIP Balcony',
     price: 50000,
-    color: '#E04D65', // Coral/Red as in the chart
+    color: '#E85D1A', // Orange/Red as in the chart
     badgeBg: 'bg-rose-100 text-rose-700 border-rose-400',
     border: 'border-rose-500',
-    description: 'Balcony - Row AA Center (Seats 9-17)',
-    total: 9,
+    description: 'Balcony - Row AA Center (Seats 9-16)',
+    total: 8,
   },
   REGULAR: {
     name: 'REGULAR',
     price: 35000,
-    color: '#3B82F6', // Blue as in the chart
+    color: '#0D6BA8', // Blue as in the chart
     badgeBg: 'bg-blue-100 text-blue-700 border-blue-400',
     border: 'border-blue-500',
     description: 'Main Floor & Balcony (Standard Theater View)',
-    total: 271,
+    total: 269,
   },
 };
 
@@ -39,15 +39,15 @@ export function generateInitialSeats(): Seat[] {
   // =================================================================
   // 1. MAIN FLOOR (225 SEATS TOTAL)
   // Rows: A, B, C, D, E, F, G, H
-  // Rows A-G: 30 seats each (Left 1-10, Center 11-20, Right 21-30)
-  // Row H: 15 seats (Left 1-10, Right 21-25)
-  // VIP: Row A (11-20) & Row B (11-20) = 20 seats
+  // Rows A-G: 30 seats each (Right 1-10, Center 11-20, Left 21-30)
+  // Row H: 15 seats (Right 1-10, Left 11-15)
+  // VIP: Row A (11-20) & Row B (11-20) = 20 seats (Reserved)
   // REGULAR: The rest = 205 seats
   // =================================================================
   const mainFloorRows = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
 
   mainFloorRows.forEach((row) => {
-    // Left Block: 1 to 10 (Regular)
+    // Right Block: 1 to 10 (Regular)
     for (let num = 1; num <= 10; num++) {
       seats.push({
         id: `MF-${row}-${num}`,
@@ -55,7 +55,7 @@ export function generateInitialSeats(): Seat[] {
         section: 'MAIN_FLOOR',
         row,
         number: num,
-        block: 'LEFT',
+        block: 'RIGHT',
         category: 'REGULAR',
         price: 35000,
         status: 'available',
@@ -78,7 +78,7 @@ export function generateInitialSeats(): Seat[] {
       });
     }
 
-    // Right Block: 21 to 30 (Regular)
+    // Left Block: 21 to 30 (Regular)
     for (let num = 21; num <= 30; num++) {
       seats.push({
         id: `MF-${row}-${num}`,
@@ -86,7 +86,7 @@ export function generateInitialSeats(): Seat[] {
         section: 'MAIN_FLOOR',
         row,
         number: num,
-        block: 'RIGHT',
+        block: 'LEFT',
         category: 'REGULAR',
         price: 35000,
         status: 'available',
@@ -94,22 +94,8 @@ export function generateInitialSeats(): Seat[] {
     }
   });
 
-  // Row H: Left (1-10) and Right (21-25)
+  // Row H: Right (1-10) and Left (11-15)
   for (let num = 1; num <= 10; num++) {
-    seats.push({
-      id: `MF-H-${num}`,
-      label: `H-${num}`,
-      section: 'MAIN_FLOOR',
-      row: 'H',
-      number: num,
-      block: 'LEFT',
-      category: 'REGULAR',
-      price: 35000,
-      status: 'available',
-    });
-  }
-
-  for (let num = 21; num <= 25; num++) {
     seats.push({
       id: `MF-H-${num}`,
       label: `H-${num}`,
@@ -123,19 +109,33 @@ export function generateInitialSeats(): Seat[] {
     });
   }
 
+  for (let num = 11; num <= 15; num++) {
+    seats.push({
+      id: `MF-H-${num}`,
+      label: `H-${num}`,
+      section: 'MAIN_FLOOR',
+      row: 'H',
+      number: num,
+      block: 'LEFT',
+      category: 'REGULAR',
+      price: 35000,
+      status: 'available',
+    });
+  }
+
   // =================================================================
-  // 2. BALCONY (75 SEATS TOTAL)
+  // 2. BALCONY (72 SEATS TOTAL — 3 ROWS x 24 SEATS)
   // Rows: AA, AB, AC
-  // Left: 1 to 8 (Regular)
-  // Center: 9 to 17 (VIP Balcony on Row AA; Regular on Row AB and AC)
-  // Right: 18 to 25 (Regular)
-  // VIP BALCONY: Row AA (9-17) = 9 seats
-  // REGULAR: 66 seats
+  // Right: 1 to 8 (Regular)
+  // Center: 9 to 16 (VIP Balcony on Row AA; Regular on Row AB and AC)
+  // Left: 17 to 24 (Regular)
+  // VIP BALCONY: Row AA (9-16) = 8 seats
+  // REGULAR: 64 seats
   // =================================================================
   const balconyRows = ['AA', 'AB', 'AC'];
 
   balconyRows.forEach((row) => {
-    // Left: 1 to 8
+    // Right: 1 to 8
     for (let num = 1; num <= 8; num++) {
       seats.push({
         id: `BAL-${row}-${num}`,
@@ -143,15 +143,15 @@ export function generateInitialSeats(): Seat[] {
         section: 'BALCONY',
         row,
         number: num,
-        block: 'LEFT',
+        block: 'RIGHT',
         category: 'REGULAR',
         price: 35000,
         status: 'available',
       });
     }
 
-    // Center: 9 to 17 (VIP Balcony for Row AA; Regular for AB & AC)
-    for (let num = 9; num <= 17; num++) {
+    // Center: 9 to 16 (VIP Balcony for Row AA; Regular for AB & AC)
+    for (let num = 9; num <= 16; num++) {
       const isVipBalcony = row === 'AA';
       seats.push({
         id: `BAL-${row}-${num}`,
@@ -166,15 +166,15 @@ export function generateInitialSeats(): Seat[] {
       });
     }
 
-    // Right: 18 to 25
-    for (let num = 18; num <= 25; num++) {
+    // Left: 17 to 24
+    for (let num = 17; num <= 24; num++) {
       seats.push({
         id: `BAL-${row}-${num}`,
         label: `${row}-${num}`,
         section: 'BALCONY',
         row,
         number: num,
-        block: 'RIGHT',
+        block: 'LEFT',
         category: 'REGULAR',
         price: 35000,
         status: 'available',

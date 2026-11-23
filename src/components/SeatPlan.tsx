@@ -1,17 +1,15 @@
 'use client';
 
 import React, { useState, useMemo, useRef } from 'react';
-import { Seat, TicketCategory } from '@/types/ticket';
-import { CATEGORY_INFO } from '@/data/initialSeats';
+import { Seat } from '@/types/ticket';
 import {
   ZoomIn,
   ZoomOut,
   RotateCcw,
   Sparkles,
-  Ticket,
   ChevronRight,
-  Maximize2,
   Info,
+  Lock,
 } from 'lucide-react';
 
 interface SeatPlanProps {
@@ -38,7 +36,7 @@ export default function SeatPlan({
   const [hoveredSeat, setHoveredSeat] = useState<Seat | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Group seats by row for fast O(1) lookup: rowMap[row][seatNumber]
+  // Group seats by row for O(1) lookup: seatLookup[row][seatNumber]
   const seatLookup = useMemo(() => {
     const map: Record<string, Record<number, Seat>> = {};
     seats.forEach((s) => {
@@ -48,18 +46,20 @@ export default function SeatPlan({
     return map;
   }, [seats]);
 
-  const MAIN_FLOOR_ROWS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-  const BALCONY_ROWS = ['AA', 'AB', 'AC'];
+  // Poster top-to-bottom row ordering: Balcony (AC -> AA) at top, Main Floor (H -> A) below, STAGE at bottom
+  const BALCONY_ROWS = ['AC', 'AB', 'AA'];
+  const BALC_LEFT_SLOTS = [24, 23, 22, 21, 20, 19, 18, 17];
+  const BALC_CENTER_SLOTS = [16, 15, 14, 13, 12, 11, 10, 9];
+  const BALC_RIGHT_SLOTS = [8, 7, 6, 5, 4, 3, 2, 1];
 
-  const MAIN_LEFT_SLOTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-  const MAIN_CENTER_SLOTS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
-  const MAIN_RIGHT_SLOTS = [21, 22, 23, 24, 25, 26, 27, 28, 29, 30];
+  const MAIN_FLOOR_ALL_ROWS = ['H', 'G', 'F', 'E', 'D', 'C', 'B', 'A'];
+  const MAIN_FLOOR_CENTER_ROWS = ['G', 'F', 'E', 'D', 'C', 'B', 'A'];
 
-  const BALC_LEFT_SLOTS = [1, 2, 3, 4, 5, 6, 7, 8];
-  const BALC_CENTER_SLOTS = [9, 10, 11, 12, 13, 14, 15, 16, 17];
-  const BALC_RIGHT_SLOTS = [18, 19, 20, 21, 22, 23, 24, 25];
+  const MAIN_LEFT_SLOTS = [30, 29, 28, 27, 26, 25, 24, 23, 22, 21];
+  const MAIN_LEFT_ROW_H_SLOTS: (number | null)[] = [null, null, null, null, null, 15, 14, 13, 12, 11];
+  const MAIN_CENTER_SLOTS = [20, 19, 18, 17, 16, 15, 14, 13, 12, 11];
+  const MAIN_RIGHT_SLOTS = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
 
-  // Selected seats summary
   const selectedSeats = useMemo(() => {
     return seats.filter((s) => selectedSeatIds.includes(s.id));
   }, [seats, selectedSeatIds]);
@@ -78,21 +78,24 @@ export default function SeatPlan({
 
   const getSeatColor = (seat: Seat, isSelected: boolean) => {
     if (seat.status === 'sold') {
-      return 'bg-slate-700 text-slate-500 border border-slate-800 cursor-not-allowed opacity-50 line-through';
+      return 'bg-slate-400 text-slate-700 border border-slate-500 cursor-not-allowed opacity-50 line-through';
     }
     if (seat.status === 'held' && !isSelected) {
       return 'bg-amber-300 text-amber-950 border border-amber-500 cursor-not-allowed animate-pulse';
     }
     if (isSelected) {
-      return 'bg-[#F4B32A] text-[#0F1C30] border-[#0F1C30] font-black shadow-[0_0_12px_rgba(244,179,42,0.8)] scale-110 z-20 ring-2 ring-white';
+      return 'bg-[#F4B32A] text-[#0F1C30] border-[#0F1C30] font-black shadow-[0_0_12px_rgba(244,179,42,0.9)] scale-110 z-20 ring-2 ring-[#0F1C30]';
     }
     if (seat.category === 'VIP') {
-      return 'bg-[#C1272D] text-white/90 border border-[#8E1C21] cursor-not-allowed opacity-90 shadow-xs';
+      // Main Floor VIP (Rows A & B center 11-20) — Strictly Reserved / Cannot be clicked or seated
+      return 'bg-[#E85D1A] text-white/95 border border-[#A83B0B] cursor-not-allowed opacity-90 shadow-xs';
     }
     if (seat.category === 'VIP_BALCONY') {
-      return 'bg-[#C1272D] text-white border border-[#961C20] hover:scale-115 hover:z-10 shadow-xs cursor-pointer';
+      // Balcony VIP (Row AA center 9-16) — Purchasable @ Rp 50.000
+      return 'bg-[#E85D1A] text-white border border-[#B2410E] hover:scale-115 hover:z-10 shadow-xs cursor-pointer';
     }
-    return 'bg-[#3B82F6] text-white border border-[#1D4ED8] hover:scale-115 hover:z-10 shadow-xs cursor-pointer';
+    // Regular seats — Royal/Poster Blue @ Rp 35.000
+    return 'bg-[#0D6BA8] text-white border border-[#084B78] hover:scale-115 hover:z-10 shadow-xs cursor-pointer';
   };
 
   const renderSeatButton = (seat: Seat | undefined, slotKey: string | number) => {
@@ -107,6 +110,7 @@ export default function SeatPlan({
     return (
       <button
         key={seat.id}
+        type="button"
         onClick={() => {
           if (isReserved) return;
           onToggleSeat(seat.id);
@@ -115,8 +119,12 @@ export default function SeatPlan({
         onMouseLeave={() => setHoveredSeat(null)}
         disabled={isDisabled}
         aria-label={`Seat ${seat.label} - ${isReserved ? 'VIP Main Floor (Reserved)' : seat.category === 'VIP_BALCONY' ? 'VIP Balcony' : 'Regular'} - Rp ${seat.price.toLocaleString('id-ID')}`}
-        title={isReserved ? `Seat ${seat.label} is RESERVED (VIP Main Floor / Invitation Only)` : `Seat ${seat.label} - Rp ${seat.price.toLocaleString('id-ID')}`}
-        className={`w-6 h-6 sm:w-7 sm:h-7 rounded-md text-[10px] sm:text-[11px] font-bold flex items-center justify-center shrink-0 transition-transform ${getSeatColor(
+        title={
+          isReserved
+            ? `Seat ${seat.label} is RESERVED (Cannot be booked)`
+            : `Seat ${seat.label} • Rp ${seat.price.toLocaleString('id-ID')}`
+        }
+        className={`relative w-6 h-6 sm:w-7 sm:h-7 rounded-md text-[9px] sm:text-[10px] font-bold flex items-center justify-center shrink-0 transition-transform ${getSeatColor(
           seat,
           isSelected
         )}`}
@@ -135,28 +143,40 @@ export default function SeatPlan({
           <div>
             <div className="inline-flex items-center gap-2 bg-[#C1272D] text-[#FAF6ED] font-bebas text-xs sm:text-sm px-3 py-1 rounded-md border border-[#F4B32A] mb-2 tracking-wider">
               <Sparkles className="w-3.5 h-3.5 text-[#F4B32A]" />
-              OFFICIAL 300-SEAT SEATING PLAN
+              FIND YOUR COMFORT ZONE • 297 SEATS TOTAL
             </div>
             <h2 className="font-bebas text-4xl sm:text-6xl text-[#FAF6ED] tracking-wider leading-none">
               CHOOSE YOUR <span className="text-[#F4B32A]">SEATS</span>
             </h2>
             <p className="text-xs sm:text-sm text-slate-300 max-w-xl mt-1">
-              Main Floor (225 Seats) & Balcony (75 Seats). Click any available seat to reserve. Maximum {maxSeats} seats per booking.
+              Balcony (72 Seats) & Main Floor (225 Seats). Click any available blue or orange Balcony seat to reserve (max {maxSeats} seats). Main Floor Row A &amp; B orange VIP seats are strictly reserved.
             </p>
           </div>
 
           {/* Section Filter Pills */}
           <div className="flex items-center gap-2 bg-[#182B49] p-1.5 rounded-2xl border-2 border-slate-700 self-start md:self-auto">
             <button
+              type="button"
               onClick={() => setActiveSection('ALL')}
               className={`cursor-pointer px-3.5 py-1.5 rounded-xl font-bebas text-xs sm:text-sm tracking-wider transition-all ${activeSection === 'ALL'
                 ? 'bg-[#C1272D] text-white shadow-sm'
                 : 'text-slate-300 hover:text-white'
                 }`}
             >
-              ALL TIERS (300)
+              ALL TIERS (297)
             </button>
             <button
+              type="button"
+              onClick={() => setActiveSection('BALCONY')}
+              className={`cursor-pointer px-3.5 py-1.5 rounded-xl font-bebas text-xs sm:text-sm tracking-wider transition-all ${activeSection === 'BALCONY'
+                ? 'bg-[#C1272D] text-white shadow-sm'
+                : 'text-slate-300 hover:text-white'
+                }`}
+            >
+              BALCONY (72)
+            </button>
+            <button
+              type="button"
               onClick={() => setActiveSection('MAIN')}
               className={`cursor-pointer px-3.5 py-1.5 rounded-xl font-bebas text-xs sm:text-sm tracking-wider transition-all ${activeSection === 'MAIN'
                 ? 'bg-[#C1272D] text-white shadow-sm'
@@ -165,30 +185,22 @@ export default function SeatPlan({
             >
               MAIN FLOOR (225)
             </button>
-            <button
-              onClick={() => setActiveSection('BALCONY')}
-              className={`cursor-pointer px-3.5 py-1.5 rounded-xl font-bebas text-xs sm:text-sm tracking-wider transition-all ${activeSection === 'BALCONY'
-                ? 'bg-[#C1272D] text-white shadow-sm'
-                : 'text-slate-300 hover:text-white'
-                }`}
-            >
-              BALCONY (75)
-            </button>
           </div>
         </div>
 
-        {/* Highlight Category Notification if redirected from Categories section */}
+        {/* Highlight Category Notification */}
         {highlightCategory && (
           <div className="bg-[#182B49] border-2 border-[#F4B32A] p-3 rounded-2xl flex items-center justify-between text-xs">
             <span className="flex items-center gap-2 text-slate-200">
               <Info className="w-4 h-4 text-[#F4B32A]" />
               <span>
-                Filtering view for <strong>{highlightCategory}</strong>. Click any seat on the map to add it to your order.
+                Showing seats for <strong>{highlightCategory}</strong>. Click any available seat on the map below to add it to your booking.
               </span>
             </span>
             <button
+              type="button"
               onClick={onClearHighlight}
-              className="text-[#F4B32A] hover:underline font-bold"
+              className="text-[#F4B32A] hover:underline font-bold cursor-pointer"
             >
               Show All Tiers
             </button>
@@ -196,36 +208,43 @@ export default function SeatPlan({
         )}
 
         {/* Seating Map Interactive Board */}
-        <div className="relative bg-[#182B49] rounded-3xl border-4 border-slate-700 shadow-[0_12px_0_#060c15] p-4 sm:p-8 overflow-hidden">
+        <div className="relative bg-[#182B49] rounded-3xl border-4 border-slate-700 shadow-[0_12px_0_#060c15] p-3 sm:p-8 overflow-hidden">
 
           {/* Zoom & Reset Floating Controls */}
-          <div className="absolute top-4 right-4 z-30 flex items-center gap-1.5 bg-[#0F1C30]/90 backdrop-blur-md p-1.5 rounded-xl border border-slate-700">
-            <button
-              onClick={() => handleZoom(0.1)}
-              className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
-              title="Zoom In"
-            >
-              <ZoomIn className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => handleZoom(-0.1)}
-              className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
-              title="Zoom Out"
-            >
-              <ZoomOut className="w-4 h-4" />
-            </button>
-            <button
-              onClick={handleResetZoom}
-              className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
-              title="Reset Zoom"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Swipe guidance indicator for mobile */}
-          <div className="sm:hidden text-center text-[11px] font-semibold text-slate-400 mb-3 flex items-center justify-center gap-1">
-            <span>← Swipe left or right to view all 30 rows →</span>
+          <div className="flex items-center justify-between mb-4">
+            <div className="sm:hidden text-[11px] font-semibold text-slate-300 flex items-center gap-1">
+              <span>← Swipe sideways to view full seat chart →</span>
+            </div>
+            <div className="hidden sm:flex items-center gap-2 text-xs text-slate-300 font-semibold">
+              <Lock className="w-3.5 h-3.5 text-[#F4B32A]" />
+              <span>Note: Main Floor Center Rows A &amp; B (11–20) are reserved and cannot be selected.</span>
+            </div>
+            <div className="flex items-center gap-1.5 bg-[#0F1C30]/90 backdrop-blur-md p-1.5 rounded-xl border border-slate-700 ml-auto">
+              <button
+                type="button"
+                onClick={() => handleZoom(0.1)}
+                className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                title="Zoom In"
+              >
+                <ZoomIn className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleZoom(-0.1)}
+                className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                title="Zoom Out"
+              >
+                <ZoomOut className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={handleResetZoom}
+                className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                title="Reset Zoom"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           {/* Zoomable / Scrollable Floor Canvas */}
@@ -234,195 +253,314 @@ export default function SeatPlan({
             className="overflow-x-auto pb-8 pt-2 transition-transform duration-150 origin-top"
           >
             <div
-              className="min-w-[780px] max-w-4xl mx-auto space-y-12"
+              className="min-w-[860px] max-w-5xl mx-auto space-y-8"
               style={{ transform: `scale(${zoom})`, transformOrigin: 'top center' }}
             >
 
-              {/* ================= MAIN FLOOR AREA ================= */}
-              {(activeSection === 'ALL' || activeSection === 'MAIN') && (
-                <div className="space-y-6">
-
-                  {/* Physical Stage Banner matching poster */}
-                  <div className="relative max-w-md mx-auto mb-4">
-                    <div className="relative flex items-center justify-center">
-                      <div className="w-3.5 h-7 bg-[#C59F5E] border-2 border-[#8E6E32] rounded-l-md -mr-1 hidden sm:block shadow-sm" />
-                      <div className="flex-1 max-w-sm h-10 sm:h-11 bg-gradient-to-r from-[#D8B67D] via-[#ECD4AA] to-[#D8B67D] rounded-xl border-2 border-[#8E6E32] flex items-center justify-center shadow-md">
-                        <span className="font-bebas text-xl sm:text-2xl tracking-[0.35em] text-[#2C1805] font-black pl-[0.35em]">
-                          STAGE
-                        </span>
-                      </div>
-                      <div className="w-3.5 h-7 bg-[#C59F5E] border-2 border-[#8E6E32] rounded-r-md -ml-1 hidden sm:block shadow-sm" />
-                    </div>
-                  </div>
-
-                  {/* Main Floor Header with Yellow Ripped Paper Badge */}
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-slate-700/80 pb-3">
-                    <div className="inline-flex items-center gap-2 bg-[#F4B32A] text-[#0F1C30] font-bebas text-base sm:text-lg px-4 py-1 rounded-lg border-2 border-[#0F1C30] shadow-[0_2px_0_#0F1C30] tracking-wider transform -rotate-1">
-                      MAIN FLOOR — 225 SEATS TOTAL
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="bg-[#C1272D] text-white font-bebas text-xs sm:text-sm px-3 py-1 rounded-md border border-[#0F1C30] font-bold">
-                        20 VIP (RESERVED)
-                      </span>
-                      <span className="bg-[#3B82F6] text-white font-bebas text-xs sm:text-sm px-3 py-1 rounded-md border border-[#0F1C30] font-bold">
-                        205 REGULAR
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Main Floor Seat Matrix (Rows A - H) */}
-                  <div className="space-y-1.5 sm:space-y-2">
-                    {MAIN_FLOOR_ROWS.map((rowKey) => {
-                      const rowLookup = seatLookup[rowKey] || {};
-
-                      return (
-                        <div key={rowKey} className="flex items-center justify-center">
-                          {/* Row Letter (Left Only, as in the official poster) */}
-                          <span className="w-6 sm:w-8 font-bebas text-sm sm:text-base text-[#F4B32A] text-center font-bold shrink-0 mr-1 sm:mr-2">
-                            {rowKey}
-                          </span>
-
-                          {/* Left Block: Seats 1-10 */}
-                          <div className="flex gap-1 sm:gap-1.5 shrink-0">
-                            {MAIN_LEFT_SLOTS.map((num) => renderSeatButton(rowLookup[num], `MF-${rowKey}-${num}`))}
-                          </div>
-
-                          {/* Left Aisle */}
-                          <div className="w-3 sm:w-5 shrink-0" />
-
-                          {/* Center Block: Seats 11-20 (Empty placeholders on Row H) */}
-                          <div className="flex gap-1 sm:gap-1.5 shrink-0">
-                            {MAIN_CENTER_SLOTS.map((num) => renderSeatButton(rowLookup[num], `MF-${rowKey}-${num}`))}
-                          </div>
-
-                          {/* Right Aisle */}
-                          <div className="w-3 sm:w-5 shrink-0" />
-
-                          {/* Right Block: Seats 21-30 (Row H has 21-25 then 5 empty placeholders) */}
-                          <div className="flex gap-1 sm:gap-1.5 shrink-0">
-                            {MAIN_RIGHT_SLOTS.map((num) => renderSeatButton(rowLookup[num], `MF-${rowKey}-${num}`))}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                </div>
-              )}
-
-              {/* ================= BALCONY AREA ================= */}
+              {/* ================= 1. BALCONY WINDOW (TOP) ================= */}
               {(activeSection === 'ALL' || activeSection === 'BALCONY') && (
-                <div className="space-y-6 pt-6 border-t-2 border-dashed border-slate-700">
-
-                  {/* Balcony Stage Ribbon */}
-                  <div className="relative max-w-md mx-auto mb-4">
-                    <div className="relative flex items-center justify-center">
-                      <div className="w-3.5 h-7 bg-[#C59F5E] border-2 border-[#8E6E32] rounded-l-md -mr-1 hidden sm:block shadow-sm" />
-                      <div className="flex-1 max-w-sm h-10 sm:h-11 bg-gradient-to-r from-[#D8B67D] via-[#ECD4AA] to-[#D8B67D] rounded-xl border-2 border-[#8E6E32] flex items-center justify-center shadow-md">
-                        <span className="font-bebas text-xl sm:text-2xl tracking-[0.35em] text-[#2C1805] font-black pl-[0.35em]">
-                          STAGE
-                        </span>
-                      </div>
-                      <div className="w-3.5 h-7 bg-[#C59F5E] border-2 border-[#8E6E32] rounded-r-md -ml-1 hidden sm:block shadow-sm" />
+                <div className="rounded-2xl border-4 border-[#0F1C30] bg-[#FAF6ED] text-[#0F1C30] shadow-[6px_6px_0_#060c15] overflow-hidden max-w-4xl mx-auto">
+                  {/* Retro Orange-Red Window Title Bar */}
+                  <div className="bg-[#E84A27] border-b-4 border-[#0F1C30] px-4 py-2.5 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="font-bebas text-2xl text-[#0F1C30] tracking-wider leading-none">
+                        BALCONY
+                      </span>
+                      <span className="bg-[#FAF6ED] text-[#0F1C30] font-bebas text-xs px-2.5 py-0.5 rounded border-2 border-[#0F1C30] tracking-wider">
+                        72 SEATS TOTAL • 8 VIP BALCONY (AA 9–16) • 64 REGULAR
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-3.5 h-3.5 rounded-full border-2 border-[#0F1C30] bg-[#FAF6ED]/30" />
+                      <span className="w-3.5 h-3.5 rounded-full border-2 border-[#0F1C30] bg-[#FAF6ED]/30" />
+                      <span className="w-3.5 h-3.5 rounded-full border-2 border-[#0F1C30] bg-[#FAF6ED]/30" />
                     </div>
                   </div>
 
-                  {/* Balcony Header with Yellow Ripped Paper Badge */}
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-slate-700/80 pb-3">
-                    <div className="inline-flex items-center gap-2 bg-[#F4B32A] text-[#0F1C30] font-bebas text-base sm:text-lg px-4 py-1 rounded-lg border-2 border-[#0F1C30] shadow-[0_2px_0_#0F1C30] tracking-wider transform -rotate-1">
-                      BALCONY — 75 SEATS TOTAL
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="bg-[#C1272D] text-white font-bebas text-xs sm:text-sm px-3 py-1 rounded-md border border-[#0F1C30] font-bold">
-                        9 VIP BALCONY (Rp 50.000)
-                      </span>
-                      <span className="bg-[#3B82F6] text-white font-bebas text-xs sm:text-sm px-3 py-1 rounded-md border border-[#0F1C30] font-bold">
-                        66 REGULAR (Rp 35.000)
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Balcony Seat Matrix (Rows AA - AC) */}
-                  <div className="space-y-1.5 sm:space-y-2">
-                    {BALCONY_ROWS.map((rowKey) => {
-                      const rowLookup = seatLookup[rowKey] || {};
-
-                      return (
-                        <div key={rowKey} className="flex items-center justify-center">
-                          {/* Row Letter (Left Only, as in the official poster) */}
-                          <span className="w-6 sm:w-8 font-bebas text-sm sm:text-base text-[#F4B32A] text-center font-bold shrink-0 mr-1 sm:mr-2">
-                            {rowKey}
-                          </span>
-
-                          {/* Left Block: Seats 1-8 */}
-                          <div className="flex gap-1 sm:gap-1.5 shrink-0">
-                            {BALC_LEFT_SLOTS.map((num) => renderSeatButton(rowLookup[num], `BAL-${rowKey}-${num}`))}
-                          </div>
-
-                          {/* Left Aisle */}
-                          <div className="w-3 sm:w-5 shrink-0" />
-
-                          {/* Center Block: Seats 9-17 (VIP Balcony on AA, Regular on AB & AC) */}
-                          <div className="flex gap-1 sm:gap-1.5 shrink-0">
-                            {BALC_CENTER_SLOTS.map((num) => renderSeatButton(rowLookup[num], `BAL-${rowKey}-${num}`))}
-                          </div>
-
-                          {/* Right Aisle */}
-                          <div className="w-3 sm:w-5 shrink-0" />
-
-                          {/* Right Block: Seats 18-25 */}
-                          <div className="flex gap-1 sm:gap-1.5 shrink-0">
-                            {BALC_RIGHT_SLOTS.map((num) => renderSeatButton(rowLookup[num], `BAL-${rowKey}-${num}`))}
-                          </div>
+                  {/* Balcony Grid: Rows AC, AB, AA */}
+                  <div className="p-4 sm:p-6 flex items-center justify-center gap-3 sm:gap-5">
+                    {/* Left Row Labels */}
+                    <div className="flex flex-col gap-1.5 sm:gap-2 py-2.5">
+                      {BALCONY_ROWS.map((rowKey) => (
+                        <div
+                          key={`bal-lbl-l-${rowKey}`}
+                          className="h-6 sm:h-7 w-7 font-bebas text-base text-[#0F1C30] flex items-center justify-center font-bold"
+                        >
+                          {rowKey}
                         </div>
-                      );
-                    })}
-                  </div>
+                      ))}
+                    </div>
 
+                    {/* Left Block (24..17) */}
+                    <div className="border-2 border-[#0F1C30] rounded-xl p-2 sm:p-2.5 bg-white shadow-xs">
+                      <div className="flex flex-col gap-1.5 sm:gap-2">
+                        {BALCONY_ROWS.map((rowKey) => {
+                          const rowLookup = seatLookup[rowKey] || {};
+                          return (
+                            <div key={`bal-l-${rowKey}`} className="flex gap-1 sm:gap-1.5">
+                              {BALC_LEFT_SLOTS.map((num) =>
+                                renderSeatButton(rowLookup[num], `BAL-${rowKey}-${num}`)
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Center Block (16..9) */}
+                    <div className="border-2 border-[#0F1C30] rounded-xl p-2 sm:p-2.5 bg-white shadow-xs">
+                      <div className="flex flex-col gap-1.5 sm:gap-2">
+                        {BALCONY_ROWS.map((rowKey) => {
+                          const rowLookup = seatLookup[rowKey] || {};
+                          return (
+                            <div key={`bal-c-${rowKey}`} className="flex gap-1 sm:gap-1.5">
+                              {BALC_CENTER_SLOTS.map((num) =>
+                                renderSeatButton(rowLookup[num], `BAL-${rowKey}-${num}`)
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Right Block (8..1) */}
+                    <div className="border-2 border-[#0F1C30] rounded-xl p-2 sm:p-2.5 bg-white shadow-xs">
+                      <div className="flex flex-col gap-1.5 sm:gap-2">
+                        {BALCONY_ROWS.map((rowKey) => {
+                          const rowLookup = seatLookup[rowKey] || {};
+                          return (
+                            <div key={`bal-r-${rowKey}`} className="flex gap-1 sm:gap-1.5">
+                              {BALC_RIGHT_SLOTS.map((num) =>
+                                renderSeatButton(rowLookup[num], `BAL-${rowKey}-${num}`)
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Right Row Labels */}
+                    <div className="flex flex-col gap-1.5 sm:gap-2 py-2.5">
+                      {BALCONY_ROWS.map((rowKey) => (
+                        <div
+                          key={`bal-lbl-r-${rowKey}`}
+                          className="h-6 sm:h-7 w-7 font-bebas text-base text-[#0F1C30] flex items-center justify-center font-bold"
+                        >
+                          {rowKey}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
+
+              {/* ================= 2. MAIN FLOOR WINDOW (MIDDLE) ================= */}
+              {(activeSection === 'ALL' || activeSection === 'MAIN') && (
+                <div className="rounded-2xl border-4 border-[#0F1C30] bg-[#FAF6ED] text-[#0F1C30] shadow-[6px_6px_0_#060c15] overflow-hidden">
+                  {/* Retro Yellow Window Title Bar */}
+                  <div className="bg-[#F4B32A] border-b-4 border-[#0F1C30] px-4 py-2.5 flex items-center justify-between">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span className="font-bebas text-2xl text-[#0F1C30] tracking-wider leading-none">
+                        MAIN FLOOR
+                      </span>
+                      <span className="bg-[#FAF6ED] text-[#0F1C30] font-bebas text-xs px-2.5 py-0.5 rounded border-2 border-[#0F1C30] tracking-wider">
+                        225 SEATS TOTAL • 20 VIP (RESERVED / NOT BOOKABLE) • 205 REGULAR
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-3.5 h-3.5 rounded-full border-2 border-[#0F1C30] bg-[#FAF6ED]/40" />
+                      <span className="w-3.5 h-3.5 rounded-full border-2 border-[#0F1C30] bg-[#FAF6ED]/40" />
+                      <span className="w-3.5 h-3.5 rounded-full border-2 border-[#0F1C30] bg-[#FAF6ED]/40" />
+                    </div>
+                  </div>
+
+                  {/* Main Floor Matrix (Rows H -> A top-to-bottom) */}
+                  <div className="p-4 sm:p-6 flex items-end justify-center gap-2 sm:gap-3.5">
+                    {/* Left Row Labels (H -> A) */}
+                    <div className="flex flex-col gap-1.5 sm:gap-2 py-2.5">
+                      {MAIN_FLOOR_ALL_ROWS.map((rowKey) => (
+                        <div
+                          key={`mf-lbl-l-${rowKey}`}
+                          className="h-6 sm:h-7 w-5 font-bebas text-base text-[#0F1C30] flex items-center justify-center font-bold"
+                        >
+                          {rowKey}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Left Wing Block (Row H: 15..11 aligned right; Rows G..A: 30..21) */}
+                    <div className="border-2 border-[#0F1C30] rounded-xl p-2 sm:p-2.5 bg-white shadow-xs">
+                      <div className="flex flex-col gap-1.5 sm:gap-2">
+                        {MAIN_FLOOR_ALL_ROWS.map((rowKey) => {
+                          const rowLookup = seatLookup[rowKey] || {};
+                          if (rowKey === 'H') {
+                            return (
+                              <div key="mf-l-H" className="flex gap-1 sm:gap-1.5">
+                                {MAIN_LEFT_ROW_H_SLOTS.map((num, idx) =>
+                                  num === null
+                                    ? renderSeatButton(undefined, `MF-H-empty-${idx}`)
+                                    : renderSeatButton(rowLookup[num], `MF-H-${num}`)
+                                )}
+                              </div>
+                            );
+                          }
+                          return (
+                            <div key={`mf-l-${rowKey}`} className="flex gap-1 sm:gap-1.5">
+                              {MAIN_LEFT_SLOTS.map((num) =>
+                                renderSeatButton(rowLookup[num], `MF-${rowKey}-${num}`)
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Center Block (Rows G..A: 20..11; Rows B & A Reserved VIP) */}
+                    <div className="border-2 border-[#0F1C30] rounded-xl p-2 sm:p-2.5 bg-white shadow-xs self-end relative">
+                      <div className="flex flex-col gap-1.5 sm:gap-2">
+                        {MAIN_FLOOR_CENTER_ROWS.map((rowKey) => {
+                          const rowLookup = seatLookup[rowKey] || {};
+                          return (
+                            <div key={`mf-c-${rowKey}`} className="flex gap-1 sm:gap-1.5">
+                              {MAIN_CENTER_SLOTS.map((num) =>
+                                renderSeatButton(rowLookup[num], `MF-${rowKey}-${num}`)
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Right Wing Block (Rows H..A: 10..1) */}
+                    <div className="border-2 border-[#0F1C30] rounded-xl p-2 sm:p-2.5 bg-white shadow-xs">
+                      <div className="flex flex-col gap-1.5 sm:gap-2">
+                        {MAIN_FLOOR_ALL_ROWS.map((rowKey) => {
+                          const rowLookup = seatLookup[rowKey] || {};
+                          return (
+                            <div key={`mf-r-${rowKey}`} className="flex gap-1 sm:gap-1.5">
+                              {MAIN_RIGHT_SLOTS.map((num) =>
+                                renderSeatButton(rowLookup[num], `MF-${rowKey}-${num}`)
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Right Row Labels (H -> A) */}
+                    <div className="flex flex-col gap-1.5 sm:gap-2 py-2.5">
+                      {MAIN_FLOOR_ALL_ROWS.map((rowKey) => (
+                        <div
+                          key={`mf-lbl-r-${rowKey}`}
+                          className="h-6 sm:h-7 w-5 font-bebas text-base text-[#0F1C30] flex items-center justify-center font-bold"
+                        >
+                          {rowKey}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ================= 3. STAGE BANNER (BOTTOM) ================= */}
+              <div className="max-w-3xl mx-auto pt-2">
+                <div className="flex items-center justify-center gap-4">
+                  <div className="flex-1 h-1 bg-[#FAF6ED]/80 rounded-full" />
+                  <div className="px-8 py-2 bg-[#FAF6ED] text-[#0F1C30] rounded-xl border-3 border-[#0F1C30] shadow-[4px_4px_0_#060c15]">
+                    <span className="font-bebas text-3xl sm:text-4xl tracking-[0.25em] pl-[0.25em] font-black">
+                      STAGE
+                    </span>
+                  </div>
+                  <div className="flex-1 h-1 bg-[#FAF6ED]/80 rounded-full" />
+                </div>
+              </div>
+
+              {/* ================= 4. POSTER LEGEND PILL + STATUS GUIDE ================= */}
+              <div className="space-y-4">
+                <div className="max-w-xl mx-auto bg-[#FAF6ED] text-[#0F1C30] rounded-2xl border-4 border-[#0F1C30] shadow-[5px_5px_0_#060c15] grid grid-cols-2 divide-x-3 divide-[#0F1C30] overflow-hidden">
+                  <div className="px-4 py-3 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-6 h-6 rounded-full bg-[#0D6BA8] border-2 border-[#0F1C30] shrink-0" />
+                      <span className="font-bold text-xs sm:text-sm leading-tight">
+                        Regular Seat
+                      </span>
+                    </div>
+                    <span className="font-bebas text-2xl sm:text-3xl text-[#0F1C30] tracking-wider">
+                      35K
+                    </span>
+                  </div>
+                  <div className="px-4 py-3 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-6 h-6 rounded-full bg-[#E85D1A] border-2 border-[#0F1C30] shrink-0" />
+                      <span className="font-bold text-xs sm:text-sm leading-tight">
+                        VIP Seat
+                      </span>
+                    </div>
+                    <span className="font-bebas text-2xl sm:text-3xl text-[#0F1C30] tracking-wider">
+                      50K
+                    </span>
+                  </div>
+                </div>
+
+                {/* Additional Interactive State Legend */}
+                <div className="pt-2 flex flex-wrap items-center justify-center gap-4 text-xs font-semibold text-slate-200">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-4 h-4 rounded bg-[#E85D1A] border border-[#0F1C30]" />
+                    <span>VIP Balcony (Rp 50.000 • Available to Book)</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-4 h-4 rounded bg-[#E85D1A] border border-[#A83B0B] opacity-70" />
+                    <span>VIP Main Floor A–B (Reserved / Cannot Be Booked)</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-4 h-4 rounded bg-[#0D6BA8] border border-[#0F1C30]" />
+                    <span>Regular Pass (Rp 35.000)</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-4 h-4 rounded bg-[#F4B32A] border border-[#0F1C30]" />
+                    <span>Your Selection</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-4 h-4 rounded bg-slate-500 opacity-60 border border-slate-700 line-through" />
+                    <span>Sold Out</span>
+                  </div>
+                </div>
+              </div>
 
             </div>
           </div>
 
           {/* Hovered Seat Quick Tooltip */}
           {hoveredSeat && (
-            <div className="absolute bottom-4 left-4 z-30 bg-[#0F1C30]/95 backdrop-blur-sm border-2 border-[#F4B32A] p-2.5 rounded-xl text-xs space-y-0.5 shadow-xl animate-in fade-in duration-100">
+            <div className="mt-4 sm:mt-0 sm:absolute sm:bottom-4 sm:left-4 z-30 bg-[#0F1C30]/95 backdrop-blur-sm border-2 border-[#F4B32A] p-2.5 rounded-xl text-xs space-y-0.5 shadow-xl animate-in fade-in duration-100">
               <div className="font-bebas text-base text-[#F4B32A] leading-tight">
-                SEAT {hoveredSeat.label} • {hoveredSeat.category === 'VIP' ? 'VIP MAIN FLOOR (RESERVED)' : hoveredSeat.category === 'VIP_BALCONY' ? 'VIP BALCONY' : 'REGULAR'}
+                SEAT {hoveredSeat.label} •{' '}
+                {hoveredSeat.category === 'VIP'
+                  ? 'VIP MAIN FLOOR (RESERVED)'
+                  : hoveredSeat.category === 'VIP_BALCONY'
+                    ? 'VIP BALCONY'
+                    : 'REGULAR'}
               </div>
               <div className="text-[11px] text-slate-300">
-                Tier Price: <strong>Rp {hoveredSeat.price.toLocaleString('id-ID')}</strong> • {hoveredSeat.section === 'BALCONY' ? 'Balcony Level' : 'Main Floor Level'}
+                Tier Price: <strong>Rp {hoveredSeat.price.toLocaleString('id-ID')}</strong> •{' '}
+                {hoveredSeat.section === 'BALCONY' ? 'Balcony Level' : 'Main Floor Level'}
               </div>
-              <div className={`text-[10px] font-bold uppercase ${hoveredSeat.category === 'VIP' ? 'text-amber-400 font-black' : 'text-emerald-400'}`}>
-                Status: {hoveredSeat.category === 'VIP' ? 'RESERVED (INVITATION ONLY • NOT FOR PUBLIC PURCHASE)' : hoveredSeat.status === 'sold' ? 'SOLD OUT' : hoveredSeat.status === 'held' ? 'TEMPORARILY HELD' : 'AVAILABLE TO SELECT'}
+              <div
+                className={`text-[10px] font-bold uppercase ${
+                  hoveredSeat.category === 'VIP' ? 'text-amber-400 font-black' : 'text-emerald-400'
+                }`}
+              >
+                Status:{' '}
+                {hoveredSeat.category === 'VIP'
+                  ? 'RESERVED (INVITATION ONLY • CANNOT BE BOOKED)'
+                  : hoveredSeat.status === 'sold'
+                    ? 'SOLD OUT'
+                    : hoveredSeat.status === 'held'
+                      ? 'TEMPORARILY HELD'
+                      : 'AVAILABLE TO SELECT'}
               </div>
             </div>
           )}
-
-          {/* Map Legend */}
-          <div className="pt-6 border-t border-slate-700 flex flex-wrap items-center justify-center gap-4 text-xs font-semibold">
-            <div className="flex items-center gap-1.5">
-              <div className="w-4 h-4 rounded bg-[#C1272D] border border-[#0F1C30]" />
-              <span>VIP Balcony (Rp 50.000)</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-4 h-4 rounded bg-[#C1272D] border border-[#8E1C21] opacity-70" />
-              <span>VIP Main Floor (Reserved)</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-4 h-4 rounded bg-[#3B82F6] border border-[#0F1C30]" />
-              <span>Regular Pass (Rp 35.000)</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-4 h-4 rounded bg-[#F4B32A] border border-[#0F1C30]" />
-              <span>Your Selection</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-4 h-4 rounded bg-slate-700 opacity-60 border border-slate-800 line-through" />
-              <span>Sold Out</span>
-            </div>
-          </div>
 
         </div>
 
@@ -463,6 +601,7 @@ export default function SeatPlan({
               </div>
 
               <button
+                type="button"
                 onClick={onProceedToCheckout}
                 className="cursor-pointer bg-[#C1272D] hover:bg-[#a61f25] text-white px-6 py-3.5 rounded-2xl font-bebas text-lg sm:text-xl tracking-wider border-2 border-[#0F1C30] shadow-[0_3px_0_#0F1C30] hover:translate-y-0.5 transition-all flex items-center gap-2"
               >

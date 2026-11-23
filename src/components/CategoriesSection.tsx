@@ -21,7 +21,7 @@ export default function CategoriesSection({ onSelectCategory }: CategoriesSectio
             SELECT YOUR SEATING TIER
           </h2>
           <p className="text-xs sm:text-sm text-slate-600 font-medium">
-            300 total capacity across Main Floor and Balcony levels. All tickets include official collectible wristband admission stubs.
+            297 total capacity across Main Floor and Balcony levels. All tickets include official collectible wristband admission stubs.
           </p>
         </div>
 
@@ -83,7 +83,7 @@ export default function CategoriesSection({ onSelectCategory }: CategoriesSectio
                   BALCONY • ROW AA
                 </span>
                 <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                  9 SEATS AVAILABLE
+                  8 SEATS AVAILABLE
                 </span>
               </div>
 
@@ -134,7 +134,7 @@ export default function CategoriesSection({ onSelectCategory }: CategoriesSectio
                   MAIN FLOOR & BALCONY
                 </span>
                 <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                  271 SEATS AVAILABLE
+                  269 SEATS AVAILABLE
                 </span>
               </div>
 

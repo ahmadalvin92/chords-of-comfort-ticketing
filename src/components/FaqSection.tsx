@@ -17,7 +17,7 @@ const FAQ_DATA: FaqItem[] = [
   {
     question: 'How do I choose and secure my seats?',
     answer:
-      'You can select your preferred seats directly on our interactive 300-seat seating map (225 Main Floor seats and 75 Balcony seats). Once selected, click "Proceed to Checkout" to lock your seats for 10 minutes while you complete your details.',
+      'You can select your preferred seats directly on our interactive 297-seat seating map (225 Main Floor seats and 72 Balcony seats). Once selected, click "Proceed to Checkout" to lock your seats for 10 minutes while you complete your details.',
   },
   {
     question: 'How do I complete payment without automated payment gateways?',

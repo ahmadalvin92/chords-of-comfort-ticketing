@@ -422,7 +422,7 @@ export default function AdminPage() {
   const handleResetData = async () => {
     if (
       !confirm(
-        'WARNING: Are you sure you want to reset all transactions and restore all 300 seats to AVAILABLE? All demo order records will be cleared.'
+        'WARNING: Are you sure you want to reset all transactions and restore all 297 seats to AVAILABLE? All demo order records will be cleared.'
       )
     ) {
       return;
@@ -669,12 +669,12 @@ export default function AdminPage() {
                 </div>
               </div>
               <div className="font-bebas text-2xl sm:text-4xl text-[#182B49] leading-tight">
-                {stats.soldSeats} <span className="text-sm sm:text-lg text-slate-400">/ {stats.totalCapacity || 300} Seats</span>
+                {stats.soldSeats} <span className="text-sm sm:text-lg text-slate-400">/ {stats.totalCapacity || 297} Seats</span>
               </div>
               <div className="w-full bg-slate-100 rounded-full h-2 mt-2 overflow-hidden border border-slate-200">
                 <div
                   className="bg-[#C1272D] h-2 rounded-full"
-                  style={{ width: `${(stats.soldSeats / (stats.totalCapacity || 300)) * 100}%` }}
+                  style={{ width: `${(stats.soldSeats / (stats.totalCapacity || 297)) * 100}%` }}
                 />
               </div>
             </div>
@@ -1416,7 +1416,7 @@ export default function AdminPage() {
                 </div>
               )}
 
-              {/* Grid of all 300 seats */}
+              {/* Grid of all 297 seats */}
               <div className="grid grid-cols-4 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-1.5 max-h-[500px] overflow-y-auto p-2 bg-[#FAF6ED] rounded-2xl border border-slate-300">
                 {seats.map((seat) => (
                   <button

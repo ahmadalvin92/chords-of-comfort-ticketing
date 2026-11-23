@@ -31,8 +31,16 @@ const DB_PATH = isServerless
 
 const BUNDLED_DB_PATH = path.join(process.cwd(), 'data', 'ticketing-db.json');
 
+function isSeatSchemaCurrent(seats: Seat[]): boolean {
+  if (!Array.isArray(seats) || seats.length !== 297) return false;
+  const hasMfH15 = seats.some((s) => s.id === 'MF-H-15');
+  const hasRemovedBal25 = seats.some((s) => s.id === 'BAL-AA-25');
+  const balAa17 = seats.find((s) => s.id === 'BAL-AA-17');
+  return hasMfH15 && !hasRemovedBal25 && balAa17?.category === 'REGULAR';
+}
+
 function ensureDbFile(): DbData {
-  if (globalThis.__TICKETING_DB__) {
+  if (globalThis.__TICKETING_DB__ && isSeatSchemaCurrent(globalThis.__TICKETING_DB__.seats)) {
     return globalThis.__TICKETING_DB__;
   }
 
@@ -41,7 +49,12 @@ function ensureDbFile(): DbData {
     try {
       const fileContent = fs.readFileSync(DB_PATH, 'utf8');
       const data = JSON.parse(fileContent) as DbData;
-      globalThis.__TICKETING_DB__ = data;
+      if (!isSeatSchemaCurrent(data.seats)) {
+        data.seats = generateInitialSeats();
+        saveDb(data);
+      } else {
+        globalThis.__TICKETING_DB__ = data;
+      }
       return data;
     } catch {
       // Continue fallback
@@ -53,6 +66,9 @@ function ensureDbFile(): DbData {
     try {
       const fileContent = fs.readFileSync(BUNDLED_DB_PATH, 'utf8');
       const data = JSON.parse(fileContent) as DbData;
+      if (!isSeatSchemaCurrent(data.seats)) {
+        data.seats = generateInitialSeats();
+      }
       globalThis.__TICKETING_DB__ = data;
       saveDb(data); // Write to /tmp for future persistence
       return data;
@@ -92,18 +108,23 @@ function saveDb(data: DbData) {
 // Clean up expired held seats (older than 10 mins)
 function cleanupExpiredHolds(data: DbData): boolean {
   const now = Date.now();
-  let changed = false;
+  const expiredSeatIds: string[] = [];
 
   data.seats.forEach((seat) => {
     if (seat.status === 'held' && seat.heldUntil && seat.heldUntil < now) {
       seat.status = 'available';
       seat.heldUntil = null;
       seat.heldBy = null;
-      changed = true;
+      expiredSeatIds.push(seat.id);
     }
   });
 
-  return changed;
+  if (expiredSeatIds.length > 0) {
+    updateSeatsStatusInSupabase(expiredSeatIds, 'available', null, null, null).catch(console.warn);
+    return true;
+  }
+
+  return false;
 }
 
 export function getSeats(): Seat[] {
