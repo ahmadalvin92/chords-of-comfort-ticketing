@@ -33,15 +33,15 @@ export default function Navbar({ onBookTicketsClick }: NavbarProps) {
         <div className="flex items-center justify-between h-20">
 
           {/* Left Brand Identity: Varsity Crest / College Badge */}
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-12 h-12 rounded-2xl bg-[#C1272D] border-3 border-[#0F1C30] flex items-center justify-center text-[#FAF6ED] font-bebas text-2xl shadow-[0_3px_0_#0F1C30] group-hover:-rotate-6 transition-transform">
+          <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group min-w-0">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-2xl bg-[#C1272D] border-3 border-[#0F1C30] flex items-center justify-center text-[#FAF6ED] font-bebas text-xl sm:text-2xl shadow-[0_3px_0_#0F1C30] group-hover:-rotate-6 transition-transform">
               6SP
             </div>
-            <div>
-              <span className="font-bebas text-2xl tracking-wider text-[#182B49] block leading-none">
+            <div className="min-w-0">
+              <span className="font-bebas text-xl sm:text-2xl tracking-wider text-[#182B49] block leading-none truncate">
                 CHORDS OF COMFORT
               </span>
-              <span className="text-[10px] font-bold tracking-widest text-[#C1272D] uppercase block mt-0.5">
+              <span className="text-[9px] sm:text-[10px] font-bold tracking-wider sm:tracking-widest text-[#C1272D] uppercase block mt-0.5 truncate">
                 COMM30-6SP • LSPR THEATER FESTIVAL
               </span>
             </div>

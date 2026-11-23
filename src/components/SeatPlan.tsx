@@ -154,11 +154,11 @@ export default function SeatPlan({
           </div>
 
           {/* Section Filter Pills */}
-          <div className="flex items-center gap-2 bg-[#182B49] p-1.5 rounded-2xl border-2 border-slate-700 self-start md:self-auto">
+          <div className="w-full md:w-auto grid grid-cols-3 md:flex items-center gap-1.5 sm:gap-2 bg-[#182B49] p-1.5 rounded-2xl border-2 border-slate-700 self-start md:self-auto">
             <button
               type="button"
               onClick={() => setActiveSection('ALL')}
-              className={`cursor-pointer px-3.5 py-1.5 rounded-xl font-bebas text-xs sm:text-sm tracking-wider transition-all ${activeSection === 'ALL'
+              className={`cursor-pointer px-2 sm:px-3.5 py-2 sm:py-1.5 rounded-xl font-bebas text-xs sm:text-sm tracking-wider transition-all text-center ${activeSection === 'ALL'
                 ? 'bg-[#C1272D] text-white shadow-sm'
                 : 'text-slate-300 hover:text-white'
                 }`}
@@ -168,7 +168,7 @@ export default function SeatPlan({
             <button
               type="button"
               onClick={() => setActiveSection('BALCONY')}
-              className={`cursor-pointer px-3.5 py-1.5 rounded-xl font-bebas text-xs sm:text-sm tracking-wider transition-all ${activeSection === 'BALCONY'
+              className={`cursor-pointer px-2 sm:px-3.5 py-2 sm:py-1.5 rounded-xl font-bebas text-xs sm:text-sm tracking-wider transition-all text-center ${activeSection === 'BALCONY'
                 ? 'bg-[#C1272D] text-white shadow-sm'
                 : 'text-slate-300 hover:text-white'
                 }`}
@@ -178,7 +178,7 @@ export default function SeatPlan({
             <button
               type="button"
               onClick={() => setActiveSection('MAIN')}
-              className={`cursor-pointer px-3.5 py-1.5 rounded-xl font-bebas text-xs sm:text-sm tracking-wider transition-all ${activeSection === 'MAIN'
+              className={`cursor-pointer px-2 sm:px-3.5 py-2 sm:py-1.5 rounded-xl font-bebas text-xs sm:text-sm tracking-wider transition-all text-center ${activeSection === 'MAIN'
                 ? 'bg-[#C1272D] text-white shadow-sm'
                 : 'text-slate-300 hover:text-white'
                 }`}
@@ -250,7 +250,7 @@ export default function SeatPlan({
           {/* Zoomable / Scrollable Floor Canvas */}
           <div
             ref={containerRef}
-            className="overflow-x-auto pb-8 pt-2 transition-transform duration-150 origin-top"
+            className="overflow-x-auto pb-4 pt-2 transition-transform duration-150 origin-top"
           >
             <div
               className="min-w-[860px] max-w-5xl mx-auto space-y-8"
@@ -475,58 +475,58 @@ export default function SeatPlan({
                 </div>
               </div>
 
-              {/* ================= 4. POSTER LEGEND PILL + STATUS GUIDE ================= */}
-              <div className="space-y-4">
-                <div className="max-w-xl mx-auto bg-[#FAF6ED] text-[#0F1C30] rounded-2xl border-4 border-[#0F1C30] shadow-[5px_5px_0_#060c15] grid grid-cols-2 divide-x-3 divide-[#0F1C30] overflow-hidden">
-                  <div className="px-4 py-3 flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2.5">
-                      <span className="w-6 h-6 rounded-full bg-[#0D6BA8] border-2 border-[#0F1C30] shrink-0" />
-                      <span className="font-bold text-xs sm:text-sm leading-tight">
-                        Regular Seat
-                      </span>
-                    </div>
-                    <span className="font-bebas text-2xl sm:text-3xl text-[#0F1C30] tracking-wider">
-                      35K
-                    </span>
-                  </div>
-                  <div className="px-4 py-3 flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2.5">
-                      <span className="w-6 h-6 rounded-full bg-[#E85D1A] border-2 border-[#0F1C30] shrink-0" />
-                      <span className="font-bold text-xs sm:text-sm leading-tight">
-                        VIP Seat
-                      </span>
-                    </div>
-                    <span className="font-bebas text-2xl sm:text-3xl text-[#0F1C30] tracking-wider">
-                      50K
-                    </span>
-                  </div>
-                </div>
+            </div>
+          </div>
 
-                {/* Additional Interactive State Legend */}
-                <div className="pt-2 flex flex-wrap items-center justify-center gap-4 text-xs font-semibold text-slate-200">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-4 h-4 rounded bg-[#E85D1A] border border-[#0F1C30]" />
-                    <span>VIP Balcony (Rp 50.000 • Available to Book)</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-4 h-4 rounded bg-[#E85D1A] border border-[#A83B0B] opacity-70" />
-                    <span>VIP Main Floor A–B (Reserved / Cannot Be Booked)</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-4 h-4 rounded bg-[#0D6BA8] border border-[#0F1C30]" />
-                    <span>Regular Pass (Rp 35.000)</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-4 h-4 rounded bg-[#F4B32A] border border-[#0F1C30]" />
-                    <span>Your Selection</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-4 h-4 rounded bg-slate-500 opacity-60 border border-slate-700 line-through" />
-                    <span>Sold Out</span>
-                  </div>
+          {/* ================= 4. POSTER LEGEND PILL + STATUS GUIDE (ALWAYS FITS VIEWPORT) ================= */}
+          <div className="mt-4 pt-4 border-t border-slate-700/80 space-y-4">
+            <div className="max-w-xl mx-auto bg-[#FAF6ED] text-[#0F1C30] rounded-2xl border-4 border-[#0F1C30] shadow-[5px_5px_0_#060c15] grid grid-cols-2 divide-x-3 divide-[#0F1C30] overflow-hidden">
+              <div className="px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-[#0D6BA8] border-2 border-[#0F1C30] shrink-0" />
+                  <span className="font-bold text-xs sm:text-sm leading-tight">
+                    Regular Seat
+                  </span>
                 </div>
+                <span className="font-bebas text-xl sm:text-3xl text-[#0F1C30] tracking-wider shrink-0">
+                  35K
+                </span>
               </div>
+              <div className="px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-[#E85D1A] border-2 border-[#0F1C30] shrink-0" />
+                  <span className="font-bold text-xs sm:text-sm leading-tight">
+                    VIP Seat
+                  </span>
+                </div>
+                <span className="font-bebas text-xl sm:text-3xl text-[#0F1C30] tracking-wider shrink-0">
+                  50K
+                </span>
+              </div>
+            </div>
 
+            {/* Additional Interactive State Legend */}
+            <div className="pt-1 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[11px] sm:text-xs font-semibold text-slate-200">
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-4 rounded bg-[#E85D1A] border border-[#0F1C30] shrink-0" />
+                <span>VIP Balcony (Rp 50.000 • Available to Book)</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-4 rounded bg-[#E85D1A] border border-[#A83B0B] opacity-70 shrink-0" />
+                <span>VIP Main Floor A–B (Reserved / Cannot Be Booked)</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-4 rounded bg-[#0D6BA8] border border-[#0F1C30] shrink-0" />
+                <span>Regular Pass (Rp 35.000)</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-4 rounded bg-[#F4B32A] border border-[#0F1C30] shrink-0" />
+                <span>Your Selection</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-4 rounded bg-slate-500 opacity-60 border border-slate-700 line-through shrink-0" />
+                <span>Sold Out</span>
+              </div>
             </div>
           </div>
 

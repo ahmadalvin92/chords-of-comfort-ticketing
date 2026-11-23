@@ -53,12 +53,12 @@ export default function FaqSection() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
 
         {/* Section Heading */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-2 bg-[#F4B32A] text-[#0F1C30] font-bebas text-sm px-3 py-1 rounded-md border-2 border-[#0F1C30] tracking-wider">
+        <div className="text-center space-y-3">
+          <div className="inline-flex items-center gap-2 bg-[#F4B32A] text-[#0F1C30] font-bebas text-sm px-3.5 py-1 rounded-md border-2 border-[#0F1C30] tracking-wider shadow-[0_2px_0_#0F1C30]">
             <HelpCircle className="w-4 h-4" />
             FREQUENTLY ASKED QUESTIONS
           </div>
-          <h2 className="font-bebas text-4xl sm:text-5xl text-[#182B49] tracking-wider leading-none">
+          <h2 className="font-bebas text-4xl sm:text-5xl text-[#182B49] tracking-wider leading-tight">
             EVERYTHING YOU NEED TO KNOW
           </h2>
           <p className="text-xs sm:text-sm text-slate-600 font-medium">

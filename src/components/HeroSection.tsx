@@ -36,8 +36,8 @@ export default function HeroSection({ onSelectSeatsClick }: HeroSectionProps) {
           <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
 
             {/* Top Pill / Badge */}
-            <div className="inline-flex items-center gap-2 bg-[#F4B32A] text-[#0F1C30] px-3.5 py-1.5 rounded-full border-2 border-[#0F1C30] font-bebas text-sm sm:text-base tracking-wider shadow-[0_2px_0_#0F1C30]">
-              <Flame className="w-4 h-4 fill-[#0F1C30] text-[#0F1C30]" />
+            <div className="inline-flex items-center justify-center gap-2 bg-[#F4B32A] text-[#0F1C30] px-3.5 py-1.5 rounded-full border-2 border-[#0F1C30] font-bebas text-xs sm:text-base tracking-wider shadow-[0_2px_0_#0F1C30] text-center leading-snug">
+              <Flame className="w-4 h-4 fill-[#0F1C30] text-[#0F1C30] shrink-0" />
               <span>COMM30-6SP PRESENTS • THE 35TH LSPR THEATER FESTIVAL</span>
             </div>
 
