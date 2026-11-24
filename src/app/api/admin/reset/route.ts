@@ -1,9 +1,18 @@
 import { NextResponse } from 'next/server';
 import { resetDatabase } from '@/lib/store';
+import { verifyAdminRequest } from '@/lib/adminAuth';
 
-export async function POST() {
+export async function POST(request: Request) {
+  const auth = verifyAdminRequest(request);
+  if (!auth.authorized) {
+    return NextResponse.json(
+      { success: false, error: 'Unauthorized. Committee admin session required.' },
+      { status: 401 }
+    );
+  }
+
   try {
-    resetDatabase();
+    await resetDatabase();
     return NextResponse.json({ success: true, message: 'Database reset successfully' });
   } catch (error) {
     return NextResponse.json(
@@ -12,4 +21,3 @@ export async function POST() {
     );
   }
 }
-

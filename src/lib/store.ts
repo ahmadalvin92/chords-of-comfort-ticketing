@@ -1,14 +1,24 @@
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import { Seat, Order, CheckInResult, CustomerInfo, TicketItem } from '@/types/ticket';
 import { generateInitialSeats } from '@/data/initialSeats';
 import {
+  fetchOrdersFromSupabase,
+  fetchOrderByIdFromSupabase,
+  fetchSeatsFromSupabase,
+  syncAllSeatsToSupabase,
   insertOrderToSupabase,
   updateOrderPaymentInSupabase,
   updateCustomerInSupabase,
   updateOrderItemsInSupabase,
   deleteOrderFromSupabase,
   updateSeatsStatusInSupabase,
+  releaseExpiredCartHoldsInSupabase,
+  atomicHoldSeatsInSupabase,
+  atomicLockOrderSeatsInSupabase,
+  atomicReleaseSessionSeatsInSupabase,
+  resetAllInSupabase,
 } from './supabase';
 
 interface DbData {
@@ -70,7 +80,7 @@ function ensureDbFile(): DbData {
         data.seats = generateInitialSeats();
       }
       globalThis.__TICKETING_DB__ = data;
-      saveDb(data); // Write to /tmp for future persistence
+      saveDb(data);
       return data;
     } catch {
       // Continue fallback
@@ -100,18 +110,20 @@ function saveDb(data: DbData) {
     }
     fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), 'utf8');
   } catch (err) {
-    // Graceful fallback: Serverless container memory still holds the data
     console.warn('Could not write to disk, using in-memory store:', (err as Error).message);
   }
 }
 
-// Clean up expired held seats (older than 10 mins)
-function cleanupExpiredHolds(data: DbData): boolean {
+/**
+ * Clean up expired temporary cart holds (`!seat.orderId`).
+ * Submitted pending orders (`seat.orderId` present) remain safely held until Admin verifies or deletes them.
+ */
+async function cleanupExpiredHolds(data: DbData, syncSupabase: boolean = true): Promise<boolean> {
   const now = Date.now();
   const expiredSeatIds: string[] = [];
 
   data.seats.forEach((seat) => {
-    if (seat.status === 'held' && seat.heldUntil && seat.heldUntil < now) {
+    if (seat.status === 'held' && !seat.orderId && seat.heldUntil && seat.heldUntil < now) {
       seat.status = 'available';
       seat.heldUntil = null;
       seat.heldBy = null;
@@ -119,29 +131,84 @@ function cleanupExpiredHolds(data: DbData): boolean {
     }
   });
 
-  if (expiredSeatIds.length > 0) {
-    updateSeatsStatusInSupabase(expiredSeatIds, 'available', null, null, null).catch(console.warn);
-    return true;
+  if (syncSupabase) {
+    const sbExpired = await releaseExpiredCartHoldsInSupabase(now);
+    if (sbExpired.length > 0) {
+      sbExpired.forEach((id) => {
+        const seat = data.seats.find((s) => s.id === id);
+        if (seat && !seat.orderId) {
+          seat.status = 'available';
+          seat.heldUntil = null;
+          seat.heldBy = null;
+        }
+      });
+      return true;
+    }
   }
 
-  return false;
+  return expiredSeatIds.length > 0;
 }
 
-export function getSeats(): Seat[] {
+/** Sync local cache cleanly from Supabase (source of truth across serverless instances). */
+export async function syncFromSupabase(includeOrders: boolean = true): Promise<DbData> {
   const db = ensureDbFile();
-  if (cleanupExpiredHolds(db)) {
+
+  try {
+    const [sbSeats, sbOrders] = await Promise.all([
+      fetchSeatsFromSupabase(),
+      includeOrders ? fetchOrdersFromSupabase() : Promise.resolve(null),
+    ]);
+
+    if (sbSeats && sbSeats.length > 0) {
+      mergeSupabaseSeats(sbSeats);
+    } else if (sbSeats === null) {
+      // Table might be empty or unreachable; don't overwrite Supabase blindly unless truly empty
+    }
+
+    if (includeOrders && Array.isArray(sbOrders)) {
+      mergeSupabaseOrders(sbOrders);
+    }
+  } catch (err) {
+    console.warn('[Store] Supabase sync warning:', (err as Error).message);
+  }
+
+  if (await cleanupExpiredHolds(db, true)) {
+    saveDb(db);
+  }
+
+  return db;
+}
+
+export async function getSeats(): Promise<Seat[]> {
+  const db = ensureDbFile();
+  try {
+    const sbSeats = await fetchSeatsFromSupabase();
+    if (sbSeats && sbSeats.length > 0) {
+      mergeSupabaseSeats(sbSeats);
+    } else {
+      await syncAllSeatsToSupabase(db.seats);
+    }
+  } catch (err) {
+    console.warn('[Store] getSeats sync fallback:', (err as Error).message);
+  }
+
+  if (await cleanupExpiredHolds(db, true)) {
     saveDb(db);
   }
   return db.seats;
 }
 
-export function holdSeats(
-  seatIds: string[],
+export async function holdSeats(
+  rawSeatIds: string[],
   sessionId: string,
   holdMinutes: number = 10
-): { success: boolean; error?: string; heldSeats?: Seat[] } {
-  const db = ensureDbFile();
-  cleanupExpiredHolds(db);
+): Promise<{ success: boolean; error?: string; heldSeats?: Seat[] }> {
+  const seatIds = Array.from(new Set(rawSeatIds));
+  if (seatIds.length === 0 || seatIds.length > 6) {
+    return { success: false, error: 'You can hold between 1 and 6 seats per transaction.' };
+  }
+
+  const db = await syncFromSupabase(false);
 
   const unavailable: string[] = [];
   const targetSeats: Seat[] = [];
@@ -155,7 +222,7 @@ export function holdSeats(
       unavailable.push(`${seat.label} (Main Floor VIP seats are reserved for invitations only)`);
     } else if (seat.status === 'sold') {
       unavailable.push(`${seat.label} (already sold)`);
-    } else if (seat.status === 'held' && seat.heldBy !== sessionId) {
+    } else if (seat.status === 'held' && (seat.orderId || seat.heldBy !== sessionId)) {
       unavailable.push(`${seat.label} (temporarily held by another buyer)`);
     } else {
       targetSeats.push(seat);
@@ -170,23 +237,39 @@ export function holdSeats(
   }
 
   const expiry = Date.now() + holdMinutes * 60 * 1000;
+
+  // Atomic conditional lock in Supabase across concurrent instances
+  const atomicRes = await atomicHoldSeatsInSupabase(seatIds, sessionId, expiry);
+  if (!atomicRes.ok) {
+    // Refresh seats so client gets updated state
+    await syncFromSupabase(false);
+    return {
+      success: false,
+      error: 'One or more selected seats were just reserved by another attendee. Please pick another seat.',
+    };
+  }
+
   targetSeats.forEach((seat) => {
     seat.status = 'held';
     seat.heldBy = sessionId;
     seat.heldUntil = expiry;
+    seat.orderId = null;
   });
 
   saveDb(db);
   return { success: true, heldSeats: targetSeats };
 }
 
-export function releaseSeats(seatIds: string[], sessionId: string): boolean {
-  const db = ensureDbFile();
+export async function releaseSeats(rawSeatIds: string[], sessionId: string): Promise<boolean> {
+  const seatIds = Array.from(new Set(rawSeatIds));
+  if (seatIds.length === 0) return false;
+
+  const db = await syncFromSupabase(false);
   let changed = false;
 
   seatIds.forEach((id) => {
     const seat = db.seats.find((s) => s.id === id);
-    if (seat && seat.status === 'held' && seat.heldBy === sessionId) {
+    if (seat && seat.status === 'held' && !seat.orderId && seat.heldBy === sessionId) {
       seat.status = 'available';
       seat.heldBy = null;
       seat.heldUntil = null;
@@ -194,22 +277,27 @@ export function releaseSeats(seatIds: string[], sessionId: string): boolean {
     }
   });
 
+  await atomicReleaseSessionSeatsInSupabase(seatIds, sessionId);
+
   if (changed) {
     saveDb(db);
   }
   return changed;
 }
 
-export function createOrder(
+export async function createOrder(
   customer: CustomerInfo,
-  seatIds: string[],
+  rawSeatIds: string[],
   sessionId: string,
-  paymentMethod: string = 'TRANSFER_MANUAL'
-): { success: boolean; order?: Order; error?: string } {
-  const db = ensureDbFile();
-  cleanupExpiredHolds(db);
+  paymentMethod: string = 'TRANSFER_MANDIRI'
+): Promise<{ success: boolean; order?: Order; error?: string }> {
+  const seatIds = Array.from(new Set(rawSeatIds));
+  if (seatIds.length === 0 || seatIds.length > 6) {
+    return { success: false, error: 'You must select between 1 and 6 seats per order.' };
+  }
 
-  // Validate seats
+  const db = await syncFromSupabase(true);
+
   const selectedSeats: Seat[] = [];
   for (const id of seatIds) {
     const seat = db.seats.find((s) => s.id === id);
@@ -217,18 +305,21 @@ export function createOrder(
       return { success: false, error: `Seat with ID ${id} not found.` };
     }
     if (seat.category === 'VIP') {
-      return { success: false, error: `Seat ${seat.label} is VIP Main Floor and exclusively reserved for invitations.` };
+      return {
+        success: false,
+        error: `Seat ${seat.label} is VIP Main Floor and exclusively reserved for invitations.`,
+      };
     }
     if (seat.status === 'sold') {
       return { success: false, error: `Seat ${seat.label} is already sold.` };
     }
-    if (seat.status === 'held' && seat.heldBy !== sessionId) {
+    if (seat.status === 'held' && (seat.orderId || seat.heldBy !== sessionId)) {
       return { success: false, error: `Seat ${seat.label} is currently reserved by another buyer.` };
     }
     selectedSeats.push(seat);
   }
 
-  const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
+  const randomSuffix = crypto.randomBytes(3).toString('hex').toUpperCase();
   const orderId = `LSPR-6SP-${randomSuffix}`;
   let totalAmount = 0;
 
@@ -266,28 +357,44 @@ export function createOrder(
     qrPayload,
   };
 
-  // Hold seats with orderId
+  // Atomically lock seats for this order in Supabase BEFORE inserting order
+  const lockRes = await atomicLockOrderSeatsInSupabase(seatIds, sessionId, orderId);
+  if (!lockRes.ok) {
+    await syncFromSupabase(false);
+    return {
+      success: false,
+      error: 'One or more seats were just claimed by another booking. Please re-select available seats.',
+    };
+  }
+
+  const inserted = await insertOrderToSupabase(order);
+  if (!inserted) {
+    // Rollback seat locks if order insert failed
+    await updateSeatsStatusInSupabase(seatIds, 'available', null, null, null);
+    return {
+      success: false,
+      error: 'Failed to save reservation to database. Please try again.',
+    };
+  }
+
   selectedSeats.forEach((seat) => {
     seat.status = 'held';
     seat.heldBy = orderId;
-    seat.heldUntil = Date.now() + 15 * 60 * 1000; // 15 mins for payment window
+    seat.heldUntil = null;
+    seat.orderId = orderId;
   });
 
-  db.orders.push(order);
+  db.orders.unshift(order);
   saveDb(db);
-
-  // Background sync with Supabase
-  insertOrderToSupabase(order).catch(console.warn);
-  updateSeatsStatusInSupabase(seatIds, 'held', orderId, Date.now() + 15 * 60 * 1000, orderId).catch(console.warn);
 
   return { success: true, order };
 }
 
-export function confirmPayment(
+export async function confirmPayment(
   orderId: string,
   paymentMethod?: string
-): { success: boolean; order?: Order; error?: string } {
-  const db = ensureDbFile();
+): Promise<{ success: boolean; order?: Order; error?: string }> {
+  const db = await syncFromSupabase(true);
   const order = db.orders.find((o) => o.id === orderId);
 
   if (!order) {
@@ -298,13 +405,24 @@ export function confirmPayment(
     return { success: true, order };
   }
 
+  // Verify none of the seats were already sold to a different order
+  for (const item of order.items) {
+    const seat = db.seats.find((s) => s.id === item.seatId);
+    if (seat && seat.status === 'sold' && seat.orderId && seat.orderId !== orderId) {
+      return {
+        success: false,
+        error: `Seat ${seat.label} has already been sold to another order (#${seat.orderId}).`,
+      };
+    }
+  }
+
+  const paidAt = new Date().toISOString();
   order.paymentStatus = 'paid';
-  order.paidAt = new Date().toISOString();
+  order.paidAt = paidAt;
   if (paymentMethod) {
     order.paymentMethod = paymentMethod;
   }
 
-  // Mark all seats as sold
   order.items.forEach((item) => {
     const seat = db.seats.find((s) => s.id === item.seatId);
     if (seat) {
@@ -315,52 +433,88 @@ export function confirmPayment(
     }
   });
 
-  saveDb(db);
-
-  // Background sync with Supabase
-  updateOrderPaymentInSupabase(orderId, 'paid', order.paidAt || new Date().toISOString()).catch(console.warn);
   const seatIds = order.items.map((i) => i.seatId);
-  updateSeatsStatusInSupabase(seatIds, 'sold', null, null, orderId).catch(console.warn);
+  await Promise.all([
+    updateOrderPaymentInSupabase(orderId, 'paid', paidAt, order.paymentMethod),
+    updateSeatsStatusInSupabase(seatIds, 'sold', null, null, orderId),
+  ]);
 
+  saveDb(db);
   return { success: true, order };
 }
 
-export function getOrder(orderId: string): Order | null {
+export async function getOrder(orderId: string): Promise<Order | null> {
+  const sbOrder = await fetchOrderByIdFromSupabase(orderId);
   const db = ensureDbFile();
-  const order = db.orders.find((o) => o.id === orderId);
-  return order || null;
+
+  if (sbOrder) {
+    const idx = db.orders.findIndex((o) => o.id === sbOrder.id);
+    if (idx === -1) db.orders.push(sbOrder);
+    else db.orders[idx] = sbOrder;
+    saveDb(db);
+    return sbOrder;
+  }
+
+  return db.orders.find((o) => o.id === orderId) || null;
 }
 
-export function getAllOrders(): Order[] {
-  const db = ensureDbFile();
+export async function getAllOrders(): Promise<Order[]> {
+  const db = await syncFromSupabase(true);
   return db.orders.sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 }
 
-export function validateTicketQR(qrPayload: string): CheckInResult {
-  const db = ensureDbFile();
+export async function validateTicketQR(qrPayload: string): Promise<CheckInResult> {
+  const db = await syncFromSupabase(true);
 
-  let parsed: { orderId?: string; secretHash?: string } = {};
+  let parsed: { orderId?: string; secretHash?: string; ticketCode?: string } = {};
+  let isJsonQr = false;
   try {
-    parsed = JSON.parse(qrPayload);
+    const obj = JSON.parse(qrPayload);
+    if (obj && typeof obj === 'object') {
+      parsed = obj;
+      isJsonQr = true;
+    }
   } catch {
-    parsed = { orderId: qrPayload.trim() };
+    const raw = qrPayload.trim().replace(/^#/, '').toUpperCase();
+    parsed = { orderId: raw, ticketCode: raw };
   }
 
-  const orderId = parsed.orderId;
-  if (!orderId) {
+  if (isJsonQr) {
+    if (!parsed.orderId || !parsed.secretHash) {
+      return {
+        status: 'INVALID',
+        message: 'Unrecognized QR Code format!',
+      };
+    }
+    const expectedHash = Buffer.from(`${parsed.orderId}-COMM30-6SP`).toString('base64');
+    if (parsed.secretHash !== expectedHash) {
+      return {
+        status: 'INVALID',
+        message: 'Invalid QR security signature!',
+      };
+    }
+  }
+
+  const lookupId = parsed.orderId;
+  if (!lookupId) {
     return {
       status: 'INVALID',
-      message: 'Unrecognized QR Code format!',
+      message: 'Unrecognized QR Code or Ticket ID!',
     };
   }
 
-  const order = db.orders.find((o) => o.id === orderId);
+  const order = db.orders.find(
+    (o) =>
+      o.id.toUpperCase() === lookupId.toUpperCase() ||
+      o.items.some((item) => item.ticketCode.toUpperCase() === lookupId.toUpperCase())
+  );
+
   if (!order) {
     return {
       status: 'INVALID',
-      message: `Ticket not found in database (ID: ${orderId})`,
+      message: `Ticket not found in database (ID: ${lookupId})`,
     };
   }
 
@@ -371,13 +525,12 @@ export function validateTicketQR(qrPayload: string): CheckInResult {
     };
   }
 
-  // Check if all items already checked in
   const alreadyCheckedIn = order.items.every((item) => item.isCheckedIn);
   if (alreadyCheckedIn) {
     const firstCheckInTime = order.items[0]?.checkedInAt;
     return {
       status: 'ALREADY_CHECKED_IN',
-      message: `Ticket has already been checked in!`,
+      message: 'Ticket has already been checked in!',
       checkedInAt: firstCheckInTime,
       order: {
         id: order.id,
@@ -389,21 +542,18 @@ export function validateTicketQR(qrPayload: string): CheckInResult {
     };
   }
 
-  // Mark check in
   const now = new Date().toISOString();
   order.items.forEach((item) => {
     item.isCheckedIn = true;
     item.checkedInAt = now;
   });
 
+  await updateOrderItemsInSupabase(order.id, order.items);
   saveDb(db);
-
-  // Background sync check-in status to Supabase
-  updateOrderItemsInSupabase(order.id, order.items).catch(console.warn);
 
   return {
     status: 'VALID',
-    message: `Ticket Valid! Enjoy the performance 🎉`,
+    message: 'Ticket Valid! Enjoy the performance 🎉',
     checkedInAt: now,
     order: {
       id: order.id,
@@ -415,26 +565,35 @@ export function validateTicketQR(qrPayload: string): CheckInResult {
   };
 }
 
-export function resetDatabase() {
+export async function resetDatabase(): Promise<DbData> {
   const initialData: DbData = {
     seats: generateInitialSeats(),
     orders: [],
     lastUpdated: new Date().toISOString(),
   };
+  await resetAllInSupabase(initialData.seats);
   globalThis.__TICKETING_DB__ = initialData;
   saveDb(initialData);
   return initialData;
 }
 
-export function manualToggleCheckIn(orderId: string): { success: boolean; isCheckedIn?: boolean; error?: string } {
-  const db = ensureDbFile();
+export async function manualToggleCheckIn(
+  orderId: string
+): Promise<{ success: boolean; isCheckedIn?: boolean; error?: string }> {
+  const db = await syncFromSupabase(true);
   const order = db.orders.find((o) => o.id === orderId);
 
   if (!order) {
     return { success: false, error: `Order ${orderId} not found.` };
   }
 
-  // Toggle state
+  if (order.paymentStatus !== 'paid') {
+    return {
+      success: false,
+      error: 'Cannot check in an unpaid order. Please approve payment first.',
+    };
+  }
+
   const willBeCheckedIn = !order.items.every((it) => it.isCheckedIn);
   const now = willBeCheckedIn ? new Date().toISOString() : null;
 
@@ -443,16 +602,14 @@ export function manualToggleCheckIn(orderId: string): { success: boolean; isChec
     item.checkedInAt = now;
   });
 
+  await updateOrderItemsInSupabase(order.id, order.items);
   saveDb(db);
-
-  // Background sync check-in status to Supabase
-  updateOrderItemsInSupabase(order.id, order.items).catch(console.warn);
 
   return { success: true, isCheckedIn: willBeCheckedIn };
 }
 
-export function deleteOrder(orderId: string): { success: boolean; error?: string } {
-  const db = ensureDbFile();
+export async function deleteOrder(orderId: string): Promise<{ success: boolean; error?: string }> {
+  const db = await syncFromSupabase(true);
   const orderIdx = db.orders.findIndex((o) => o.id === orderId);
 
   if (orderIdx === -1) {
@@ -462,7 +619,11 @@ export function deleteOrder(orderId: string): { success: boolean; error?: string
   const order = db.orders[orderIdx];
   const seatIds = order.items.map((i) => i.seatId);
 
-  // Free up associated seats
+  await Promise.all([
+    deleteOrderFromSupabase(orderId),
+    updateSeatsStatusInSupabase(seatIds, 'available', null, null, null),
+  ]);
+
   order.items.forEach((item) => {
     const seat = db.seats.find((s) => s.id === item.seatId);
     if (seat && (seat.orderId === orderId || seat.heldBy === orderId)) {
@@ -476,18 +637,14 @@ export function deleteOrder(orderId: string): { success: boolean; error?: string
   db.orders.splice(orderIdx, 1);
   saveDb(db);
 
-  // Background sync deletion and seat release to Supabase
-  deleteOrderFromSupabase(orderId).catch(console.warn);
-  updateSeatsStatusInSupabase(seatIds, 'available', null, null, null).catch(console.warn);
-
   return { success: true };
 }
 
-export function updateCustomerInfo(
+export async function updateCustomerInfo(
   orderId: string,
   customerUpdates: Partial<CustomerInfo>
-): { success: boolean; order?: Order; error?: string } {
-  const db = ensureDbFile();
+): Promise<{ success: boolean; order?: Order; error?: string }> {
+  const db = await syncFromSupabase(true);
   const order = db.orders.find((o) => o.id === orderId);
 
   if (!order) {
@@ -499,21 +656,24 @@ export function updateCustomerInfo(
     ...customerUpdates,
   };
 
+  await updateCustomerInSupabase(orderId, order.customer);
   saveDb(db);
-
-  // Background sync customer updates to Supabase
-  updateCustomerInSupabase(orderId, order.customer).catch(console.warn);
 
   return { success: true, order };
 }
 
-export function manualCreateOrder(
+export async function manualCreateOrder(
   customer: CustomerInfo,
-  seatIds: string[],
+  rawSeatIds: string[],
   paymentMethod: string = 'MANUAL_CASH',
   isPaid: boolean = true
-): { success: boolean; order?: Order; error?: string } {
-  const db = ensureDbFile();
+): Promise<{ success: boolean; order?: Order; error?: string }> {
+  const seatIds = Array.from(new Set(rawSeatIds));
+  if (seatIds.length === 0) {
+    return { success: false, error: 'At least one seat must be specified.' };
+  }
+
+  const db = await syncFromSupabase(true);
 
   const selectedSeats: Seat[] = [];
   for (const id of seatIds) {
@@ -521,13 +681,13 @@ export function manualCreateOrder(
     if (!seat) {
       return { success: false, error: `Seat ${id} not found.` };
     }
-    if (seat.status === 'sold') {
-      return { success: false, error: `Seat ${seat.label} is already sold.` };
+    if (seat.status === 'sold' || (seat.status === 'held' && seat.orderId)) {
+      return { success: false, error: `Seat ${seat.label} is already sold or reserved.` };
     }
     selectedSeats.push(seat);
   }
 
-  const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
+  const randomSuffix = crypto.randomBytes(3).toString('hex').toUpperCase();
   const orderId = `LSPR-ADM-${randomSuffix}`;
   let totalAmount = 0;
 
@@ -566,25 +726,24 @@ export function manualCreateOrder(
     qrPayload,
   };
 
-  selectedSeats.forEach((seat) => {
-    seat.status = isPaid ? 'sold' : 'held';
-    seat.orderId = isPaid ? orderId : null;
-    seat.heldBy = isPaid ? null : orderId;
-    seat.heldUntil = isPaid ? null : Date.now() + 60 * 60 * 1000;
-  });
-
-  db.orders.push(order);
-  saveDb(db);
-
-  // Background sync manual order to Supabase
-  insertOrderToSupabase(order).catch(console.warn);
-  updateSeatsStatusInSupabase(
+  await insertOrderToSupabase(order);
+  await updateSeatsStatusInSupabase(
     seatIds,
     isPaid ? 'sold' : 'held',
     isPaid ? null : orderId,
-    isPaid ? null : Date.now() + 60 * 60 * 1000,
+    null,
     orderId
-  ).catch(console.warn);
+  );
+
+  selectedSeats.forEach((seat) => {
+    seat.status = isPaid ? 'sold' : 'held';
+    seat.orderId = orderId;
+    seat.heldBy = isPaid ? null : orderId;
+    seat.heldUntil = null;
+  });
+
+  db.orders.unshift(order);
+  saveDb(db);
 
   return { success: true, order };
 }
@@ -595,28 +754,8 @@ export function manualCreateOrder(
 
 export function mergeSupabaseOrders(supabaseOrders: Order[]) {
   const db = ensureDbFile();
-  const existingMap = new Map(db.orders.map((o) => [o.id, o]));
-  let changed = false;
-
-  supabaseOrders.forEach((so) => {
-    const existing = existingMap.get(so.id);
-    if (!existing) {
-      db.orders.push(so);
-      changed = true;
-    } else {
-      if (existing.paymentStatus !== so.paymentStatus || existing.paidAt !== so.paidAt) {
-        existing.paymentStatus = so.paymentStatus;
-        existing.paidAt = so.paidAt;
-        changed = true;
-      }
-      existing.items = so.items;
-      existing.customer = so.customer;
-    }
-  });
-
-  if (changed) {
-    saveDb(db);
-  }
+  db.orders = supabaseOrders;
+  saveDb(db);
 }
 
 export function mergeSupabaseSeats(supabaseSeats: Seat[]) {
@@ -630,12 +769,17 @@ export function mergeSupabaseSeats(supabaseSeats: Seat[]) {
       if (
         seat.status !== sbSeat.status ||
         seat.orderId !== sbSeat.orderId ||
-        seat.heldBy !== sbSeat.heldBy
+        seat.heldBy !== sbSeat.heldBy ||
+        seat.heldUntil !== sbSeat.heldUntil ||
+        seat.category !== sbSeat.category ||
+        seat.price !== sbSeat.price
       ) {
         seat.status = sbSeat.status;
         seat.orderId = sbSeat.orderId;
         seat.heldBy = sbSeat.heldBy;
         seat.heldUntil = sbSeat.heldUntil;
+        seat.category = sbSeat.category;
+        seat.price = sbSeat.price;
         changed = true;
       }
     }

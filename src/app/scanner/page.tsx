@@ -24,11 +24,20 @@ export default function ScannerPage() {
   const [history, setHistory] = useState<CheckInResult[]>([]);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const isHandlingScan = useRef(false);
+  const audioCtxRef = useRef<AudioContext | null>(null);
 
-  // Play audio beep using browser Web Audio API
+  // Play audio beep using a single reusable Web Audio API AudioContext
   const playSound = (type: 'valid' | 'duplicate' | 'invalid') => {
     try {
-      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtx) return;
+      if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
+        audioCtxRef.current = new AudioCtx();
+      }
+      const audioCtx = audioCtxRef.current;
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(() => {});
+      }
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.connect(gain);

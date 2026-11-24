@@ -1,7 +1,16 @@
 import { NextResponse } from 'next/server';
 import { confirmPayment } from '@/lib/store';
+import { verifyAdminRequest } from '@/lib/adminAuth';
 
 export async function POST(request: Request) {
+  const auth = verifyAdminRequest(request);
+  if (!auth.authorized) {
+    return NextResponse.json(
+      { success: false, error: 'Unauthorized. Only authenticated committee admins can approve payments.' },
+      { status: 401 }
+    );
+  }
+
   try {
     const body = await request.json();
     const { orderId, paymentMethod } = body;
@@ -13,7 +22,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = confirmPayment(orderId, paymentMethod || 'TRANSFER_MANDIRI');
+    const result = await confirmPayment(orderId, paymentMethod || 'TRANSFER_MANDIRI');
     if (!result.success) {
       return NextResponse.json(result, { status: 404 });
     }
@@ -26,4 +35,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

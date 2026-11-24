@@ -38,6 +38,21 @@ interface AdminUser {
   email: string;
   name: string;
   role: string;
+  token?: string;
+}
+
+function formatWaPhone(phone?: string | null): string | null {
+  if (!phone) return null;
+  const digits = phone.replace(/[^0-9]/g, '');
+  if (digits.length < 8) return null;
+  if (digits.startsWith('0')) return `62${digits.slice(1)}`;
+  if (digits.startsWith('8')) return `62${digits}`;
+  return digits;
+}
+
+function escapeCsvCell(value: string | number | null | undefined): string {
+  const str = String(value ?? '').replace(/\r?\n/g, ' ');
+  return `"${str.replace(/"/g, '""')}"`;
 }
 
 export default function AdminPage() {
@@ -94,10 +109,24 @@ export default function AdminPage() {
     }
   }, []);
 
-  const fetchAdminData = async () => {
+  const getAuthHeaders = (userOverride?: AdminUser | null): Record<string, string> => {
+    const token = userOverride?.token ?? currentUser?.token;
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
+  const fetchAdminData = async (userOverride?: AdminUser | null) => {
     try {
       setLoading(true);
-      const res = await fetch('/api/admin/orders');
+      const res = await fetch('/api/admin/orders', {
+        cache: 'no-store',
+        headers: getAuthHeaders(userOverride),
+      });
+      if (res.status === 401) {
+        localStorage.removeItem('chords_admin_session');
+        setCurrentUser(null);
+        setLoginError('Your admin session expired. Please sign in again.');
+        return;
+      }
       const data = await res.json();
       if (data.success) {
         setOrders(data.orders);
@@ -113,8 +142,15 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (currentUser) {
-      fetchAdminData();
+      if (!currentUser.token) {
+        // Force fresh login for legacy pre-token localStorage sessions
+        localStorage.removeItem('chords_admin_session');
+        setCurrentUser(null);
+        return;
+      }
+      fetchAdminData(currentUser);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser]);
 
   // Handle Login
@@ -135,8 +171,10 @@ export default function AdminPage() {
         throw new Error(data.error || 'Authentication failed.');
       }
 
-      setCurrentUser(data.user);
-      localStorage.setItem('chords_admin_session', JSON.stringify(data.user));
+      const loggedUser: AdminUser = { ...data.user, token: data.token || data.user?.token };
+      setCurrentUser(loggedUser);
+      localStorage.setItem('chords_admin_session', JSON.stringify(loggedUser));
+      setLoginPassword('');
     } catch (err) {
       setLoginError((err as Error).message);
     } finally {
@@ -144,16 +182,10 @@ export default function AdminPage() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await fetch('/api/admin/login', { method: 'DELETE' }).catch(() => {});
     localStorage.removeItem('chords_admin_session');
     setCurrentUser(null);
-  };
-
-  // Quick Account Autofill for Committee
-  const handleQuickFill = (email: string, pass: string) => {
-    setLoginEmail(email);
-    setLoginPassword(pass);
-    setLoginError(null);
   };
 
   // Filtered Orders
@@ -192,7 +224,7 @@ export default function AdminPage() {
     try {
       const res = await fetch('/api/admin/action', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify({ action: 'mark_paid', orderId }),
       });
       const data = await res.json();
@@ -211,7 +243,7 @@ export default function AdminPage() {
     try {
       const res = await fetch('/api/admin/action', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify({ action: 'toggle_checkin', orderId }),
       });
       const data = await res.json();
@@ -237,7 +269,7 @@ export default function AdminPage() {
     try {
       const res = await fetch('/api/admin/action', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify({ action: 'delete_order', orderId }),
       });
       const data = await res.json();
@@ -261,7 +293,7 @@ export default function AdminPage() {
     try {
       const res = await fetch('/api/admin/action', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify({
           action: 'update_customer',
           orderId: editingOrder.id,
@@ -284,7 +316,8 @@ export default function AdminPage() {
 
   // WhatsApp Message Builders with robust URL-encoding (protecting #, emojis, and newlines)
   const buildSendTicketWaUrl = (o: Order) => {
-    const cleanPhone = o.customer.phone.replace(/[^0-9]/g, '').replace(/^0/, '62');
+    const cleanPhone = formatWaPhone(o.customer.phone);
+    if (!cleanPhone) return null;
     const seatsStr = o.items.map((i) => i.seatLabel).join(', ');
     const catStr = o.items[0]?.category || 'REGULAR';
     const plainMsg = `Hello ${o.customer.fullName}! ✨\n\nYour ticket payment for *Chords of Comfort* (LSPR COMM30-6SP • The 35th LSPR Theater Festival) has been *SUCCESSFULLY VERIFIED*! 🎉🎟️\n\n*OFFICIAL TICKET DETAILS:*\n• Order ID: *#${o.id}*\n• Name: ${o.customer.fullName}\n• Seats: *${seatsStr}* (${catStr})\n• Total Paid: Rp ${o.totalAmount.toLocaleString('id-ID')}\n• Status: *PAID (VERIFIED)*\n\n*YOUR OFFICIAL E-TICKET & QR PASS:*\n👉 https://chords-of-comfort-ticketing.vercel.app/ticket/${o.id}\n\n⚠️ *IMPORTANT INSTRUCTIONS:*\n1. Save your ticket link or take a screenshot of the QR Code.\n2. Present your QR Code at the registration desk upon gate opening (January 2027 • Amani Palladium Theatre, LSPR Bekasi).\n\nWe look forward to seeing you at the musical! 🎭🌟\nInstagram: @chordsofcomfort.theater\nSupport: WA 0819-1534-8866`;
@@ -292,7 +325,8 @@ export default function AdminPage() {
   };
 
   const buildFollowUpWaUrl = (o: Order) => {
-    const cleanPhone = o.customer.phone.replace(/[^0-9]/g, '').replace(/^0/, '62');
+    const cleanPhone = formatWaPhone(o.customer.phone);
+    if (!cleanPhone) return null;
     const seatsStr = o.items.map((i) => i.seatLabel).join(', ');
     const plainMsg = `Hello ${o.customer.fullName}! 👋\n\nThis is the Ticketing Team for *Chords of Comfort* (LSPR COMM30-6SP).\n\nFriendly reminder regarding your ticket reservation:\n• Order ID: *#${o.id}*\n• Name: ${o.customer.fullName}\n• Seats: *${seatsStr}*\n• Total Amount: *Rp ${o.totalAmount.toLocaleString('id-ID')}*\n• Status: *Awaiting Bank Transfer*\n\n*Committee Bank Account (Bank Mandiri Only):*\n- Bank Mandiri: *1330037267812* (a.n. Viona Oktaviana)\n\nPlease reply with your transfer receipt to secure your reserved seats before they are automatically released. Thank you! 🙏🎭`;
     return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(plainMsg)}`;
@@ -316,7 +350,7 @@ export default function AdminPage() {
     try {
       const res = await fetch('/api/admin/action', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify({
           action: 'manual_create',
           customer: {
@@ -389,30 +423,32 @@ export default function AdminPage() {
         : '-';
 
       return [
-        `"${o.id}"`,
-        `"${new Date(o.createdAt).toLocaleString('en-US')}"`,
-        `"${o.customer.fullName}"`,
-        `"${o.customer.email}"`,
-        `"'${o.customer.phone}"`, // prefix with single quote to preserve leading zero
-        `"${seatsStr}"`,
-        `"${catStr}"`,
+        escapeCsvCell(o.id),
+        escapeCsvCell(new Date(o.createdAt).toLocaleString('en-US')),
+        escapeCsvCell(o.customer.fullName),
+        escapeCsvCell(o.customer.email),
+        escapeCsvCell(`'${o.customer.phone}`),
+        escapeCsvCell(seatsStr),
+        escapeCsvCell(catStr),
         o.items.length,
         o.totalAmount,
-        `"${o.paymentStatus.toUpperCase()}"`,
-        `"${o.paymentMethod || 'BANK_TRANSFER'}"`,
-        `"${checkedInStr}"`,
-        `"${checkInTime}"`,
+        escapeCsvCell(o.paymentStatus.toUpperCase()),
+        escapeCsvCell(o.paymentMethod || 'BANK_TRANSFER'),
+        escapeCsvCell(checkedInStr),
+        escapeCsvCell(checkInTime),
       ].join(',');
     });
 
-    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows].join('\n');
-    const encodedUri = encodeURI(csvContent);
+    const csvText = '\uFEFF' + [headers.map((h) => escapeCsvCell(h)).join(','), ...rows].join('\r\n');
+    const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `CHORDS_OF_COMFORT_Attendees_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.href = url;
+    link.download = `CHORDS_OF_COMFORT_Attendees_${new Date().toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const handlePrintAttendanceList = () => {
@@ -430,11 +466,16 @@ export default function AdminPage() {
 
     setIsResetting(true);
     try {
-      const res = await fetch('/api/admin/reset', { method: 'POST' });
+      const res = await fetch('/api/admin/reset', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+      });
       const data = await res.json();
       if (data.success) {
         alert('Ticketing database reset successfully.');
         fetchAdminData();
+      } else {
+        alert(data.error || 'Failed to reset database.');
       }
     } catch (err) {
       alert('Failed to reset: ' + (err as Error).message);
@@ -488,7 +529,7 @@ export default function AdminPage() {
                 <input
                   type="email"
                   required
-                  placeholder="meovivi@vinsky.com"
+                  placeholder="committee@lspr.edu"
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
                   className="w-full pl-9 pr-3 py-2.5 bg-[#FAF6ED] rounded-xl border-2 border-slate-300 focus:border-[#182B49] focus:outline-none text-sm font-medium"
@@ -522,32 +563,7 @@ export default function AdminPage() {
               <span>{isLoggingIn ? 'VALIDATING CREDENTIALS...' : 'SIGN IN TO DASHBOARD'}</span>
             </button>
 
-            {/* Quick Login Chips for Committee */}
-            <div className="pt-3 border-t-2 border-dashed border-slate-200">
-              <span className="text-[11px] font-bold text-slate-500 uppercase block mb-2">
-                Quick Sign-In Accounts:
-              </span>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleQuickFill('meovivi@vinsky.com', 'viona1002')}
-                  className="text-left p-2 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-300 text-xs transition-colors"
-                >
-                  <strong className="block text-[#182B49]">👤 Viona</strong>
-                  <span className="text-[10px] text-slate-500 font-mono">meovivi@vinsky.com</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleQuickFill('vinsky@vinsky.com', 'alvin123')}
-                  className="text-left p-2 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-300 text-xs transition-colors"
-                >
-                  <strong className="block text-[#182B49]">👤 Alvin</strong>
-                  <span className="text-[10px] text-slate-500 font-mono">vinsky@vinsky.com</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="text-center pt-2">
+            <div className="text-center pt-2 border-t-2 border-dashed border-slate-200">
               <Link
                 href="/"
                 className="text-xs font-bold text-slate-500 hover:text-[#182B49] transition-colors"
@@ -929,16 +945,23 @@ export default function AdminPage() {
 
                           {/* Contact & WhatsApp Click */}
                           <td className="p-3 space-y-1">
-                            <a
-                              href={`https://wa.me/${o.customer.phone.replace(/[^0-9]/g, '').replace(/^0/, '62')}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-900 font-bold text-xs"
-                              title="Chat on WhatsApp"
-                            >
-                              <Phone className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>{o.customer.phone}</span>
-                            </a>
+                            {formatWaPhone(o.customer.phone) ? (
+                              <a
+                                href={`https://wa.me/${formatWaPhone(o.customer.phone)}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-900 font-bold text-xs"
+                                title="Chat on WhatsApp"
+                              >
+                                <Phone className="w-3.5 h-3.5 text-emerald-600" />
+                                <span>{o.customer.phone}</span>
+                              </a>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-slate-400 font-semibold text-xs">
+                                <Phone className="w-3.5 h-3.5 text-slate-300" />
+                                <span>{o.customer.phone || '-'}</span>
+                              </span>
+                            )}
                             <div className="text-[11px] text-slate-500 flex items-center gap-1">
                               <Mail className="w-3 h-3 text-slate-400" />
                               <span>{o.customer.email}</span>
@@ -976,16 +999,20 @@ export default function AdminPage() {
                                 <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full font-bold text-[10px]">
                                   <CheckCircle2 className="w-3 h-3 text-emerald-600" /> PAID (VERIFIED)
                                 </span>
-                                <a
-                                  href={buildSendTicketWaUrl(o)}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="inline-flex items-center gap-1 bg-[#25D366] hover:bg-[#20ba59] text-white px-2 py-1 rounded-md text-[10px] font-bold shadow-xs transition-transform active:scale-95"
-                                  title="Send official E-Ticket link to attendee via WhatsApp"
-                                >
-                                  <MessageCircle className="w-3 h-3 fill-current" />
-                                  <span>Send Ticket WA</span>
-                                </a>
+                                {buildSendTicketWaUrl(o) ? (
+                                  <a
+                                    href={buildSendTicketWaUrl(o)!}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center gap-1 bg-[#25D366] hover:bg-[#20ba59] text-white px-2 py-1 rounded-md text-[10px] font-bold shadow-xs transition-transform active:scale-95"
+                                    title="Send official E-Ticket link to attendee via WhatsApp"
+                                  >
+                                    <MessageCircle className="w-3 h-3 fill-current" />
+                                    <span>Send Ticket WA</span>
+                                  </a>
+                                ) : (
+                                  <span className="block text-[10px] text-slate-400 font-semibold">No WA Number</span>
+                                )}
                               </div>
                             ) : (
                               <div className="space-y-1.5">
@@ -999,16 +1026,18 @@ export default function AdminPage() {
                                   >
                                     ✓ Approve Payment
                                   </button>
-                                  <a
-                                    href={buildFollowUpWaUrl(o)}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="inline-flex items-center gap-1 bg-amber-500 hover:bg-amber-600 text-white px-2 py-0.5 rounded text-[10px] font-bold justify-center"
-                                    title="Remind attendee via WhatsApp to complete bank transfer"
-                                  >
-                                    <MessageCircle className="w-3 h-3" />
-                                    <span>Remind WA</span>
-                                  </a>
+                                  {buildFollowUpWaUrl(o) && (
+                                    <a
+                                      href={buildFollowUpWaUrl(o)!}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="inline-flex items-center gap-1 bg-amber-500 hover:bg-amber-600 text-white px-2 py-0.5 rounded text-[10px] font-bold justify-center"
+                                      title="Remind attendee via WhatsApp to complete bank transfer"
+                                    >
+                                      <MessageCircle className="w-3 h-3" />
+                                      <span>Remind WA</span>
+                                    </a>
+                                  )}
                                 </div>
                               </div>
                             )}
@@ -1157,7 +1186,8 @@ export default function AdminPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {filteredOrders.map((o) => {
                     const isCheckedIn = o.items.every((i) => i.isCheckedIn);
-                    const cleanPhone = o.customer.phone.replace(/[^0-9]/g, '').replace(/^0/, '62');
+                    const cleanPhone = formatWaPhone(o.customer.phone);
+                    const sendWaUrl = buildSendTicketWaUrl(o);
 
                     return (
                       <div
@@ -1220,16 +1250,23 @@ export default function AdminPage() {
                               Contact Channels
                             </div>
                             <div className="flex items-center gap-2">
-                              <a
-                                href={`https://wa.me/${cleanPhone}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2.5 py-1 rounded-lg text-[11px] shadow-xs"
-                                title="Chat on WhatsApp"
-                              >
-                                <MessageCircle className="w-3.5 h-3.5" />
-                                <span>{o.customer.phone}</span>
-                              </a>
+                              {cleanPhone ? (
+                                <a
+                                  href={`https://wa.me/${cleanPhone}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2.5 py-1 rounded-lg text-[11px] shadow-xs"
+                                  title="Chat on WhatsApp"
+                                >
+                                  <MessageCircle className="w-3.5 h-3.5" />
+                                  <span>{o.customer.phone}</span>
+                                </a>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 bg-slate-200 text-slate-500 font-bold px-2.5 py-1 rounded-lg text-[11px]">
+                                  <MessageCircle className="w-3.5 h-3.5" />
+                                  <span>No WhatsApp</span>
+                                </span>
+                              )}
                             </div>
                             <div className="text-slate-600 flex items-center gap-1.5 pt-0.5">
                               <Mail className="w-3.5 h-3.5 text-slate-400" />
@@ -1269,16 +1306,22 @@ export default function AdminPage() {
                         <div className="pt-2 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
                           <div className="flex items-center gap-1.5">
                             {o.paymentStatus === 'paid' ? (
-                              <a
-                                href={buildSendTicketWaUrl(o)}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center gap-1 bg-[#25D366] hover:bg-[#20ba59] text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-xs active:scale-95 transition-all"
-                                title="Send official ticket pass to user via WhatsApp"
-                              >
-                                <MessageCircle className="w-3.5 h-3.5" />
-                                <span>Send Ticket WA</span>
-                              </a>
+                              sendWaUrl ? (
+                                <a
+                                  href={sendWaUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1 bg-[#25D366] hover:bg-[#20ba59] text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-xs active:scale-95 transition-all"
+                                  title="Send official ticket pass to user via WhatsApp"
+                                >
+                                  <MessageCircle className="w-3.5 h-3.5" />
+                                  <span>Send Ticket WA</span>
+                                </a>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 bg-slate-200 text-slate-500 px-3 py-1.5 rounded-xl text-xs font-bold">
+                                  No WA Number
+                                </span>
+                              )
                             ) : (
                               <button
                                 onClick={() => handleMarkAsPaid(o.id)}
@@ -1875,26 +1918,34 @@ See you at the theatre! 🌟`}
                   <span>Send WhatsApp Message to Attendee:</span>
                 </span>
                 <div className="flex flex-col gap-1.5">
-                  <a
-                    href={buildSendTicketWaUrl(selectedOrder)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-xs"
-                  >
-                    <MessageCircle className="w-4 h-4 fill-current" />
-                    <span>Send Official E-Ticket Pass (Paid)</span>
-                  </a>
+                  {buildSendTicketWaUrl(selectedOrder) ? (
+                    <>
+                      <a
+                        href={buildSendTicketWaUrl(selectedOrder)!}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-xs"
+                      >
+                        <MessageCircle className="w-4 h-4 fill-current" />
+                        <span>Send Official E-Ticket Pass (Paid)</span>
+                      </a>
 
-                  {selectedOrder.paymentStatus !== 'paid' && (
-                    <a
-                      href={buildFollowUpWaUrl(selectedOrder)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="w-full bg-amber-500 hover:bg-amber-600 text-white py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-xs"
-                    >
-                      <MessageCircle className="w-4 h-4" />
-                      <span>Send Payment Reminder (Pending)</span>
-                    </a>
+                      {selectedOrder.paymentStatus !== 'paid' && buildFollowUpWaUrl(selectedOrder) && (
+                        <a
+                          href={buildFollowUpWaUrl(selectedOrder)!}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="w-full bg-amber-500 hover:bg-amber-600 text-white py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-xs"
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                          <span>Send Payment Reminder (Pending)</span>
+                        </a>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-xs text-slate-500 font-semibold py-1">
+                      No valid WhatsApp number registered for this guest.
+                    </div>
                   )}
                 </div>
               </div>

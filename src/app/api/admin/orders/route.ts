@@ -1,27 +1,20 @@
 import { NextResponse } from 'next/server';
-import { getAllOrders, getSeats, mergeSupabaseOrders, mergeSupabaseSeats } from '@/lib/store';
-import { fetchOrdersFromSupabase, fetchSeatsFromSupabase } from '@/lib/supabase';
-import { CATEGORY_INFO } from '@/data/initialSeats';
+import { getAllOrders, getSeats } from '@/lib/store';
+import { verifyAdminRequest } from '@/lib/adminAuth';
 import { TicketCategory } from '@/types/ticket';
 
-export async function GET() {
+export async function GET(request: Request) {
+  const auth = verifyAdminRequest(request);
+  if (!auth.authorized) {
+    return NextResponse.json(
+      { success: false, error: 'Unauthorized. Please sign in to the committee dashboard.' },
+      { status: 401, headers: { 'Cache-Control': 'no-store, max-age=0' } }
+    );
+  }
+
   try {
-    // Attempt Supabase Realtime Sync
-    try {
-      const [sbOrders, sbSeats] = await Promise.all([
-        fetchOrdersFromSupabase(),
-        fetchSeatsFromSupabase(),
-      ]);
-      if (sbOrders && sbOrders.length > 0) mergeSupabaseOrders(sbOrders);
-      if (sbSeats && sbSeats.length > 0) mergeSupabaseSeats(sbSeats);
-    } catch (err) {
-      console.warn('[Admin Orders API] Supabase sync fallback:', err);
-    }
+    const [orders, seats] = await Promise.all([getAllOrders(), getSeats()]);
 
-    const orders = getAllOrders();
-    const seats = getSeats();
-
-    // Calculate statistics
     const totalCapacity = seats.length;
     const soldSeats = seats.filter((s) => s.status === 'sold').length;
     const heldSeats = seats.filter((s) => s.status === 'held').length;
@@ -30,7 +23,6 @@ export async function GET() {
     const paidOrders = orders.filter((o) => o.paymentStatus === 'paid');
     const totalRevenue = paidOrders.reduce((sum, o) => sum + o.totalAmount, 0);
 
-    // Sales by Category
     const categoryStats: Record<
       TicketCategory,
       { total: number; sold: number; available: number; revenue: number }
@@ -54,22 +46,25 @@ export async function GET() {
       o.items.filter((item) => item.isCheckedIn)
     ).length;
 
-    return NextResponse.json({
-      success: true,
-      stats: {
-        totalCapacity,
-        soldSeats,
-        heldSeats,
-        availableSeats,
-        totalOrders: orders.length,
-        paidOrdersCount: paidOrders.length,
-        totalRevenue,
-        totalCheckIns: checkIns,
-        categoryStats,
+    return NextResponse.json(
+      {
+        success: true,
+        stats: {
+          totalCapacity,
+          soldSeats,
+          heldSeats,
+          availableSeats,
+          totalOrders: orders.length,
+          paidOrdersCount: paidOrders.length,
+          totalRevenue,
+          totalCheckIns: checkIns,
+          categoryStats,
+        },
+        orders,
+        seats,
       },
-      orders,
-      seats,
-    });
+      { headers: { 'Cache-Control': 'no-store, max-age=0' } }
+    );
   } catch (error) {
     return NextResponse.json(
       { success: false, error: (error as Error).message },
@@ -77,4 +72,3 @@ export async function GET() {
     );
   }
 }
-

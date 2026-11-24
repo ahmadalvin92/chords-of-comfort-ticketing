@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getOrder, mergeSupabaseOrders } from '@/lib/store';
-import { fetchOrdersFromSupabase } from '@/lib/supabase';
+import { getOrder } from '@/lib/store';
 
 export async function GET(
   request: Request,
@@ -8,29 +7,19 @@ export async function GET(
 ) {
   try {
     const { orderId } = await context.params;
-    let order = getOrder(orderId);
-
-    // If not found in local memory instance, try fetching from Supabase
-    if (!order) {
-      try {
-        const sbOrders = await fetchOrdersFromSupabase();
-        if (sbOrders && sbOrders.length > 0) {
-          mergeSupabaseOrders(sbOrders);
-          order = getOrder(orderId);
-        }
-      } catch (err) {
-        console.warn('[Ticket API] Supabase fetch fallback:', err);
-      }
-    }
+    const order = await getOrder(orderId);
 
     if (!order) {
       return NextResponse.json(
         { success: false, error: 'Ticket/Order not found.' },
-        { status: 404 }
+        { status: 404, headers: { 'Cache-Control': 'no-store, max-age=0' } }
       );
     }
 
-    return NextResponse.json({ success: true, order });
+    return NextResponse.json(
+      { success: true, order },
+      { headers: { 'Cache-Control': 'no-store, max-age=0' } }
+    );
   } catch (error) {
     return NextResponse.json(
       { success: false, error: (error as Error).message },
@@ -38,4 +27,3 @@ export async function GET(
     );
   }
 }
-

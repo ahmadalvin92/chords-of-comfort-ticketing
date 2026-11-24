@@ -31,15 +31,19 @@ function TicketContent({
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
 
   useEffect(() => {
-    async function loadOrder() {
+    let active = true;
+
+    async function loadOrder(showSpinner = false) {
+      if (showSpinner) setLoading(true);
       try {
-        const res = await fetch(`/api/ticket/${orderId}`);
+        const res = await fetch(`/api/ticket/${orderId}`, { cache: 'no-store' });
         const data = await res.json();
 
         if (!res.ok || !data.success) {
           throw new Error(data.error || 'Ticket not found.');
         }
 
+        if (!active) return;
         setOrder(data.order);
 
         // Generate high-resolution scannable QR Code
@@ -49,15 +53,25 @@ function TicketContent({
           color: { dark: '#0F1C30', light: '#FFFFFF' },
           errorCorrectionLevel: 'M',
         });
-        setQrCodeUrl(qrUrl);
+        if (active) setQrCodeUrl(qrUrl);
       } catch (err) {
-        setError((err as Error).message);
+        if (active) setError((err as Error).message);
       } finally {
-        setLoading(false);
+        if (active && showSpinner) setLoading(false);
       }
     }
 
-    loadOrder();
+    loadOrder(true);
+
+    // Poll every 10s so ticket auto-activates when admin verifies payment
+    const interval = setInterval(() => {
+      loadOrder(false);
+    }, 10000);
+
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
   }, [orderId]);
 
   const handlePrint = () => {
@@ -281,14 +295,28 @@ function TicketContent({
                 SCAN AT VENUE GATE
               </div>
 
-              <div className="p-3 bg-white rounded-2xl border-2 border-[#0F1C30] shadow-md">
+              <div className="p-3 bg-white rounded-2xl border-2 border-[#0F1C30] shadow-md relative overflow-hidden">
                 {qrCodeUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={qrCodeUrl}
-                    alt="Ticket QR Code"
-                    className="w-48 h-48 object-contain rounded-lg"
-                  />
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={qrCodeUrl}
+                      alt="Ticket QR Code"
+                      className={`w-48 h-48 object-contain rounded-lg transition-all ${
+                        order.paymentStatus !== 'paid' ? 'blur-sm opacity-40 select-none pointer-events-none' : ''
+                      }`}
+                    />
+                    {order.paymentStatus !== 'paid' && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center p-3 bg-amber-50/60">
+                        <span className="bg-[#182B49] text-[#F4B32A] font-bebas text-sm px-3 py-1 rounded-md border-2 border-[#0F1C30] tracking-wider shadow-sm">
+                          PENDING VERIFICATION
+                        </span>
+                        <span className="text-[10px] font-bold text-slate-800 mt-1.5 leading-tight">
+                          QR activates automatically after transfer verification
+                        </span>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <div className="w-48 h-48 bg-slate-100 flex items-center justify-center text-xs">
                     Generating QR...

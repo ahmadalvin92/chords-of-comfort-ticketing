@@ -1,24 +1,15 @@
 import { NextResponse } from 'next/server';
-import { getSeats, holdSeats, releaseSeats, mergeSupabaseSeats } from '@/lib/store';
-import { fetchSeatsFromSupabase, syncAllSeatsToSupabase, updateSeatsStatusInSupabase } from '@/lib/supabase';
+import { getSeats, holdSeats, releaseSeats } from '@/lib/store';
+
+const SESSION_ID_REGEX = /^[a-zA-Z0-9_-]{3,64}$/;
 
 export async function GET() {
   try {
-    try {
-      const sbSeats = await fetchSeatsFromSupabase();
-      if (sbSeats && sbSeats.length > 0) {
-        mergeSupabaseSeats(sbSeats);
-      } else {
-        // Auto-seed to Supabase when table is ready
-        const localSeats = getSeats();
-        syncAllSeatsToSupabase(localSeats).catch(() => {});
-      }
-    } catch (err) {
-      console.warn('[Seats API] Supabase sync fallback:', err);
-    }
-
-    const seats = getSeats();
-    return NextResponse.json({ success: true, seats });
+    const seats = await getSeats();
+    return NextResponse.json(
+      { success: true, seats },
+      { headers: { 'Cache-Control': 'no-store, max-age=0' } }
+    );
   } catch (error) {
     return NextResponse.json(
       { success: false, error: (error as Error).message },
@@ -39,20 +30,17 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!sessionId) {
+    if (typeof sessionId !== 'string' || !SESSION_ID_REGEX.test(sessionId)) {
       return NextResponse.json(
         { success: false, error: 'Invalid session ID.' },
         { status: 400 }
       );
     }
 
-    const result = holdSeats(seatIds, sessionId);
+    const result = await holdSeats(seatIds, sessionId);
     if (!result.success) {
       return NextResponse.json(result, { status: 409 });
     }
-
-    // Sync held seats to Supabase
-    updateSeatsStatusInSupabase(seatIds, 'held', sessionId, Date.now() + 10 * 60 * 1000).catch(() => {});
 
     return NextResponse.json(result);
   } catch (error) {
@@ -68,19 +56,14 @@ export async function DELETE(request: Request) {
     const body = await request.json();
     const { seatIds, sessionId } = body;
 
-    if (!seatIds || !sessionId) {
+    if (!Array.isArray(seatIds) || seatIds.length === 0 || typeof sessionId !== 'string' || !SESSION_ID_REGEX.test(sessionId)) {
       return NextResponse.json(
-        { success: false, error: 'Incomplete data.' },
+        { success: false, error: 'Incomplete or invalid release parameters.' },
         { status: 400 }
       );
     }
 
-    const released = releaseSeats(seatIds, sessionId);
-    if (released) {
-      // Sync release to Supabase
-      updateSeatsStatusInSupabase(seatIds, 'available', null, null, null).catch(() => {});
-    }
-
+    const released = await releaseSeats(seatIds, sessionId);
     return NextResponse.json({ success: true, released });
   } catch (error) {
     return NextResponse.json(
@@ -89,4 +72,3 @@ export async function DELETE(request: Request) {
     );
   }
 }
-

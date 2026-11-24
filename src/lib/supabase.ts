@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { Seat, Order, TicketCategory, SeatStatus, PaymentStatus, CustomerInfo } from '@/types/ticket';
+import { Seat, Order, TicketCategory, SeatStatus, PaymentStatus, CustomerInfo, TicketItem } from '@/types/ticket';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://cfamirjqdxpdhnwtsevw.supabase.co';
 const SUPABASE_KEY =
@@ -12,6 +12,9 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: {
     persistSession: false,
   },
+  global: {
+    fetch: (url, options) => fetch(url, { ...options, cache: 'no-store' }),
+  },
 });
 
 export interface SupabaseOrderRow {
@@ -23,7 +26,7 @@ export interface SupabaseOrderRow {
   total_amount: number;
   payment_status: string;
   payment_method?: string | null;
-  items: any; // JSONB
+  items: TicketItem[] | string;
   qr_payload?: string | null;
   paid_at?: string | null;
   created_at?: string;
@@ -58,7 +61,7 @@ export function orderToRow(order: Order): SupabaseOrderRow {
     payment_status: order.paymentStatus,
     payment_method: order.paymentMethod || 'TRANSFER_MANDIRI',
     items: order.items,
-    qr_payload: order.qrPayload,
+    qr_payload: order.qrPayload || null,
     paid_at: order.paidAt || null,
     created_at: order.createdAt,
     updated_at: new Date().toISOString(),
@@ -66,6 +69,12 @@ export function orderToRow(order: Order): SupabaseOrderRow {
 }
 
 export function rowToOrder(row: SupabaseOrderRow): Order {
+  const parsedItems: TicketItem[] = Array.isArray(row.items)
+    ? row.items
+    : typeof row.items === 'string'
+      ? JSON.parse(row.items)
+      : [];
+
   return {
     id: row.id,
     createdAt: row.created_at || new Date().toISOString(),
@@ -75,7 +84,7 @@ export function rowToOrder(row: SupabaseOrderRow): Order {
       phone: row.customer_phone,
       notes: row.notes || undefined,
     },
-    items: Array.isArray(row.items) ? row.items : [],
+    items: parsedItems,
     totalAmount: row.total_amount,
     paymentStatus: (row.payment_status as PaymentStatus) || 'pending',
     paymentMethod: row.payment_method || 'TRANSFER_MANDIRI',
@@ -120,7 +129,7 @@ export function rowToSeat(row: SupabaseSeatRow): Seat {
 }
 
 // ============================================================================
-// SUPABASE ASYNC HELPERS (WITH SAFE ERROR HANDLING)
+// SUPABASE ASYNC & ATOMIC HELPERS
 // ============================================================================
 
 export async function fetchOrdersFromSupabase(): Promise<Order[] | null> {
@@ -137,6 +146,21 @@ export async function fetchOrdersFromSupabase(): Promise<Order[] | null> {
     return (data as SupabaseOrderRow[]).map(rowToOrder);
   } catch (err) {
     console.warn('[Supabase] fetchOrders exception:', (err as Error).message);
+    return null;
+  }
+}
+
+export async function fetchOrderByIdFromSupabase(orderId: string): Promise<Order | null> {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('id', orderId)
+      .maybeSingle();
+
+    if (error || !data) return null;
+    return rowToOrder(data as SupabaseOrderRow);
+  } catch {
     return null;
   }
 }
@@ -159,16 +183,22 @@ export async function insertOrderToSupabase(order: Order): Promise<boolean> {
 export async function updateOrderPaymentInSupabase(
   orderId: string,
   paymentStatus: string,
-  paidAt?: string
+  paidAt?: string,
+  paymentMethod?: string
 ): Promise<boolean> {
   try {
+    const updates: Record<string, unknown> = {
+      payment_status: paymentStatus,
+      paid_at: paidAt || new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    if (paymentMethod) {
+      updates.payment_method = paymentMethod;
+    }
+
     const { error } = await supabase
       .from('orders')
-      .update({
-        payment_status: paymentStatus,
-        paid_at: paidAt || new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
+      .update(updates)
       .eq('id', orderId);
 
     if (error) {
@@ -209,7 +239,7 @@ export async function updateCustomerInSupabase(
   }
 }
 
-export async function updateOrderItemsInSupabase(orderId: string, items: any[]): Promise<boolean> {
+export async function updateOrderItemsInSupabase(orderId: string, items: TicketItem[]): Promise<boolean> {
   try {
     const { error } = await supabase
       .from('orders')
@@ -281,6 +311,7 @@ export async function updateSeatsStatusInSupabase(
   heldUntil?: number | null,
   orderId?: string | null
 ): Promise<boolean> {
+  if (seatIds.length === 0) return true;
   try {
     const updates: Partial<SupabaseSeatRow> = {
       status,
@@ -299,6 +330,205 @@ export async function updateSeatsStatusInSupabase(
     return true;
   } catch (err) {
     console.warn('[Supabase] updateSeatsStatus exception:', (err as Error).message);
+    return false;
+  }
+}
+
+/** Release only expired temporary pre-checkout cart holds (where order_id IS NULL). */
+export async function releaseExpiredCartHoldsInSupabase(now: number): Promise<string[]> {
+  try {
+    const { data, error } = await supabase
+      .from('seats')
+      .update({
+        status: 'available',
+        held_by: null,
+        held_until: null,
+        order_id: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('status', 'held')
+      .is('order_id', null)
+      .lt('held_until', now)
+      .select('id');
+
+    if (error || !data) {
+      if (error) console.warn('[Supabase] releaseExpiredCartHolds error:', error.message);
+      return [];
+    }
+    return (data as { id: string }[]).map((r) => r.id);
+  } catch (err) {
+    console.warn('[Supabase] releaseExpiredCartHolds exception:', (err as Error).message);
+    return [];
+  }
+}
+
+/**
+ * Atomically lock pre-checkout cart holds in Supabase.
+ * Only locks seats that are available OR already held by the same pre-checkout sessionId.
+ */
+export async function atomicHoldSeatsInSupabase(
+  seatIds: string[],
+  sessionId: string,
+  heldUntil: number
+): Promise<{ ok: boolean; reason?: 'conflict' | 'error' }> {
+  if (seatIds.length === 0) return { ok: false, reason: 'error' };
+  try {
+    // Snapshot seats already held by this sessionId so rollback won't release existing holds
+    const { data: existingRows } = await supabase
+      .from('seats')
+      .select('id, status, order_id, held_by')
+      .in('id', seatIds);
+
+    const alreadyHeldBySession = new Set(
+      (existingRows || [])
+        .filter((r) => r.status === 'held' && !r.order_id && r.held_by === sessionId)
+        .map((r) => r.id as string)
+    );
+
+    const { data, error } = await supabase
+      .from('seats')
+      .update({
+        status: 'held',
+        held_by: sessionId,
+        held_until: heldUntil,
+        order_id: null,
+        updated_at: new Date().toISOString(),
+      })
+      .in('id', seatIds)
+      .neq('category', 'VIP')
+      .or(`status.eq.available,and(status.eq.held,order_id.is.null,held_by.eq.${sessionId})`)
+      .select('id');
+
+    if (error) {
+      console.warn('[Supabase] atomicHoldSeats error:', error.message);
+      return { ok: false, reason: 'error' };
+    }
+
+    const updatedIds = (data as { id: string }[] | null)?.map((r) => r.id) || [];
+    if (updatedIds.length !== seatIds.length) {
+      const newlyLocked = updatedIds.filter((id) => !alreadyHeldBySession.has(id));
+      if (newlyLocked.length > 0) {
+        await supabase
+          .from('seats')
+          .update({
+            status: 'available',
+            held_by: null,
+            held_until: null,
+            order_id: null,
+            updated_at: new Date().toISOString(),
+          })
+          .in('id', newlyLocked)
+          .eq('held_by', sessionId)
+          .is('order_id', null);
+      }
+      return { ok: false, reason: 'conflict' };
+    }
+
+    return { ok: true };
+  } catch (err) {
+    console.warn('[Supabase] atomicHoldSeats exception:', (err as Error).message);
+    return { ok: false, reason: 'error' };
+  }
+}
+
+/**
+ * Atomically lock seats for a submitted pending order (`order_id = orderId`, `held_until = null`).
+ * Submitted orders stay locked until Admin approves (`sold`) or deletes (`available`).
+ */
+export async function atomicLockOrderSeatsInSupabase(
+  seatIds: string[],
+  sessionId: string,
+  orderId: string
+): Promise<{ ok: boolean; reason?: 'conflict' | 'error' }> {
+  if (seatIds.length === 0) return { ok: false, reason: 'error' };
+  try {
+    const { data, error } = await supabase
+      .from('seats')
+      .update({
+        status: 'held',
+        held_by: orderId,
+        held_until: null,
+        order_id: orderId,
+        updated_at: new Date().toISOString(),
+      })
+      .in('id', seatIds)
+      .neq('category', 'VIP')
+      .or(`status.eq.available,and(status.eq.held,order_id.is.null,held_by.eq.${sessionId})`)
+      .select('id');
+
+    if (error) {
+      console.warn('[Supabase] atomicLockOrderSeats error:', error.message);
+      return { ok: false, reason: 'error' };
+    }
+
+    const updatedIds = (data as { id: string }[] | null)?.map((r) => r.id) || [];
+    if (updatedIds.length !== seatIds.length) {
+      if (updatedIds.length > 0) {
+        await supabase
+          .from('seats')
+          .update({
+            status: 'available',
+            held_by: null,
+            held_until: null,
+            order_id: null,
+            updated_at: new Date().toISOString(),
+          })
+          .in('id', updatedIds)
+          .eq('order_id', orderId);
+      }
+      return { ok: false, reason: 'conflict' };
+    }
+
+    return { ok: true };
+  } catch (err) {
+    console.warn('[Supabase] atomicLockOrderSeats exception:', (err as Error).message);
+    return { ok: false, reason: 'error' };
+  }
+}
+
+/** Release only pre-checkout session holds (`order_id IS NULL`). */
+export async function atomicReleaseSessionSeatsInSupabase(
+  seatIds: string[],
+  sessionId: string
+): Promise<boolean> {
+  if (seatIds.length === 0) return true;
+  try {
+    const { error } = await supabase
+      .from('seats')
+      .update({
+        status: 'available',
+        held_by: null,
+        held_until: null,
+        order_id: null,
+        updated_at: new Date().toISOString(),
+      })
+      .in('id', seatIds)
+      .eq('status', 'held')
+      .eq('held_by', sessionId)
+      .is('order_id', null);
+
+    if (error) {
+      console.warn('[Supabase] atomicReleaseSessionSeats error:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn('[Supabase] atomicReleaseSessionSeats exception:', (err as Error).message);
+    return false;
+  }
+}
+
+/** Reset all orders and restore all seats in Supabase (Admin only). */
+export async function resetAllInSupabase(seats: Seat[]): Promise<boolean> {
+  try {
+    const { error: delErr } = await supabase.from('orders').delete().neq('id', '__NONE__');
+    if (delErr) {
+      console.warn('[Supabase] reset delete orders error:', delErr.message);
+    }
+    const ok = await syncAllSeatsToSupabase(seats);
+    return ok && !delErr;
+  } catch (err) {
+    console.warn('[Supabase] resetAll exception:', (err as Error).message);
     return false;
   }
 }

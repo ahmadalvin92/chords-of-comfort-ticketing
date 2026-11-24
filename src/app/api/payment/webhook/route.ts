@@ -1,9 +1,17 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { confirmPayment, getOrder } from '@/lib/store';
+import { confirmPayment } from '@/lib/store';
 
 export async function POST(request: Request) {
   try {
+    const serverKey = process.env.MIDTRANS_SERVER_KEY;
+    if (!serverKey) {
+      return NextResponse.json(
+        { success: false, message: 'Midtrans webhook is not enabled for manual bank transfer mode.' },
+        { status: 403 }
+      );
+    }
+
     const notification = await request.json();
     const {
       order_id,
@@ -14,30 +22,28 @@ export async function POST(request: Request) {
       payment_type,
     } = notification;
 
-    if (!order_id) {
-      return NextResponse.json({ message: 'Order ID is required' }, { status: 400 });
+    if (!order_id || !signature_key) {
+      return NextResponse.json(
+        { success: false, message: 'Order ID and signature key are required' },
+        { status: 400 }
+      );
     }
 
-    // If Midtrans Server Key is configured, verify signature
-    const serverKey = process.env.MIDTRANS_SERVER_KEY;
-    if (serverKey && signature_key) {
-      const expectedSignature = crypto
-        .createHash('sha512')
-        .update(`${order_id}${status_code}${gross_amount}${serverKey}`)
-        .digest('hex');
+    const expectedSignature = crypto
+      .createHash('sha512')
+      .update(`${order_id}${status_code}${gross_amount}${serverKey}`)
+      .digest('hex');
 
-      if (signature_key !== expectedSignature) {
-        return NextResponse.json({ message: 'Invalid signature key' }, { status: 403 });
-      }
+    if (signature_key !== expectedSignature) {
+      return NextResponse.json({ success: false, message: 'Invalid signature key' }, { status: 403 });
     }
 
-    // Midtrans transaction status handling
     if (
       transaction_status === 'capture' ||
       transaction_status === 'settlement' ||
       transaction_status === 'success'
     ) {
-      confirmPayment(order_id, payment_type || 'MIDTRANS');
+      await confirmPayment(order_id, payment_type || 'MIDTRANS');
     }
 
     return NextResponse.json({ success: true, message: 'Notification processed' });
@@ -48,4 +54,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

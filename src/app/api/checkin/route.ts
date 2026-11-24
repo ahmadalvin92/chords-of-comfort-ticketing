@@ -6,14 +6,14 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { qrPayload } = body;
 
-    if (!qrPayload) {
+    if (!qrPayload || typeof qrPayload !== 'string' || !qrPayload.trim()) {
       return NextResponse.json(
         { status: 'INVALID', message: 'QR Code payload is empty.' },
         { status: 400 }
       );
     }
 
-    const result = validateTicketQR(qrPayload);
+    const result = await validateTicketQR(qrPayload);
     return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json(
@@ -22,4 +22,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

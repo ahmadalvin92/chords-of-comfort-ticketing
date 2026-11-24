@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Seat } from '@/types/ticket';
 import {
   ZoomIn,
@@ -35,6 +35,12 @@ export default function SeatPlan({
   const [activeSection, setActiveSection] = useState<'ALL' | 'MAIN' | 'BALCONY'>('ALL');
   const [hoveredSeat, setHoveredSeat] = useState<Seat | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (highlightCategory === 'VIP BALCONY' && activeSection === 'MAIN') {
+      setActiveSection('ALL');
+    }
+  }, [highlightCategory, activeSection]);
 
   // Group seats by row for O(1) lookup: seatLookup[row][seatNumber]
   const seatLookup = useMemo(() => {
@@ -106,6 +112,12 @@ export default function SeatPlan({
     const isReserved = seat.category === 'VIP';
     const isSelected = selectedSeatIds.includes(seat.id);
     const isDisabled = seat.status === 'sold' || (seat.status === 'held' && !isSelected) || isReserved;
+    const isDimmedByFilter =
+      Boolean(highlightCategory) &&
+      !isSelected &&
+      seat.status === 'available' &&
+      ((highlightCategory === 'VIP BALCONY' && seat.category !== 'VIP_BALCONY') ||
+        (highlightCategory === 'REGULAR' && seat.category !== 'REGULAR'));
 
     return (
       <button
@@ -127,7 +139,7 @@ export default function SeatPlan({
         className={`relative w-6 h-6 sm:w-7 sm:h-7 rounded-md text-[9px] sm:text-[10px] font-bold flex items-center justify-center shrink-0 transition-transform ${getSeatColor(
           seat,
           isSelected
-        )}`}
+        )} ${isDimmedByFilter ? 'opacity-40' : ''}`}
       >
         {seat.number}
       </button>

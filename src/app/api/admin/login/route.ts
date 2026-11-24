@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { ADMIN_COOKIE_NAME, createAdminToken } from '@/lib/adminAuth';
 
 export const ADMIN_USERS = [
   {
@@ -19,7 +20,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { email, username, password } = body;
-    const userIdentifier = (email || username || '').trim().toLowerCase();
+    const userIdentifier = String(email || username || '').trim().toLowerCase();
 
     if (!userIdentifier || !password) {
       return NextResponse.json(
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const cleanPassword = password.trim();
+    const cleanPassword = String(password).trim();
 
     const matchedUser = ADMIN_USERS.find(
       (u) => u.email.toLowerCase() === userIdentifier && u.password === cleanPassword
@@ -41,15 +42,29 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({
+    const token = createAdminToken(matchedUser.email);
+
+    const response = NextResponse.json({
       success: true,
+      token,
       user: {
         email: matchedUser.email,
         name: matchedUser.name,
         role: matchedUser.role,
+        token,
         loggedInAt: new Date().toISOString(),
       },
     });
+
+    response.cookies.set(ADMIN_COOKIE_NAME, token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60,
+      secure: process.env.NODE_ENV === 'production',
+    });
+
+    return response;
   } catch (error) {
     return NextResponse.json(
       { success: false, error: (error as Error).message },
@@ -58,3 +73,14 @@ export async function POST(request: Request) {
   }
 }
 
+export async function DELETE() {
+  const response = NextResponse.json({ success: true });
+  response.cookies.set(ADMIN_COOKIE_NAME, '', {
+    httpOnly: true,
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 0,
+    secure: process.env.NODE_ENV === 'production',
+  });
+  return response;
+}

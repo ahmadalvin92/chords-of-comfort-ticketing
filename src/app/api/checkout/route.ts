@@ -1,26 +1,59 @@
 import { NextResponse } from 'next/server';
 import { createOrder } from '@/lib/store';
 
+const SESSION_ID_REGEX = /^[a-zA-Z0-9_-]{3,64}$/;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { customer, seatIds, sessionId, paymentMethod } = body;
 
-    if (!customer?.fullName || !customer?.email || !customer?.phone) {
+    const fullName = typeof customer?.fullName === 'string' ? customer.fullName.trim() : '';
+    const email = typeof customer?.email === 'string' ? customer.email.trim() : '';
+    const phone = typeof customer?.phone === 'string' ? customer.phone.trim() : '';
+    const notes = typeof customer?.notes === 'string' ? customer.notes.trim() : undefined;
+
+    if (fullName.length < 2) {
       return NextResponse.json(
-        { success: false, error: 'Customer information incomplete (Full Name, Email, and Phone Number are required).' },
+        { success: false, error: 'Please provide your full name (minimum 2 characters).' },
         { status: 400 }
       );
     }
 
-    if (!seatIds || !Array.isArray(seatIds) || seatIds.length === 0) {
+    if (!EMAIL_REGEX.test(email)) {
       return NextResponse.json(
-        { success: false, error: 'Please select at least 1 seat.' },
+        { success: false, error: 'Please provide a valid email address.' },
         { status: 400 }
       );
     }
 
-    const orderResult = createOrder(customer, seatIds, sessionId, paymentMethod || 'TRANSFER_MANDIRI');
+    const phoneDigits = phone.replace(/[^0-9]/g, '');
+    if (phoneDigits.length < 8 || phoneDigits.length > 16) {
+      return NextResponse.json(
+        { success: false, error: 'Please provide a valid WhatsApp phone number (8-16 digits).' },
+        { status: 400 }
+      );
+    }
+
+    if (!seatIds || !Array.isArray(seatIds) || seatIds.length === 0 || seatIds.length > 6) {
+      return NextResponse.json(
+        { success: false, error: 'Please select between 1 and 6 seats.' },
+        { status: 400 }
+      );
+    }
+
+    const safeSessionId =
+      typeof sessionId === 'string' && SESSION_ID_REGEX.test(sessionId)
+        ? sessionId
+        : 'sess_checkout';
+
+    const orderResult = await createOrder(
+      { fullName, email, phone, notes },
+      seatIds,
+      safeSessionId,
+      paymentMethod || 'TRANSFER_MANDIRI'
+    );
 
     if (!orderResult.success || !orderResult.order) {
       return NextResponse.json(orderResult, { status: 409 });
@@ -28,7 +61,7 @@ export async function POST(request: Request) {
 
     const order = orderResult.order;
 
-    // Check if Midtrans Server Key is configured in environment
+    // Optional Midtrans Snap Token generation if configured
     const midtransServerKey = process.env.MIDTRANS_SERVER_KEY;
     let snapToken: string | undefined = undefined;
 
@@ -47,9 +80,9 @@ export async function POST(request: Request) {
             gross_amount: order.totalAmount,
           },
           customer_details: {
-            first_name: customer.fullName,
-            email: customer.email,
-            phone: customer.phone,
+            first_name: fullName,
+            email,
+            phone,
           },
           item_details: order.items.map((item) => ({
             id: item.seatId,
@@ -74,7 +107,7 @@ export async function POST(request: Request) {
           order.snapToken = snapToken;
         }
       } catch (err) {
-        console.warn('Midtrans Snap request failed, falling back to simulated checkout:', err);
+        console.warn('Midtrans Snap request failed:', err);
       }
     }
 
@@ -91,4 +124,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

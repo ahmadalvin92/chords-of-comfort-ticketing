@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Seat, CustomerInfo } from '@/types/ticket';
 import {
   X,
@@ -9,7 +9,6 @@ import {
   User,
   Mail,
   Phone,
-  Ticket,
   AlertCircle,
   ArrowRight,
   ArrowLeft,
@@ -19,6 +18,7 @@ import {
 interface CheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onHoldExpired?: () => void;
   selectedSeats: Seat[];
   onConfirmCheckout: (customer: CustomerInfo, paymentMethod: string) => Promise<void>;
   loading: boolean;
@@ -28,6 +28,7 @@ interface CheckoutModalProps {
 export default function CheckoutModal({
   isOpen,
   onClose,
+  onHoldExpired,
   selectedSeats,
   onConfirmCheckout,
   loading,
@@ -40,29 +41,41 @@ export default function CheckoutModal({
     notes: '',
   });
 
-  const [paymentMethod, setPaymentMethod] = useState<string>('MANDIRI_TRANSFER');
+  const [paymentMethod] = useState<string>('MANDIRI_TRANSFER');
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({});
-
-  // 10-Minute Concurrency Hold Countdown Timer
   const [secondsRemaining, setSecondsRemaining] = useState(600); // 10 mins
+
+  const onCloseRef = useRef(onClose);
+  const onHoldExpiredRef = useRef(onHoldExpired);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+    onHoldExpiredRef.current = onHoldExpired;
+  }, [onClose, onHoldExpired]);
 
   useEffect(() => {
     if (!isOpen) return;
 
-    // Listen to browser popstate (back button) to gracefully close modal
-    const handlePopState = () => {
-      onClose();
+    setSecondsRemaining(600);
+    setValidationErrors({});
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onCloseRef.current();
+      }
     };
-    window.addEventListener('popstate', handlePopState);
-    window.history.pushState({ modalOpen: true }, '');
+    window.addEventListener('keydown', handleKeyDown);
 
     const interval = setInterval(() => {
       setSecondsRemaining((prev) => {
         if (prev <= 1) {
           clearInterval(interval);
           alert('Your reservation hold window has expired. Selected seats have been returned to available.');
-          onClose();
+          if (onHoldExpiredRef.current) {
+            onHoldExpiredRef.current();
+          } else {
+            onCloseRef.current();
+          }
           return 0;
         }
         return prev - 1;
@@ -71,9 +84,9 @@ export default function CheckoutModal({
 
     return () => {
       clearInterval(interval);
-      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -87,14 +100,18 @@ export default function CheckoutModal({
 
   const validate = () => {
     const errors: { [key: string]: string } = {};
-    if (!formData.fullName.trim()) {
-      errors.fullName = 'Please enter your full name as shown on your ID.';
+    if (formData.fullName.trim().length < 2) {
+      errors.fullName = 'Please enter your full name as shown on your ID (min. 2 characters).';
     }
-    if (!formData.email.trim() || !/\S+@\S+\.\S+/.test(formData.email)) {
+    if (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
       errors.email = 'Please provide a valid email address for E-Ticket delivery.';
     }
-    if (!formData.phone.trim() || formData.phone.length < 8) {
-      errors.phone = 'Please provide an active WhatsApp number (min. 8 digits).';
+    const phoneDigits = formData.phone.replace(/[^0-9]/g, '');
+    if (phoneDigits.length < 8 || phoneDigits.length > 16) {
+      errors.phone = 'Please provide a valid active WhatsApp number (8-16 digits).';
+    }
+    if (selectedSeats.length === 0) {
+      errors.agreeTerms = 'No seats selected. Please return to the seating map.';
     }
     if (!agreeTerms) {
       errors.agreeTerms = 'Please confirm agreement to the audience entry guidelines.';
